@@ -1,0 +1,298 @@
+# The MIT License (MIT)
+#
+# Copyright (c) 2012-2018 https://github.com/rbf
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# SOURCE:     https://github.com/rbf/dotfiles/blob/master/git
+# RAW:        https://raw.githubusercontent.com/rbf/dotfiles/master/git/.gitconfig
+# SHORTLINK:  http://rbf.li/gitconfig
+
+# Git uses a series of configuration files to determine non-default behavior that
+# you may want. These config files can be stored in three different places:
+#
+#   1) /etc/gitconfig file: for every user on the system and all their repositories.
+#   2) ~/.gitconfig file: Specific to your user.
+#   3) .git/config a given repository: Specific to that single repository.
+#
+# Each level overwrites values in the previous level, so values in .git/config
+# trump those in /etc/gitconfig, for instance.
+#
+# (From: http://git-scm.com/book/en/Getting-Started-First-Time-Git-Setup
+#        http://git-scm.com/book/ch7-1.html)
+#
+# More info on git-config file and syntax:
+#   https://www.kernel.org/pub/software/scm/git/docs/git-config.html
+#
+# Run the following command to download and install this file for the current
+# user (while saving the current .gitconfig file as .gitconfig.local, if any):
+#
+#     [ -f ~/.gitconfig ] && cat ~/.gitconfig >> ~/.gitconfig.local; curl -#SL rbf.li/gitconfig -o ~/.gitconfig
+#
+# You can also find this simple installer on rbf.li/gitconfiginstall or shorter
+# at rbf.li/gci. If you trust the content of the link, that you can directly do:
+#
+#     bash <(curl -sSL rbf.li/gci)
+#
+# Please DO NOT MODIFY or customize this file because your changes will be lost
+# when you update it with 'git update-gitconfig'. Instead create a file named
+# '.gitconfig.local' in the same directory as the current '.gitconfig' and add
+# your customizations (including your username and email) in that file.
+
+# To understand the structure of this aliases see https://www.atlassian.com/blog/git/advanced-git-aliases
+[alias]
+
+  # Initialise a git repo in the current folder adding all of its contents to an initial commit.
+  # SOURCE: http://blog.blindgaenger.net/advanced_git_aliases.html
+  this = !git init && git add . && git commit -m \"initial commit\"
+
+  # Shorthand for 'git commit -m "commit message"' but without the need to quote the commit
+  # message, and checking the max commit length.
+  cm = !"f() { COMMIT_MESSAGE=\"${*}\"; if git imp-check-commit-message-length \"${COMMIT_MESSAGE}\"; then git commit -m \"${COMMIT_MESSAGE}\"; else git imp-error \"Commit aborted.\"; exit 1; fi; }; f"
+
+  # Like 'git cam commit message' but simulating the --all commit flag to include in the commit the files
+  # that have been modified and deleted. However, new files you have not told Git about are not affected.
+  # DOC: https://git-scm.com/docs/git-commit#git-commit---all
+  # DOC: https://git-scm.com/docs/git-add#git-add---update
+  cam = ! git add --update && git cm
+
+  # This is an alias to 'git checkout' but without any arguments it will list all local branches
+  # to choose the one we want to switch to (useful in systems without tab-autocompletion).
+  co = !"f() { : git checkout ; if [ -n \"${1}\" ]; then git checkout \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else echo \"There are no other branches beyond $(git rev-parse --abbrev-ref HEAD).\"; exit; fi; done <<< \"$(git branch | grep -v \"*\")\"; read -p \"Switch to branch number [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git checkout ${b[${bn}]}; else echo \"Invalid option ${bn}.\"; echo \"Aborting\"; fi; }; f"
+
+  # Similar to 'git co' but for 'git merge'.
+  me = !"f() { : git merge ; if [ -n \"${1}\" ]; then git merge \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else echo \"There are no other branches beyond '$(git rev-parse --abbrev-ref HEAD)'.\"; exit; fi; done <<< \"$(git branch | grep -v \"*\")\"; read -p \"Branch number to merge into current branch '$(git rev-parse --abbrev-ref HEAD)' [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git merge ${b[${bn}]}; else echo \"Invalid option ${bn}.\"; echo \"Aborting\"; fi; }; f"
+
+  # The contrary of 'git add' to remove files from the stage to be committed.
+  unstage = reset HEAD --
+
+  # Show a compact and easy to ready version of 'git status'.
+  # NOTE: The short version with the same options (to use it e.g. directly in the terminal)
+  # is 'git status -sb'.
+  # DOC: https://git-scm.com/docs/git-status#git-status--s
+  st = status --short --branch
+
+  # This is an alias to 'git branch' but without any arguments it will list a detailed list of the branches.
+  br = !"f() { : git branch ; if [ -n \"${1}\" ]; then git branch \"${@}\"; else git br-details \"${@}\"; fi; }; f"
+  # DOC: https://git-scm.com/docs/git-for-each-ref
+  br-details  = !PREV_BRANCH="$(git rev-list --quiet @{-1} 2>/dev/null && git rev-parse --symbolic-full-name @{-1} || echo '')" && MAX_BRANCH_NAME_LENGTH=$(git imp-get-max-branch-name-length include-remote-branches) && BRANCH_NAME_COL_WIDTH=$((( MAX_BRANCH_NAME_LENGTH + 2 ))) && git for-each-ref --sort=-committerdate --format='%(if:equals=refs/remotes)%(refname:rstrip=-2)%(then)%(color:cyan)R %(align:'${BRANCH_NAME_COL_WIDTH}',left)%(refname:lstrip=2)%(end) %(align:22,left)Remote branch%(end)%(else)%(if)%(HEAD)%(then)%(color:bold)%(else)%(end)%(color:green)%(if)%(HEAD)%(then)* %(else)%(if:equals='"${PREV_BRANCH}"')%(refname)%(then)- %(else)  %(end)%(end)%(align:'${BRANCH_NAME_COL_WIDTH}',left)%(refname:short)%(end) %(align:25,left)%(if)%(upstream)%(then)%(if)%(upstream:track)%(then)%(color:yellow)%(if:equals=[gone])%(upstream:track)%(then)Tracked upstream gone%(else)%(upstream:track)%(end)%(else)%(color:green)Published and in sync%(end)%(else)%(color:red)%(upstream)Unpublished branch%(end)%(end)%(end)%(color:white) * %(color:yellow)%(objectname:short) %(color:green)%(align:15,left)%(committerdate:relative)%(end)%(color:white)| %(contents:subject)%(color:blue) [%(committername)]%(color:reset)' refs/heads/
+  bra = !git br-details refs/remotes
+  braa = !echo "$ git branch -avv" && git branch -avv && echo && echo "$ git remote show origin" && git remote show origin
+
+  # Publish the current branch to the origin remote.
+  br-publish = !"git push -u origin $(git rev-parse --abbrev-ref HEAD)"
+
+  # Delete the branches that have been merged to master.
+  # SOURCE: https://www.atlassian.com/blog/git/advanced-git-aliases
+  # DOC: https://git-scm.com/docs/git-branch#git-branch---mergedltcommitgt
+  br-prune-merged = !"git imp-check-clean-tree && git checkout master && git branch --merged master | grep -v master | xargs $( [ $(uname) == 'Linux' ] && echo '--no-run-if-empty' ) git branch -dvv;"
+  # Delete the branches that have been deleted from remote.
+  br-prune-gone   = !"git imp-check-clean-tree && git checkout master && git remote -v prune origin && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs $( [ $(uname) == 'Linux' ] && echo '--no-run-if-empty' ) git branch -dvv"
+
+  # Fetch all remotes and print the state of all branches. This command does not modify anything locally.
+  sync = !git fetch --progress --verbose --all --prune && echo && git bra
+  s = !git sync
+  # Like 'git sync' but switching to the master branch, updating it and removing all local branches that have been merged to master.
+  # DOC: https://git-scm.com/docs/git-pull#git-pull---ff-only
+  sync-hard = !"git imp-check-clean-tree && git sync && git checkout master && git pull --ff-only --verbose && git br-prune-gone && git gc && git bra"
+  sh = !git sync-hard
+
+  difft = difftool
+  d = diff --word-diff=color
+  dc = diff --cached
+  ds = diff --stat --raw
+  dsc = diff --cached --stat --raw
+
+  wip = !"f() { git add -A && git commit -am \"[WIP] ${*}\"; }; f"
+  unwip = !"f() { LAST_COMMIT_MESSAGE=\"$(git log -1 --pretty=tformat:%s)\"; [ \"${LAST_COMMIT_MESSAGE:0:5}\" == \"[WIP]\" ] && ( echo \"Undoing last WIP commit: ${LAST_COMMIT_MESSAGE}\" && git reset HEAD^ -- && echo \"Now at:\" && git log -1 --oneline ) || ( echo \"The last commit is not a [WIP] commit! Nothing to do.\"; git log -1 --oneline ) }; f"
+
+  ## Aliases related to the commit history (git log)
+  # DOC: https://git-scm.com/docs/git-log
+
+  # A nicer version of the logs, including a graphical representation of the
+  # history and the branches, the author of the commit and the branch and tag
+  # names.
+  # If the output is not paginated properly check the documentation for
+  # 'core.pager' and 'pager.<cmd>' settings. The order of preference for the
+  # pager is the $GIT_PAGER environment variable, then core.pager configuration,
+  # then $PAGER, and then the default chosen at compile time (usually less).
+  # DOC: https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-config.html
+  history = log --pretty=tformat:\"%C(yellow)%h%Cgreen %ad %Creset| %s%C(red)%d %C(blue)[%an]%Creset\" --graph --date=relative
+
+  # Include commits from all local and remote branches. Do a 'got fetch' before if
+  # you want to make sure that the command reports the last state in the remotes.
+  # NOTE: ': git log ;' notation allows the shell to know from which command the tab-autocompletion should be used.
+  # DOC: https://git-scm.com/docs/git-log#git-log---all
+  hist    = ! ": git log ; git history --all"
+
+  # Shorthand to list the last 5 commits in the current branch. Userful to check the current state of the branch.
+  # DOC: https://git-scm.com/docs/git-log#git-log---max-countltnumbergt
+  h       = ! ": git log ; git history --max-count 5"
+
+  # Like 'git h' but including a summary of how files were changed in each commit.
+  # DOC: https://git-scm.com/docs/git-log#git-log---raw
+  # DOC: https://git-scm.com/docs/git-log#git-log---shortstat
+  hs      = ! ": git log ; git h --shortstat --raw"
+
+  # Like 'git hs' but including a the full commit diff in each commit.
+  # DOC: https://git-scm.com/docs/git-log#git-log---patch
+  hdiff   = ! ": git log ; git hs --patch"
+
+  # Like 'git hdiff' but showing a word diff instead of a line diff.
+  # DOC: https://git-scm.com/docs/git-log#git-log---word-diffltmodegt
+  hd      = ! ": git log ; git hdiff --word-diff=color"
+
+  # The following three aliases are shorthands for 'hs', 'hdiff' and 'hd' but
+  # showing only the very last commit.
+  # NOTE: '-1' is a shorthand for '--max-count 1'
+  lastcommit      = ! ": git log ; git hs -1"
+  lastcommitd     = ! ": git log ; git hd -1"
+  lastcommitdiff  = ! ": git log ; git hdiff -1"
+
+  # Show only the commits that have NOT been merged into master.
+  # DOC: https://git-scm.com/docs/git-log#git-log---cherry
+  unmerged = ! ": git log ; git history --cherry master..HEAD"
+  tags = log --pretty=tformat:\"%C(yellow)%h%Cgreen %ad %C(red)%d\" --date=relative --simplify-by-decoration --branches --all
+
+  type = cat-file -t
+  dump = cat-file -p
+  alias = config --get-regexp alias
+
+  # Forget about a tracked file and do not consider it changed thus not
+  # including it in the commits. This is useful sometimes to change some
+  # configuration files to be used in the local dev environment.
+  # DOC: https://www.git-scm.com/docs/git-update-index#git-update-index---no-skip-worktree
+  # DOC: https://www.git-scm.com/docs/git-update-index#_skip_worktree_bit
+  # SOURCE: https://stackoverflow.com/a/13631525
+  # SOURCE: https://fallengamer.livejournal.com/93321.html
+  forget = update-index --skip-worktree
+  unforget = update-index --no-skip-worktree
+  forgotten = !git ls-files -v | grep ^S
+
+  # The 'forget' command above does not remove the file from the repo. To
+  # completely stop including a file in a repo (but keep local file), use
+  # 'simpleuntrack' and add it to .gitignore configuration. Alternatively,
+  # 'untrack' will do both automatically.
+  simpleuntrack = rm --cached
+  untrack = !"f() { if [ -z \"${1}\" ]; then echo git untrack: You must specify a file.; exit 0; fi; if [ $(find . -path \"*${1}\" | wc -l) == 0 ]; then echo git untrack: ${1}: No such file.; exit 1; fi; if [ $(find . -path \"*${1}\" | wc -l) != 1 ]; then echo git untrack: Try to untrack the file from the root repo dir: $(pwd); exit 1; fi; file=$(find . -path "*$1" | head -1); echo Removing $file from repo but keeping local file... && git rm --cached $file && echo Adding $file to $(pwd)/.gitignore && echo $file >> .gitignore; }; f"
+
+  # List all ignored files detailing the corresponding ignore rule and the file
+  # where the ignore rule is defined.
+  # DOC: https://www.git-scm.com/docs/git-check-ignore
+  ignored = !git check-ignore -v **/*
+
+  ## GitHub related
+
+  web = !"f() { URL=\"http://github.com/$(git imp-get-own-and-repo)\" || exit 1; BRANCH=\"$(git branch -avv | egrep '\\*.*\\[.*\\]' | sed 's|\\* \\([^ ]*\\)  .*|\\1|')\"; [ -n \"${BRANCH}\" ] && URL=\"${URL}/tree/${BRANCH}\" && URL=\"${URL//#/%23}\"; echo Opening URL: $URL; open \"${URL}\"; }; f"
+
+  token = !"f() { if TKN_FROM=\"$(git imp-get-token --location)\"; then echo \"Valid GitHub token found in ${TKN_FROM}.\"; echo \"To manage or rewoke your application tokens go to: https://github.com/settings/applications\"; exit 0; else [ -n \"${TKN_FROM}\" ] && git imp-warn \"I found a token in ${TKN_FROM} but I cannot validate it right now.\"; exit 1; fi; }; f"
+
+  issue = !"f() { git imp-check-repo || exit 1; TKN=\"$(git imp-get-token)\" || exit 1; TITLE=\"${1}\"; OWN_AND_REPO=\"$(git imp-get-own-and-repo)\" || exit 1; [ -z \"${TITLE}\" ] && read -e -p \"Title: \" TITLE; if [ -z \"${TITLE%% }\" ]; then git imp-error \"Title cannot be blank.\"; exit 1; fi; read -e -p \"Body: \" BODY; GH_RESP=\"$(curl -sSi -d \"{\\\"title\\\":\\\"${TITLE}\\\",\\\"body\\\":\\\"${BODY}\\\"}\" https://api.github.com/repos/${OWN_AND_REPO}/issues?access_token=${TKN})\"; [ \"$(echo \"${GH_RESP}\" | head -1 | grep \"HTTP/1.1 2\")\" != \"\" ] && OK=true || OK=false; ! $OK && echo \"Error creating a GitHub issue.\" && echo ${GH_RESP} && exit 1; URL=\"$(echo \"${GH_RESP}\" | grep \"html_url\" | head -1 | sed -e \"s/.*\\\"html_url\\\": \\\"\\(.*\\)\\\".*/\\1/\")\"; echo \"New issue #${URL##*/} successfully created at $URL\"; }; f"
+
+  issues = !"from_cache() { if [ -f $GHI_LOG ]; then git imp-warn \"This is the last issue list I remember from $(stat -qf '%Sm' ${GHI_LOG}):\"; cat ${GHI_LOG}; else git imp-error \"I don't remember any issue list here.\"; exit 1; fi; exit 0;}; f() { git imp-check-repo || exit 1; GHI_LOG='.git-issues.cache'; INCLUDE_LABELS=$(git config --get --bool github.issues.show-labels || echo false); INCLUDE_REPO=$(git config --get --bool github.issues.show-repo || echo false); export DO_COLOR=$(git config --get --bool github.issues.color || echo true); while [ \"${1:0:1}\" == \"-\" ]; do case ${1:1} in r|-repo) INCLUDE_REPO=true;; -no-repo) INCLUDE_REPO=false;; n|-no-color) DO_COLOR=false;; -color) DO_COLOR=true;; c|-cached) from_cache;; l|-labels) INCLUDE_LABELS=true;; -no-labels) INCLUDE_LABELS=false;; *) git imp-error \"Unkown flag: ${1}\"; exit 1;; esac; shift; done; for p in ${@}; do [ \"${p:0:1}\" == \"-\" ] && { git imp-error \"Found flag $p when expecting assignee.\"; git imp-error \"Flags must come before assignee.\n\"; exit 1;}; done; ASSIGNEE=${1:-$(git config --get github.issues.assignee || git config --get user.name)}; TKN=\"$(git imp-get-token)\" || from_cache; OWN_AND_REPO=\"$(git imp-get-own-and-repo)\" || exit 1; GH_RESP=\"$(curl -sSL https://api.github.com/repos/${OWN_AND_REPO}/issues?$( [ \"${ASSIGNEE}\" != \"all\" ] && echo \"assignee=$( [ -n \"${ASSIGNEE}\" ] && echo \"${ASSIGNEE//assigned/*}\")\")'&'access_token=${TKN})\"; if [ $? -ne 0 ]; then git imp-error \"The connection to GitHub failed. Please verify the internet availability.\"; from_cache; fi; GH_RESP=$(git imp-sanitize-json-resp \"${GH_RESP}\"); python -c \"import json,datetime as dt, dateutil as du, dateutil.parser as dup, dateutil.relativedelta as dur; d = lambda x: dur.relativedelta(dt.datetime.now(du.tz.tzlocal()),dup.parse(x)); color = lambda rgb: (int(36 * (int(rgb[:2], 16) * 5 / 256) + 6 * (int(rgb[2:4], 16) * 5 / 256) + (int(rgb[4:], 16) * 5 / 256) + 16)); label_str = lambda label_dict: $( $DO_COLOR && echo \"' \\033[48;5;%sm$(tput setaf 0)$(tput bold) %s $(tput sgr0)' % (str(color(label_dict['color'])), label_dict['name'])\" || echo \"' ' + label_dict['name']\" ); issues=json.loads('${GH_RESP}'.decode('utf-8'))['body']; print('\\n'.join(['$(git imp-printf 233 $(${INCLUDE_REPO} && echo ${OWN_AND_REPO}))$(git imp-printf 3 '#%-3d') $(git imp-printf 2 '%-12s') | %s%s$(git imp-printf 1 '%s')$(git imp-printf 4 '%s')' % (i['number'], reduce((lambda acc, x: str(getattr(d(i['created_at']),x)) + ' ' + (x if getattr(d(i['created_at']),x) is not 1 else x[:-1]) + ' ago' if acc[:1] is '0' else acc),['0', 'years','months','days','hours','minutes']), i['title'], ''$($INCLUDE_LABELS && echo \".join([ label_str(label) for label in i['labels'] ])\"), ' (' + i['milestone']['title'] + ')' if i['milestone'] else '', ' [' + i['assignee']['login'] + ']' if i['assignee'] else '') for i in issues]).encode('utf-8') if issues else '$(git imp-warn No issues found. 2>&1)')\" | tee ${GHI_LOG}; }; f"
+
+  release = !"intomsg() { echo ${@} >> ${TAG_MSG_FILE}; }; echointomsg() { echo ${@}; intomsg ${@}; }; curl_issue() { ISSUE_OWN_AND_REPO=${i%%#*}; GH_RESP=\"$(curl -sS https://api.github.com/repos/${ISSUE_OWN_AND_REPO:-${OWN_AND_REPO}}/issues/${1#*\\#}?access_token=${TKN} | egrep \"^  \\\"title\\\":.*,$\" | sed \"s/.*\\\": *\\\"\\(.*\\)\\\",/\\1/\")\"; echo \"  - ${1}: ${GH_RESP}\" ; }; f() { TAG_MSG_FILE=\".git-tag-msg-template.tmp\"; git imp-check-repo || exit 1; FROM_COMMIT=\"$(git describe --abbrev=0 2> /dev/null)\"; if [ -z \"${FROM_COMMIT}\" ]; then FROM_COMMIT=\"$(git log --format=\"%h\" | tail -1)\"; FROM_COMMIT_TYPE=\"initial commit\"; TAG_FOUND=false; else TAG_FOUND=true; FROM_COMMIT_TYPE=\"last annotated tag\"; fi; TO_COMMIT=\"HEAD\"; if [ \"$(git describe --always ${FROM_COMMIT})\" == \"$(git describe --always ${TO_COMMIT})\" ] && $TAG_FOUND; then git imp-warn \"${TO_COMMIT} has already been tagged as ${FROM_COMMIT}. Nothing to do.\"; exit 1; fi; SUGGESTED_NEW_TAG=\"v0.1\"; LAST_TAG_SUFFIX=\"${FROM_COMMIT##*.}\"; $TAG_FOUND && if [[ \"${FROM_COMMIT}\" =~ ^v20[0-9][0-9].(01|02|03|04|05|06|07|08|09|10|11|12).[0-3][0-9]$ ]]; then SUGGESTED_NEW_TAG=\"$(date +\"v%Y.%m.%d\")\"; else [ -n \"${LAST_TAG_SUFFIX##*[!0-9]*}\" ] && SUGGESTED_NEW_TAG=\"${FROM_COMMIT%.*}.$(($LAST_TAG_SUFFIX+1))\"; fi; $TAG_FOUND && git imp-warn \"Current tag: ${FROM_COMMIT}\" || git imp-warn \"This will be the first tag.\"; read -p \"New tag name [leave blank for '${SUGGESTED_NEW_TAG}']: v\" NEW_TAG_NAME; [ -n \"${NEW_TAG_NAME}\" ] && NEW_TAG_NAME=\"v${NEW_TAG_NAME}\" || NEW_TAG_NAME=\"${SUGGESTED_NEW_TAG}\"; if [ -n \"$(git show \"${NEW_TAG_NAME}\" 2> /dev/null)\" ]; then git imp-error \"Tag '${NEW_TAG_NAME}' already exists.\"; exit 1; fi; OWN_AND_REPO=\"$(git imp-get-own-and-repo)\" || GH_REPO_FOUND=false; COMMIT_COUNT=$(git log --color=never --format=\"%s\" ${FROM_COMMIT}..${TO_COMMIT} | wc -l | tr -d ' ' ) ; COMMITS=($(git log --color=never --reverse --format='%h' ${FROM_COMMIT}..${TO_COMMIT})); ISSUES=($(git log --color=never --format=\"%s\" ${FROM_COMMIT}..${TO_COMMIT} | egrep -o '([-_a-zA-Z0-9]+/[-_a-zA-Z0-9]+)?#[0-9]+' | sort -u)); [ ${COMMIT_COUNT} -eq 0 ] && exit; printf \"Release ${NEW_TAG_NAME}\\n\\n\" > ${TAG_MSG_FILE}; echointomsg \"${#ISSUES[@]} GitHub issues were mentioned in the ${COMMIT_COUNT} commit messages since the ${FROM_COMMIT_TYPE} ${FROM_COMMIT}$(if [ \"${#ISSUES[@]}\" == \"0\" ]; then echo '.'; else echo ':'; fi)\"; intomsg; if $GH_REPO_FOUND; then TKN=\"$(git imp-get-token)\" || exit; for i in ${ISSUES[@]}; do echointomsg $(curl_issue ${i}); done; intomsg; fi; intomsg \"# Commits since the ${FROM_COMMIT_TYPE} ${FROM_COMMIT}:\"; for c in ${COMMITS[@]}; do intomsg $(git log --color=never --format='# - (%h) %s [%an]' -1 $c); done; intomsg; intomsg \"Diff with the previous tag: https://github.com/${OWN_AND_REPO}/compare/${FROM_COMMIT}...${NEW_TAG_NAME}\"; intomsg; intomsg \"# You might want to modify the tag message here. Lines starting\"; intomsg \"# with '#' will be ignored, but an empty message *DOES NOT* abort the tag.\"; GT_MESSAGE_EDITOR=\"$(git config --get core.editor || which vim || which vi)\"; ${GT_MESSAGE_EDITOR} ${TAG_MSG_FILE}; git tag -a --file=${TAG_MSG_FILE} ${NEW_TAG_NAME} || exit 1; if $GH_REPO_FOUND; then git imp-warn \"After pushing the new tag (with 'git push --tags'), you might:\"; git imp-warn \"- visit following permalink to see it on GitHub: https://github.com/${OWN_AND_REPO}/releases/tag/${NEW_TAG_NAME}\"; git imp-warn \"- visit following permalink to compare it with the previous tag: https://github.com/${OWN_AND_REPO}/compare/${FROM_COMMIT}...${NEW_TAG_NAME}\"; fi; git imp-warn \"To delete the newly created tag, execute: 'git tag -d ${NEW_TAG_NAME}'\"; }; f"
+
+  # SOURCE: https://stackoverflow.com/a/23486788
+  squash-all = "!f(){ git imp-warn \"This will squash ALL $(git rev-list --count HEAD) commits into one. The commit history of the current repo will be LOST. Press CTRL-C to abort.\"; DEFAULT_COMMIT_MSG='initial commit'; read -p \"Commit message: [default: '${DEFAULT_COMMIT_MSG}'] \" COMMIT_MSG; git reset $(git commit-tree HEAD^{tree} -m \"${COMMIT_MSG:-$DEFAULT_COMMIT_MSG}\") && git h && git imp-success 'Done!'; };f"
+  init-from-template = "!f(){ if git imp-check-repo 2>/dev/null; then git imp-error 'This is already a git repo.'; exit 1; fi; if [ -n \"${1}\" ]; then TEMPLATE_REPO_URL=\"${1}\"; shift; else git imp-error 'Provide the URL of the template repo.'; exit 1; fi; git init && git fetch --depth=1 -n \"${TEMPLATE_REPO_URL}\" && git reset --hard $(git commit-tree FETCH_HEAD^{tree} -m \"initial commit\") && git imp-success \"Repo initialized from template ${TEMPLATE_REPO_URL}!\"; };f"
+
+  update-gitconfig = !"f() { GH_LOCAL_FILE=~/.gitconfig.local && touch ${GH_LOCAL_FILE} && GH_PREV_USER_NAME=\"$(git config user.name || echo '')\" && GH_PREV_USER_EMAIL=\"$(git config user.email || echo '')\" && GH_PREV_TOKEN=\"$(git config github.token || echo '')\" && GH_CONFIG_BACKUP_FILENAME=~/.gitconfig_backups/.gitconfig_$(date +\"%Y%m%d%H%M%S\").bak && echo \"Saving a backup of the current ~/.gitconfig file as ${GH_CONFIG_BACKUP_FILENAME}...\" && mkdir -p ~/.gitconfig_backups && cp -v ~/.gitconfig \"${GH_CONFIG_BACKUP_FILENAME}\" && echo && echo \"Downloading .gitconfig from rbf.li/gitconfig ...\" && curl --progress-bar -L rbf.li/gitconfig -o ~/.gitconfig && echo && if [ -n \"${GH_PREV_USER_NAME}\" ] && [ -n \"${GH_PREV_USER_EMAIL}\" ]; then echo \"Ensuring that the user name (${GH_PREV_USER_NAME}) and email (${GH_PREV_USER_EMAIL}) are setup in ${GH_LOCAL_FILE} file...\"; git config --file ${GH_LOCAL_FILE} user.name \"${GH_PREV_USER_NAME}\" && git config --file ${GH_LOCAL_FILE} user.email \"${GH_PREV_USER_EMAIL}\"; else echo \"Please add your username and email to the ${GH_LOCAL_FILE} file to properly author your commits! Run:\" && echo \"git config --file ${GH_LOCAL_FILE} user.name YOUR_USER_NAME && git config --file ${GH_LOCAL_FILE} user.email YOUR_USER_EMAIL\"; fi && if [ -n \"${GH_PREV_TOKEN}\" ]; then echo \"Ensuring that the existent GitHub token is setup in ${GH_LOCAL_FILE} file...\" && git config --file ${GH_LOCAL_FILE} github.token \"${GH_PREV_TOKEN}\"; fi && if which diff 1>/dev/null 2>/dev/null; then echo && echo \"Lines changed from previous version:\" && echo && diff --side-by-side --suppress-common-lines --minimal --report-identical-files \"${GH_CONFIG_BACKUP_FILENAME}\" ~/.gitconfig; fi; }; f" #'
+
+  # Following imp-* aliases are meant to be internally used
+
+  imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@/\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\"; }; c"
+  # Like imp-printf but with a newline at the end.
+  imp-echo = !"c() { echo $(git imp-printf \"$@\") >&2; }; c"
+  imp-error = !"c() { echo $(git imp-printf 1 \"$@\") >&2; exit 1; }; c"
+  imp-warn = !"c() { echo $(git imp-printf 3 \"$@\") >&2; }; c"
+
+  imp-check-repo = !"f() { if [ -z \"$(git rev-parse --git-dir 2> /dev/null)\" ]; then git imp-error \"It doesn't seem to be a git repo here.\"; exit 1; else exit 0; fi; }; f" #'
+  imp-check-clean-tree = !"f() { if ! git diff-index --quiet HEAD -- 2> /dev/null; then git imp-error \"There are uncommitted changes. Please commit or stash them.\"; exit 1; else exit 0; fi; }; f" #'
+
+  # We use this instead of the bash command 'column' because some versions of the command do not deal well with color codes to properly calculate the width.
+  # SOURCE: https://superuser.com/questions/648665/bash-column-command-confused-by-ansi-color-escapes
+  imp-get-max-branch-name-length = !"f() { max_length=0; for b in $(git branch --list $([ \"${1}\" == 'include-remote-branches' ] && echo '--all') --no-color | tr -d '* ' | grep -v HEAD | sed 's|remotes/||g'); do lenght=${#b}; if (( max_length < lenght )); then max_length=${lenght}; fi; done; echo ${max_length}; }; f"
+
+  imp-check-commit-message-length = !"f() { max_length=70; lenght=${#1}; if (( max_length < lenght )); then git imp-error \"Commit message too long (max 70 chars):\"; git imp-printf 2 \"${1:0:${max_length}}\"; git imp-error \"${1:${max_length}}\"; exit 1; else exit 0; fi; }; f"
+
+  imp-validate-token = !"f() { curl -sfm 5 https://api.github.com/user?access_token=${1} 2>&1 1>/dev/null; }; f"
+
+  imp-get-token = !"f() { GIT_ADMIN_NOTE=\"To manage or rewoke your application tokens go to: https://github.com/settings/applications\"; if TKN=\"$(git config --local github.token 2>/dev/null)\"; then TKN_FROM='local git config'; TKN_RESET_CMD='git config --local --unset github.token'; elif TKN=\"$(git config --global github.token 2>/dev/null)\"; then TKN_FROM='global git config'; TKN_RESET_CMD='git config --global --unset github.token'; else TKN=\"${GITHUB_TOKEN}\"; TKN_FROM='system variable GITHUB_TOKEN'; TKN_RESET_CMD='unset GITHUB_TOKEN'; fi; if [ -n \"${TKN}\" ]; then git imp-validate-token ${TKN}; RES=$?; [ ${RES} -eq 0 ] && { [ \"${1}\" == \"--location\" ] && echo ${TKN_FROM} || echo ${TKN}; } && exit 0; if [ ${RES} -eq 22 ]; then git imp-error \"The GitHub token found in ${TKN_FROM} doesn't seem to be valid.\"; git imp-error \"To create a new one, remove it (i.e. '${TKN_RESET_CMD}') and re-run this command.\"; git imp-error \"${GIT_ADMIN_NOTE}\"; exit 1; fi; git imp-error \"github.com doesn't seem currently reachable. Please verify the internet availability.\"; [ \"${1}\" == \"--location\" ] && echo ${TKN_FROM} || echo ${TKN}; exit 1; fi; git imp-warn \"Requesting new authentification token...\"; NAME=\"$(git config --get user.name)\"; read -e -p \"GitHub username [leave blank to use '${NAME}']: \" USER; read -e -p \"Two-factor authentication code [leave blank if not required]: \" GH_2FA_CODE; GH_RESP=\"$(curl -sSi -u \"${USER:-${NAME}}\" -d \"{\\\"scopes\\\":[\\\"repo\\\"], \\\"note\\\":\\\"Generated on $(date +\"%Y-%m-%d %H:%M:%S %z\") with 'git token' from $(hostname).\\\"}\" --header \"X-GitHub-OTP: ${GH_2FA_CODE}\" https://api.github.com/authorizations)\"; [ \"$(echo \"${GH_RESP}\" | head -1 | grep \"HTTP/1.1 2\")\" != \"\" ] && OK=true || OK=false; if ! $OK; then git imp-error \"Error creating a GitHub token.\"; exit 1; fi; TKN=$(echo ${GH_RESP} | sed -e \"s/.*\\\"token\\\": \\\"\\([a-zA-Z0-9]*\\)\\\".*/\\1/\"); git imp-warn \"New token created successfully.\"; read -s -n 1 -p \"$(echo \"I can save it for later use if you like so:\n - in the (l)ocal git config of the current repo,\n - in the (g)lobal git config, or\n - (n)owhere: you'll manage it.\nPlease type L, G or N\n \n\")\" TARGET; case $TARGET in L|l) git config --local github.token ${TKN} && git imp-warn 'GitHub token successfully saved in the git config file of the current repo.';; G|g) git config --global github.token ${TKN} && git imp-warn '\nGitHub token successfully saved in the global git config file.';; *) git imp-warn \"You might want to store it in a system variable named GITHUB_TOKEN for persistency:\"; git imp-warn \"\\$ export GITHUB_TOKEN=${TKN}\";; esac; git imp-warn \"${GIT_ADMIN_NOTE}\"; [ \"${1}\" == \"--location\" ] && echo ${TKN_FROM} || echo ${TKN}; }; f"
+
+  imp-get-own-and-repo = !"f() { OWN_AND_REPO=\"$(git config --get remote.origin.url | sed \"s|.*[/:]\\(.*/.*\\)\\.git|\\1|\")\"; [ -n \"${OWN_AND_REPO}\" ] && echo \"${OWN_AND_REPO}\" || git imp-error \"Remote origin url not found.\"; }; f"
+
+  imp-sanitize-json-resp = !"f() { echo \"{\\\"body\\\":${@}}\" | tr '\\n' ' ' | tr -d \"'\"| sed -e \"s/[^[:print:]]/ /g\" -e \"s/\\\\\\\\\\*//g\" -e \"s/\\\\\\\\/\\\\\\\\\\\\\\\\/g\" -e \"s/\\`\\`\\`[^\\`]*\\`\\`\\`//g\" -e \"s/[[:space:]][[:space:]]*/ /g\"; }; f" #'
+
+  imp-install-python-deps = !"sudo pip install python-dateutil"
+
+[diff]
+  tool = opendiff
+  # Interesting geeky read about diff algorithms: http://fabiensanglard.net/git_code_review/diff.php
+  # DOC: https://git-scm.com/docs/git-config#git-config-diffalgorithm
+  algorithm = histogram
+
+[difftool]
+  prompt = false
+
+[core]
+  editor = /usr/bin/vim
+  excludesfile = ~/.gitignore
+  # Enable wrap when displaying text, e.g. with "git diff"
+  # SOURCE: http://iamnearlythere.com/wrapping-lines-git-diff/
+  pager = less -r
+
+[merge]
+  ff = true
+
+[color]
+  ui = auto
+
+[color "branch"]
+  current = green bold
+  local = green
+  remote = cyan dim
+
+[color "diff"]
+  plain = blue dim
+  meta = yellow
+  frag = black yellow bold
+#  func = black red
+  old = red
+  new = green
+#  commit = green red
+
+[log]
+  decorate = short
+
+[push]
+  default = upstream
+
+[github "issues"]
+  show-labels = true
+  show-repo = false
+  color = true
+  # assignee = none
+  assignee = all
+
+# This line has to be at the bottom of the file, so that configuration defined
+# in '.gitconfig.local' always takes precedence.
+# DOC: https://git-scm.com/docs/git-config#_includes
+[include]
+  path = ./.gitconfig.local

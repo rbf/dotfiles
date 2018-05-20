@@ -1,0 +1,219 @@
+# The MIT License (MIT)
+#
+# Copyright (c) 2012-2018 https://github.com/rbf
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# SOURCE:     https://github.com/rbf/dotfiles/blob/master/git
+# RAW:        https://raw.githubusercontent.com/rbf/dotfiles/master/git/.gitignore
+# SHORTLINK:  http://rbf.li/gitignore
+
+# To download and add this file to your global git config, run the following
+# command:
+#
+# f=~/.gitignore && if [ -f ${f} ]; then cp -v ${f} ${f}.backup_$(date +"%Y%m%d%H%M%S"); fi && curl -sSL rbf.li/gitignore -o ${f} && git config --global core.excludesfile ${f}
+
+# Inspired from: http://help.github.com/ignore-files/
+
+# Compiled source
+####################################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.pyc
+/target
+/classes
+
+# Packages
+####################################
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases
+####################################
+*.log
+*.sql
+*.sqlite
+*.cache
+*.tmp
+
+# Backups
+####################################
+*.bak
+*.bak_20[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]
+*.backup
+*.backup_20[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]
+
+# vim swap files
+####################################
+.*.swp
+
+# Mac OS generated files
+####################################
+.DS_Store*
+ehthumbs.db
+Thumbs.db
+
+# To ignore the icon hidden file added by Mac OS X when the folder has a custom icon,
+# instead of "Icon?" or "Icon\r", add TWO (sic) CRLF control characters.
+# (From http://blog.bitfluent.com/post/173740409/ignoring-icon-in-gitignore)
+# In vi(m) type CTRL-V + CTRL-M to insert one CRLF control character.
+# Those control characters will then appear in vim as "^M" in blue color to indicate that they are invisible.
+# (From http://www.bo.infn.it/alice/alice-doc/mll-doc/linux/vi-ex/node15.html)
+Icon
+
+
+
+# Xcode generated files
+####################################
+*xcuserdata
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+project.xcworkspace/
+xcuserdata/
+
+# Clojure with Leiningen
+####################################
+/checkouts
+.lein-deps-sum
+.lein-failures
+.lein-plugins
+.classpath
+.settings
+.project
+.lein-repl-history
+.nrepl-port
+
+# If generating the pom for a Clojure project with Leiningen, add "pom.xml" to the local .gitignore
+# and regenerate if when needed with "lein pom"
+
+# LaTeX
+####################################
+# Original from: https://gist.github.com/kogakure/149016
+*.aux
+*.glo
+*.idx
+*.log
+*.toc
+*.ist
+*.acn
+*.acr
+*.alg
+*.bbl
+*.blg
+*.dvi
+*.glg
+*.gls
+*.ilg
+*.ind
+*.lof
+*.lot
+*.maf
+*.mtc
+*.mtc1
+*.out
+*.synctex.gz
+
+# Sublime Text 2
+####################################
+*.sublime-project
+*.sublime-workspace
+
+# General folder for untracked files
+####################################
+git-untracked/
+
+# Jekyll
+####################################
+.sass-cache/
+
+# From c9.io gitignore file
+####################################
+.hgignore
+node_modules
+.c9
+.DS_Store
+Thumbs.db
+
+# C/C++
+####################################
+*.slo
+*.lo
+*.o
+*.so
+*.so.*
+*.dylib
+*.lai
+*.la
+*.a
+*.lib
+*.dll
+*.exe
+*.out
+install_manifest.txt
+CMakeCache.txt
+CMakeFiles
+cmake_install.cmake
+
+# Python
+####################################
+*.py[cod]
+.installed.cfg
+__pycache__
+pip-log.txt
+.coverage
+.tox
+nosetests.xml
+
+# Ruby
+####################################
+*.rbc
+*.sassc
+.sass-cache
+capybara-*.html
+.rspec
+.rvmrc
+/.bundle
+**.orig
+rerun.txt
+pickle-email-*.html
+*.gem
+*.rbc
+.bundle
+.config
+InstalledFiles
+spec/reports
+test/tmp
+test/version_tmp
+.yardoc
+_yardoc
