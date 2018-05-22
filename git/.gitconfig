@@ -253,7 +253,6 @@
 
 [core]
   editor = /usr/bin/vim
-  excludesfile = ~/.gitignore_global
   excludesfile = ~/.gitignore
   # Enable wrap when displaying text, e.g. with "git diff"
   # SOURCE: http://iamnearlythere.com/wrapping-lines-git-diff/
