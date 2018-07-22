@@ -165,6 +165,14 @@
   lastcommitd     = ! ": git log ; git hd -1"
   lastcommitdiff  = ! ": git log ; git hdiff -1"
 
+  # Display a list of all unique author/committer combinations.
+  users       = ! "git log --format='commit(s) authored by %an <%ae> and committed by %cn <%ce>' --all | sort | uniq -c | sort -nr"
+  # Display a list of all unique authors.
+  authors     = ! "git log --format='commit(s) authored by %an <%ae>' --all | sort | uniq -c | sort -nr"
+  # Display a list of all unique committers.
+  committers  = ! "git log --format='commit(s) committed by %cn <%ce>' --all | sort | uniq -c | sort -nr"
+
+
   # Show only the commits that have NOT been merged into master.
   # DOC: https://git-scm.com/docs/git-log#git-log---cherry
   unmerged = ! ": git log ; git history --cherry master..HEAD"
