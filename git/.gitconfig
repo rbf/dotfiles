@@ -299,6 +299,9 @@
   # assignee = none
   assignee = all
 
+[init]
+  defaultBranch = main
+
 # This line has to be at the bottom of the file, so that configuration defined
 # in '.gitconfig.local' always takes precedence.
 # DOC: https://git-scm.com/docs/git-config#_includes
