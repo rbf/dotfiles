@@ -55,6 +55,58 @@
 # '.gitconfig.local' in the same directory as the current '.gitconfig' and add
 # your customizations (including your username and email) in that file.
 
+[diff]
+  tool = opendiff
+  # Interesting geeky read about diff algorithms: http://fabiensanglard.net/git_code_review/diff.php
+  # DOC: https://git-scm.com/docs/git-config#git-config-diffalgorithm
+  algorithm = histogram
+
+[difftool]
+  prompt = false
+
+[core]
+  editor = /usr/bin/vim
+  excludesfile = ~/.gitignore
+  # Enable wrap when displaying text, e.g. with "git diff"
+  # SOURCE: http://iamnearlythere.com/wrapping-lines-git-diff/
+  pager = less -r
+
+[merge]
+  ff = true
+
+[color]
+  ui = auto
+
+[color "branch"]
+  current = green bold
+  local = green
+  remote = cyan dim
+
+[color "diff"]
+  plain = blue dim
+  meta = yellow
+  frag = black yellow bold
+#  func = black red
+  old = red
+  new = green
+#  commit = green red
+
+[log]
+  decorate = short
+
+[push]
+  default = upstream
+
+[github "issues"]
+  show-labels = true
+  show-repo = false
+  color = true
+  # assignee = none
+  assignee = all
+
+[init]
+  defaultBranch = main
+
 # To understand the structure of this aliases see https://www.atlassian.com/blog/git/advanced-git-aliases
 [alias]
 
@@ -249,58 +301,6 @@
   imp-sanitize-json-resp = !"f() { echo \"{\\\"body\\\":${@}}\" | tr '\\n' ' ' | tr -d \"'\"| sed -e \"s/[^[:print:]]/ /g\" -e \"s/\\\\\\\\\\*//g\" -e \"s/\\\\\\\\/\\\\\\\\\\\\\\\\/g\" -e \"s/\\`\\`\\`[^\\`]*\\`\\`\\`//g\" -e \"s/[[:space:]][[:space:]]*/ /g\"; }; f" #'
 
   imp-install-python-deps = !"sudo pip install python-dateutil"
-
-[diff]
-  tool = opendiff
-  # Interesting geeky read about diff algorithms: http://fabiensanglard.net/git_code_review/diff.php
-  # DOC: https://git-scm.com/docs/git-config#git-config-diffalgorithm
-  algorithm = histogram
-
-[difftool]
-  prompt = false
-
-[core]
-  editor = /usr/bin/vim
-  excludesfile = ~/.gitignore
-  # Enable wrap when displaying text, e.g. with "git diff"
-  # SOURCE: http://iamnearlythere.com/wrapping-lines-git-diff/
-  pager = less -r
-
-[merge]
-  ff = true
-
-[color]
-  ui = auto
-
-[color "branch"]
-  current = green bold
-  local = green
-  remote = cyan dim
-
-[color "diff"]
-  plain = blue dim
-  meta = yellow
-  frag = black yellow bold
-#  func = black red
-  old = red
-  new = green
-#  commit = green red
-
-[log]
-  decorate = short
-
-[push]
-  default = upstream
-
-[github "issues"]
-  show-labels = true
-  show-repo = false
-  color = true
-  # assignee = none
-  assignee = all
-
-[init]
-  defaultBranch = main
 
 # This line has to be at the bottom of the file, so that configuration defined
 # in '.gitconfig.local' always takes precedence.
