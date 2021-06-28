@@ -55,14 +55,10 @@
 # '.gitconfig.local' in the same directory as the current '.gitconfig' and add
 # your customizations (including your username and email) in that file.
 
-[diff]
-  tool = opendiff
-  # Interesting geeky read about diff algorithms: http://fabiensanglard.net/git_code_review/diff.php
-  # DOC: https://git-scm.com/docs/git-config#git-config-diffalgorithm
-  algorithm = histogram
-
-[difftool]
-  prompt = false
+# Configure user.name and user.email in the .gitconfig.local as exaplined above.
+# [user]
+#   name =
+#   email =
 
 [core]
   editor = /usr/bin/vim
@@ -70,6 +66,34 @@
   # Enable wrap when displaying text, e.g. with "git diff"
   # SOURCE: http://iamnearlythere.com/wrapping-lines-git-diff/
   pager = less -r
+
+[diff]
+  # Interesting geeky read about diff algorithms: http://fabiensanglard.net/git_code_review/diff.php
+  # DOC: https://git-scm.com/docs/git-config#git-config-diffalgorithm
+  algorithm = histogram
+  colorMoved = default
+
+[pager]
+    diff = delta
+    log = delta
+    reflog = delta
+    show = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+# Configuration for delta diff helper tool.
+# SOURCE: 28jun2021 https://github.com/dandavison/delta
+[delta]
+  side-by-side = true
+  line-numbers = true
+  features = decorations
+  whitespace-error-style = 22 reverse
+
+[delta "decorations"]
+    commit-decoration-style = bold yellow box ul
+    file-style = bold yellow ul
+    file-decoration-style = ul yellow
 
 [merge]
   ff = true
@@ -82,14 +106,18 @@
   local = green
   remote = cyan dim
 
+# You can set the color to any of the following values: normal, black, red, green, yellow, blue,
+# magenta, cyan, or white. If you want an attribute like bold in the previous example, you can
+#choose from bold, dim, ul (underline), blink, and reverse (swap foreground and background).
+# magenta, cyan, or white. If you want an attribute like bold in the previous example, you can
+# choose from bold, dim, ul (underline), blink, and reverse (swap foreground and background).
+# SOURCE: 28jun2021 https://www.git-scm.com/book/en/v2/Customizing-Git-Git-Configuration#_color
 [color "diff"]
   plain = blue dim
   meta = yellow
   frag = black yellow bold
-#  func = black red
   old = red
   new = green
-#  commit = green red
 
 [log]
   decorate = short
