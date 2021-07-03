@@ -142,6 +142,9 @@
   # SOURCE: http://blog.blindgaenger.net/advanced_git_aliases.html
   this = !git init && git add . && git commit -m \"initial commit\"
 
+  # Clone a repo but get only the current commit instead of the full history. Useful for installing tools.
+  shallow-clone = clone --depth=1
+
   # Shorthand for 'git commit -m "commit message"' but without the need to quote the commit
   # message, and checking the max commit length.
   cm = !"f() { COMMIT_MESSAGE=\"${*}\"; if git imp-check-commit-message-length \"${COMMIT_MESSAGE}\"; then git commit -m \"${COMMIT_MESSAGE}\"; else git imp-error \"Commit aborted.\"; exit 1; fi; }; f"
