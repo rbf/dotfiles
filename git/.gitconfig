@@ -181,19 +181,19 @@
   # Publish the current branch to the origin remote.
   br-publish = !"git push -u origin $(git rev-parse --abbrev-ref HEAD)"
 
-  # Delete the branches that have been merged to master.
+  # Delete the branches that have been merged to the main branch.
   # SOURCE: https://www.atlassian.com/blog/git/advanced-git-aliases
   # DOC: https://git-scm.com/docs/git-branch#git-branch---mergedltcommitgt
-  br-prune-merged = !"git imp-check-clean-tree && git checkout master && git branch --merged master | grep -v master | xargs $( [ $(uname) == 'Linux' ] && echo '--no-run-if-empty' ) git branch -dvv;"
+  br-prune-merged = !"MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git imp-check-clean-tree && git checkout ${MAIN_BRANCH} && git branch --merged ${MAIN_BRANCH} | grep -v ${MAIN_BRANCH} | xargs $( [ $(uname) == 'Linux' ] && echo '--no-run-if-empty' ) git branch -dvv;"
   # Delete the branches that have been deleted from remote.
-  br-prune-gone   = !"git imp-check-clean-tree && git checkout master && git remote -v prune origin && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs $( [ $(uname) == 'Linux' ] && echo '--no-run-if-empty' ) git branch -dvv"
+  br-prune-gone   = !"MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git imp-check-clean-tree && git checkout ${MAIN_BRANCH} && git remote -v prune origin && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs $( [ $(uname) == 'Linux' ] && echo '--no-run-if-empty' ) git branch -dvv"
 
   # Fetch all remotes and print the state of all branches. This command does not modify anything locally.
   sync = !git fetch --progress --verbose --all --prune && echo && git bra
   s = !git sync
-  # Like 'git sync' but switching to the master branch, updating it and removing all local branches that have been merged to master.
+  # Like 'git sync' but switching to the main branch, updating it and removing all local branches that have been merged to the main branch.
   # DOC: https://git-scm.com/docs/git-pull#git-pull---ff-only
-  sync-hard = !"git imp-check-clean-tree && git sync && git checkout master && git pull --ff-only --verbose && git br-prune-gone && git gc && git bra"
+  sync-hard = !"MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git imp-check-clean-tree && git sync && git checkout ${MAIN_BRANCH} && git pull --ff-only --verbose && git br-prune-gone && git gc && git bra"
   sh = !git sync-hard
 
   difft = difftool
@@ -265,9 +265,9 @@
   committers  = ! "git log --format='commit(s) committed by %cn <%ce>' --all | sort | uniq -c | sort -nr"
 
 
-  # Show only the commits that have NOT been merged into master.
+  # Show only the commits that have NOT been merged into the main branch.
   # DOC: https://git-scm.com/docs/git-log#git-log---cherry
-  unmerged = ! ": git log ; git history --cherry master..HEAD"
+  unmerged = ! ": git log ; MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git history --cherry ${MAIN_BRANCH}..HEAD"
   tags = log --pretty=tformat:\"%C(yellow)%h%Cgreen %ad %C(red)%d\" --date=relative --simplify-by-decoration --branches --all
 
   type = cat-file -t
@@ -316,6 +316,9 @@
   update-gitconfig = !"f() { GH_LOCAL_FILE=~/.gitconfig.local && touch ${GH_LOCAL_FILE} && GH_PREV_USER_NAME=\"$(git config user.name || echo '')\" && GH_PREV_USER_EMAIL=\"$(git config user.email || echo '')\" && GH_PREV_TOKEN=\"$(git config github.token || echo '')\" && GH_CONFIG_BACKUP_FILENAME=~/.gitconfig_backups/.gitconfig_$(date +\"%Y%m%d%H%M%S\").bak && echo \"Saving a backup of the current ~/.gitconfig file as ${GH_CONFIG_BACKUP_FILENAME}...\" && mkdir -p ~/.gitconfig_backups && cp -v ~/.gitconfig \"${GH_CONFIG_BACKUP_FILENAME}\" && echo && echo \"Downloading .gitconfig from rbf.li/gitconfig ...\" && curl --progress-bar -L rbf.li/gitconfig -o ~/.gitconfig && echo && if [ -n \"${GH_PREV_USER_NAME}\" ] && [ -n \"${GH_PREV_USER_EMAIL}\" ]; then echo \"Ensuring that the user name (${GH_PREV_USER_NAME}) and email (${GH_PREV_USER_EMAIL}) are setup in ${GH_LOCAL_FILE} file...\"; git config --file ${GH_LOCAL_FILE} user.name \"${GH_PREV_USER_NAME}\" && git config --file ${GH_LOCAL_FILE} user.email \"${GH_PREV_USER_EMAIL}\"; else echo \"Please add your username and email to the ${GH_LOCAL_FILE} file to properly author your commits! Run:\" && echo \"git config --file ${GH_LOCAL_FILE} user.name YOUR_USER_NAME && git config --file ${GH_LOCAL_FILE} user.email YOUR_USER_EMAIL\"; fi && if [ -n \"${GH_PREV_TOKEN}\" ]; then echo \"Ensuring that the existent GitHub token is setup in ${GH_LOCAL_FILE} file...\" && git config --file ${GH_LOCAL_FILE} github.token \"${GH_PREV_TOKEN}\"; fi && if which diff 1>/dev/null 2>/dev/null; then echo && echo \"Lines changed from previous version:\" && echo && diff --side-by-side --suppress-common-lines --minimal --report-identical-files \"${GH_CONFIG_BACKUP_FILENAME}\" ~/.gitconfig; fi; }; f" #'
 
   # Following imp-* aliases are meant to be internally used
+
+  # SOURCE: 16sep2021 https://stackoverflow.com/a/67625120
+  imp-main-branch-name = !"git branch | cut -c 3- | grep --color=never -E '^master$|^main$'"
 
   imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@/\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\"; }; c"
   # Like imp-printf but with a newline at the end.
