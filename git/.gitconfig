@@ -156,7 +156,7 @@
   cam = ! git add --update && git cm
 
   # Like 'git cam commit message' but automatically pushing to origin after commit.
-  camp = !"f() { git cam \"${*}\" && git push }; f"
+  camp = !"f() { git cam \"${*}\" && git push; }; f"
 
   # This is an alias to 'git checkout' but without any arguments it will list all local branches
   # to choose the one we want to switch to (useful in systems without tab-autocompletion).
