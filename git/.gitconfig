@@ -260,6 +260,11 @@
   lastcommitd     = ! ": git log ; git hd -1"
   lastcommitdiff  = ! ": git log ; git hdiff -1"
 
+  # Show the commit hash of the corresponding commit-ish. E.g. git sha1 HEAD
+  # SOURCE: 23sep2021 https://stackoverflow.com/a/949391
+  sha1 = rev-parse --verify
+  sha1-short = sha1 --short
+
   # Display a list of all unique author/committer combinations.
   users       = ! "git log --format='commit(s) authored by %an <%ae> and committed by %cn <%ce>' --all | sort | uniq -c | sort -nr"
   # Display a list of all unique authors.
