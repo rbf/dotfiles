@@ -165,7 +165,7 @@
   cmp = !"f() { git cm \"${*}\" && git push; }; f"
   
   # Undoes the last commit printing contextual information.
-  uncommit = ! git h -1 && git reset --soft HEAD^ && git reflog -1 && git h -1
+  uncommit = ! git h -1 && git reset HEAD^ && git reflog -1 && git h -1
 
   # This is an alias to 'git checkout' but without any arguments it will list all local branches
   # to choose the one we want to switch to (useful in systems without tab-autocompletion).
