@@ -161,6 +161,12 @@
   # Like 'git cam commit message' but automatically pushing to origin after commit.
   camp = !"f() { git cam \"${*}\" && git push; }; f"
 
+  # Like 'git camp commit message' but without adding anything else, i.e. using git cm instead of git cam.
+  cmp = !"f() { git cm \"${*}\" && git push; }; f"
+  
+  # Undoes the last commit printing contextual information.
+  uncommit = ! git h -1 && git reset --soft HEAD^ && git reflog -1 && git h -1
+
   # This is an alias to 'git checkout' but without any arguments it will list all local branches
   # to choose the one we want to switch to (useful in systems without tab-autocompletion).
   co = !"f() { : git checkout ; if [ -n \"${1}\" ]; then git checkout \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else echo \"There are no other branches beyond $(git rev-parse --abbrev-ref HEAD).\"; exit; fi; done <<< \"$(git branch | grep -v \"*\")\"; read -p \"Switch to branch number [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git checkout ${b[${bn}]}; else echo \"Invalid option ${bn}.\"; echo \"Aborting\"; fi; }; f"
