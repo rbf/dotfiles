@@ -262,13 +262,16 @@
   # DOC: https://git-scm.com/docs/git-log#git-log---word-diffltmodegt
   hd      = ! ": git log ; git hdiff --word-diff=color"
 
+  lastcommit      = show HEAD
+  lc              = lastcommit
+
   # The following three aliases are shorthands for 'hs', 'hdiff' and 'hd' but
   # showing only the very last commit.
   # NOTE: '-1' is a shorthand for '--max-count 1'
-  lastcommit      = ! ": git log ; git hs -1"
   lastcommitd     = ! ": git log ; git hd -1"
   lastcommitdiff  = ! ": git log ; git hdiff -1"
-
+  lastcommitstat  = ! ": git log ; git hs -1"
+  
   # Show the commit hash of the corresponding commit-ish. E.g. git sha1 HEAD
   # SOURCE: 23sep2021 https://stackoverflow.com/a/949391
   sha1 = rev-parse --verify
