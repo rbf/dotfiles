@@ -84,16 +84,94 @@
 
 # Configuration for delta diff helper tool.
 # SOURCE: 28jun2021 https://github.com/dandavison/delta
+
 [delta]
   side-by-side = true
   line-numbers = true
   features = decorations
-  whitespace-error-style = 22 reverse
+
+# Available style options for delta (each accepts foreground, background and attributes)
+#
+# - minus-style: for removed lines [default: normal auto]
+#
+# - zero-style: for unchanged lines [default: syntax normal]
+#
+# - plus-style: for added lines [default: syntax auto]
+#
+# - minus-emph-style: for emphasized sections of removed lines [default: normal
+#   auto]
+#
+# - minus-non-emph-style: for non-emphasized sections of removed lines that have
+#   an emphasized section. Defaults to minus-style [default: auto auto]
+#
+# - plus-emph-style: for emphasized sections of added lines [default: syntax auto]
+#
+# - plus-non-emph-style: for non-emphasized sections of added lines that have an
+#   emphasized section. Defaults to plus-style [default: auto auto]
+#
+# - commit-style: for the commit hash line. The style 'omit' can be used to remove
+#   the commit hash line from the output [default: raw]
+#
+# - commit-decoration-style: for the commit hash decoration. The style string
+#   should contain one of the special attributes 'box', 'ul' (underline), 'ol'
+#   (overline), or the combination 'ul ol' [default: ]
+#
+# - file-style: for the file section. The style 'omit' can be used to remove the
+#   file section from the output [default: blue]
+#
+# - file-decoration-style: for the file decoration. The style string should
+#   contain one of the special attributes 'box', 'ul' (underline), 'ol'
+#   (overline), or the combination 'ul ol' [default: blue ul]
+#
+# - hunk-header-style: for the hunk-header. Special attributes 'file' and
+#   'line-number' can be used to include the file path, and number of first hunk
+#   line, in the hunk header. The style 'omit' can be used to remove the hunk
+#   header section from the output [default: line- number syntax]
+#
+# - hunk-header-file-style: for the file path part of the hunk-header. The file
+#   path will only be displayed if hunk-header-style contains the 'file' special
+#   attribute [default: blue]
+#
+# - hunk-header-line-number-style: for the line number part of the hunk-header.
+#   The line number will only be displayed if hunk-header-style contains the
+#   'line-number' special attribute [default: blue]
+#
+# - hunk-header-decoration-style: for the hunk-header decoration. The style string
+#   should contain one of the special attributes 'box', 'ul' (underline), 'ol'
+#   (overline), or the combination 'ul ol' [default: blue box]
+#
+# - line-numbers-minus-style: for line numbers in the old (minus) version of the
+#   file. See STYLES and LINE NUMBERS sections [default: auto]
+#
+# - line-numbers-zero-style: for line numbers in unchanged (zero) lines. See
+#   STYLES and LINE NUMBERS sections [default: auto]
+#
+# - line-numbers-plus-style: for line numbers in the new (plus) version of the
+#   file. See STYLES and LINE NUMBERS sections [default: auto]
+#
+# - line-numbers-left-style: for the left column of line numbers. See STYLES and
+#   LINE NUMBERS sections [default: auto]
+#
+# - line-numbers-right-style: for the right column of line numbers. See STYLES and
+#   LINE NUMBERS sections [default: auto]
+#
+# - minus-empty-line-marker-style: Style for removed empty line marker (used only
+#   if minus-style has no background color) [default: normal auto]
+#
+# - plus-empty-line-marker-style: Style for added empty line marker (used only if
+#   plus-style has no background color) [default: normal auto]
+#
+# - whitespace-error-style: Style for whitespace errors. Defaults to
+#   color.diff.whitespace if that is set in git config, or else 'magenta reverse'
+#   [default: auto auto]
+#
+# DOC: https://github.com/dandavison/delta#full---help-output
 
 [delta "decorations"]
+    whitespace-error-style = magenta reverse
     commit-decoration-style = bold yellow box ul
-    file-style = bold yellow ul
-    file-decoration-style = ul yellow
+    file-style = normal
+    file-decoration-style = blue ul ol
 
 [merge]
   ff = true
