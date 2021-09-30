@@ -323,11 +323,11 @@
   dsc = d --cached --stat --raw
 
   # Diffs using the default pages, i.e. less.
-  dl = ! ": git diff ; GIT_PAGER=less git diff" 
-  dlw = dl --word-diff=color
-  dlc = dl --cached
-  dls = dl --stat --raw
-  dlsc = dl --cached --stat --raw
+  dp = ! ": git diff ; git --no-pager diff"
+  dpw = dp --word-diff=color
+  dpc = dp --cached
+  dps = dp --stat --raw
+  dpsc = dp --cached --stat --raw
 
   wip = !"f() { git add -A && git commit -am \"[WIP] ${*}\"; }; f"
   unwip = !"f() { LAST_COMMIT_MESSAGE=\"$(git log -1 --pretty=tformat:%s)\"; [ \"${LAST_COMMIT_MESSAGE:0:5}\" == \"[WIP]\" ] && ( echo \"Undoing last WIP commit: ${LAST_COMMIT_MESSAGE}\" && git reset HEAD^ -- && echo \"Now at:\" && git log -1 --oneline ) || ( echo \"The last commit is not a [WIP] commit! Nothing to do.\"; git log -1 --oneline ) }; f"
