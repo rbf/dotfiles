@@ -65,7 +65,8 @@
   excludesfile = ~/.gitignore
   # Enable wrap when displaying text, e.g. with "git diff"
   # SOURCE: http://iamnearlythere.com/wrapping-lines-git-diff/
-  pager = less -r
+  # SOURCE: 03oct2021 https://stackoverflow.com/a/18781512
+  pager = less -FRXK
 
 [diff]
   # Interesting geeky read about diff algorithms: http://fabiensanglard.net/git_code_review/diff.php
@@ -323,7 +324,7 @@
   dsc = d --cached --stat --raw
 
   # Diffs using the default pages, i.e. less.
-  dp = ! ": git diff ; git --no-pager diff"
+  dp = ! ": git diff ; GIT_PAGER='less -FRXK' git diff"
   dpw = dp --word-diff=color
   dpc = dp --cached
   dps = dp --stat --raw
