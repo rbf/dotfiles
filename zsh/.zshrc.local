@@ -1,0 +1,11 @@
+# This file is sourced at the end of .zshrc. It won't be overwritten when
+# updating .zshrb. Use it for personal, persistent modifications.
+
+# DOC: https://github.com/chubin/wttr.in
+export __LOCAL_WEATHER_DEFAULT_LOCATION='London'
+
+# DOC: https://www.gnu.org/software/gcal/manual/gcal.html#x_002dcc_002dholidays
+export __LOCAL_MCAL_CC_HOLIDAYS_LOCATION='GB_EN'
+
+# DOC: https://www.gnu.org/software/gcal/manual/gcal.html#x_002ddate_002dformat
+export __LOCAL_MCAL_DATE_FORMAT='gb'
