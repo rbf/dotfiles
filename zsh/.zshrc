@@ -67,8 +67,11 @@ FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}comment]='fg=8'
 
 # Use lsd as an alternative to ls.
 # SOURCE: 28jun2021 https://github.com/Peltoche/lsd
+# Check also the config file at ~/.config/lsd/config.yaml
 alias ls='lsd'
-alias la='ls -la'
+# -A, --almost-all  Do not list implied . and ..
+# -l, --long        Display extended file metadata as a table
+alias la='ls -lA'
 alias las='la -Sr'
 alias lat='la -tr --date relative'
 
@@ -83,7 +86,7 @@ function tree() {
     echo "tree: Accepts only one optional integer argument to define the depth of the tree, and it must be between 1 and 10 (default: 5)"
     return 1
   fi
-  ls --depth ${depth} --tree --blocks=name,size,date --date=relative --group-dirs=first
+  ls --almost-all --depth ${depth} --tree --group-dirs=first --ignore-glob .git
 }
 
 # Alternative to lsd.
@@ -282,7 +285,7 @@ function chpwd() {
     show_repo_info
   else
     show_directory_info
-  fi 
+  fi
 }
 
 function login_info() {
