@@ -217,34 +217,29 @@ function is_this_the_root_of_a_git_repo() {
 }
 
 function show_directory_info() {
-  if show_directory_stats; then
-    lsd --almost-all
-    echo
-    show_last_modified_files_in_folder
-  fi
-}
-
-function show_directory_stats() {
-  # SOURCE: 07jul2021 https://stackoverflow.com/a/12973694
-  ITEMS_COUNT=$(lsd --almost-all --long | wc -l | xargs echo)
-  if [[ "${ITEMS_COUNT}" == "0" ]]; then
-    echo "$(current_dir_without_expanding_home_directory) is empty"
-    return 1
-  else
-    echo ${ITEMS_COUNT} "items in $(current_dir_without_expanding_home_directory):"
-    return 0
-  fi
+  local items_in_dir=(*(D))
+  case ${#items_in_dir} in
+    0)
+      echo "$(current_dir_without_expanding_home_directory) is empty."
+      ;;
+    1)
+      echo "One item in $(current_dir_without_expanding_home_directory):"
+      la
+      ;;
+    2|3|4|5|6|7|8)
+      echo "${#items_in_dir} items in $(current_dir_without_expanding_home_directory):"
+      la
+      ;;
+    *)
+      echo "${#items_in_dir} items in $(current_dir_without_expanding_home_directory). 3 most recently modified:"
+      la --timesort --date relative --color always | head -3
+      ;;
+  esac
 }
 
 function current_dir_without_expanding_home_directory() {
   # SOURCE: 01jul2021 https://unix.stackexchange.com/a/207214
   dirs -p | head -1
-}
-
-function show_last_modified_files_in_folder() {
-  echo "Most recently modified files in $(current_dir_without_expanding_home_directory):"
-  lsd --almost-all --long --timesort --date relative --color always \
-    | head -3
 }
 
 function show_last_modified_files_in_tree() {
