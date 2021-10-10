@@ -6,7 +6,7 @@
 # fi
 # 
 # However, this is not enabled for now to avoid seeing the prompt before the
-# login greeting (see login_info function below).
+# login greeting (see commands called at the bottom of the file).
 
 # Path to your oh-my-zsh installation.
 export ZSH=~/.oh-my-zsh
@@ -188,13 +188,13 @@ function mcal() {
     --with-week-number \
     --starting-day=Monday \
     --cc-holidays="${__LOCAL_MCAL_CC_HOLIDAYS_LOCATION}" \
-    --holiday-list=long \
-    --multicultural-new-year-holidays \
+    --descending-holiday-list=short \
     --exclude-holiday-list-title \
+    --suppress-holiday-list-separator \
     --highlighting='\033[7;1m:\033[0m:\033[91;1m:\033[0m' \
     --highlighting=yes \
     --date-format="${__LOCAL_MCAL_DATE_FORMAT}" \
-    . | tail -n +6
+    . | tail -n +2
 }
 
 function is_this_the_home_directory() {
@@ -276,14 +276,6 @@ function chpwd() {
   fi
 }
 
-function login_info() {
-  echo
-  date
-  echo
-  mcal
-  echo
-}
-
 # Duplicate a file adding the extention .bak_[timestamp]
 # SOURCE: 28jun2021 https://gist.github.com/rbf/1844923#file-bashrc-L79-L88
 function backup() {
@@ -321,4 +313,5 @@ export PATH="/usr/local/sbin:$PATH"
 # Put your personal modifications on ~/.zshrc.local, which won't be overwritten.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
-login_info
+mcal
+echo
