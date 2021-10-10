@@ -244,10 +244,11 @@ function current_dir_without_expanding_home_directory() {
 
 function show_last_modified_files_in_tree() {
   # SOURCE: 01jul2021 https://unix.stackexchange.com/a/207214
+  # SOURCE: 10oct2021 https://unix.stackexchange.com/a/200267
   CURRENT_DIR_WITHOUT_EXPANDING_HOME_DIRECTORY="$(dirs -p | head -1)"
   echo "Most recently modified files in this repo:"
-  find *(D) -not -name .DS_Store -not -path ".git/*" -maxdepth 4 -type f \
-    | xargs lsd --almost-all --long --timesort --date relative --color always \
+  find *(D) -not -name .DS_Store -not -path ".git/*" -maxdepth 4 -type f -print0 \
+    | xargs -0 lsd --almost-all --long --timesort --date relative --color always \
     | head -3
 }
 
