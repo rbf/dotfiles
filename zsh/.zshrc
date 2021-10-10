@@ -231,7 +231,7 @@ function show_directory_info() {
       la
       ;;
     *)
-      echo "${#items_in_dir} items in $(current_dir_without_expanding_home_directory). 3 most recently modified:"
+      echo "${#items_in_dir} items in $(current_dir_without_expanding_home_directory). Most recently modified:"
       la --timesort --date relative --color always | head -3
       ;;
   esac
@@ -253,21 +253,15 @@ function show_last_modified_files_in_tree() {
 }
 
 function show_git_repo_info() {
-  echo "Latest commits in this repo:"
-  git h
-  echo
-  echo "Current repo status:"
-  git st
-}
-
-function show_repo_info() {
   show_last_modified_files_in_tree
   echo
-  show_git_repo_info
+  git h
+  echo
+  git st
   return 0
 }
 
-alias context='show_repo_info'
+alias context='show_git_repo_info'
 
 # zsh-hook function executed whenever the current working directory is changed.
 # SOURCE: 01jul2021 https://stackoverflow.com/a/3964198
@@ -276,9 +270,7 @@ function chpwd() {
   if is_this_the_home_directory; then
     show_directory_info
   elif is_this_the_root_of_a_git_repo; then
-    show_directory_info
-    echo
-    show_repo_info
+    show_git_repo_info
   else
     show_directory_info
   fi
