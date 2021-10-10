@@ -68,7 +68,7 @@ FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}comment]='fg=8'
 # Use lsd as an alternative to ls.
 # SOURCE: 28jun2021 https://github.com/Peltoche/lsd
 # Check also the config file at ~/.config/lsd/config.yaml
-alias ls='lsd'
+alias ls='lsd  --color=$( [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == Dark ]] && echo auto || echo never)'
 # -A, --almost-all  Do not list implied . and ..
 # -l, --long        Display extended file metadata as a table
 alias la='ls -lA'
