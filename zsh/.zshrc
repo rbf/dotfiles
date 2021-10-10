@@ -268,7 +268,7 @@ alias context='show_git_repo_info'
 # DOC: https://zsh.sourceforge.io/Doc/Release/Functions.html#Hook-Functions
 function chpwd() {
   if is_this_the_home_directory; then
-    show_directory_info
+    # Nothing to do.
   elif is_this_the_root_of_a_git_repo; then
     show_git_repo_info
   else
