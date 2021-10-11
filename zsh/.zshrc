@@ -303,12 +303,35 @@ HEROKU_AC_ZSH_SETUP_PATH=/Users/rob/Library/Caches/heroku/autocomplete/zsh_setup
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+function is_macos_in_dark_mode() {
+  [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]
+}
+
 # As suggested by "brew doctor":
 #   Warning: Homebrew's "sbin" was not found in your PATH but you have installed
 #   formulae that put executables in /usr/local/sbin.
 #   Consider setting your PATH for example like so:
 #   echo 'export PATH="/usr/local/sbin:$PATH"' >> ~/.zshrc
 export PATH="/usr/local/sbin:$PATH"
+
+# The BAT_THEME seems also to be picked up by git d when using delta (although
+# not specified in delta's docs).
+# DOC: https://github.com/sharkdp/bat#highlighting-theme
+# DOC: https://github.com/dandavison/delta#custom-themes
+
+# These 2 bat themes dynamically adapt to the light/dark macOS interface styles,
+# but they look a bit rough.
+# export BAT_THEME="ansi"
+# export BAT_THEME="base16"
+
+# These 2 bat themes do not dynamically adapt to the light/dark macOS interface
+# styles (i.e. .zshrc must be reloaded in order to change the theme for bat and
+# delta), but they look nicer.
+if is_macos_in_dark_mode; then
+  export BAT_THEME="Solarized (dark)"
+else
+  export BAT_THEME="Solarized (light)"
+fi
 
 # Put your personal modifications on ~/.zshrc.local, which won't be overwritten.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
