@@ -327,11 +327,19 @@ export PATH="/usr/local/sbin:$PATH"
 # These 2 bat themes do not dynamically adapt to the light/dark macOS interface
 # styles (i.e. .zshrc must be reloaded in order to change the theme for bat and
 # delta), but they look nicer.
-if is_macos_in_dark_mode; then
-  export BAT_THEME="Solarized (dark)"
-else
-  export BAT_THEME="Solarized (light)"
-fi
+# export BAT_THEME="Solarized (dark)"
+# export BAT_THEME="Solarized (light)"
+
+function dynamic_bat_theme_name() {
+  if is_macos_in_dark_mode; then
+    echo "Solarized (dark)"
+  else
+    echo "Solarized (light)"
+  fi
+}
+
+alias git='BAT_THEME="$(dynamic_bat_theme_name)" git'
+alias bat='BAT_THEME="$(dynamic_bat_theme_name)" bat'
 
 # Put your personal modifications on ~/.zshrc.local, which won't be overwritten.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
