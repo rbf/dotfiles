@@ -217,7 +217,7 @@ function is_this_the_root_of_a_git_repo() {
 }
 
 function show_directory_info() {
-  local items_in_dir=(*(D))
+  local items_in_dir=(*(DN))
   case ${#items_in_dir} in
     0)
       echo "$(current_dir_without_expanding_home_directory) is empty."
