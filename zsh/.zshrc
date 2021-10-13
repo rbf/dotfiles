@@ -1,12 +1,42 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
+IS_RUNNING_INSIDE_TMUX="false"
+if [[ -n "${TMUX}" ]]; then
+  IS_RUNNING_INSIDE_TMUX="true"
+fi
+
+RELATIVE_SHLVL=$(($SHLVL - 1))
+if $IS_RUNNING_INSIDE_TMUX; then
+  RELATIVE_SHLVL=$(($RELATIVE_SHLVL - 1))
+fi
+
+IS_RUNNING_AS_A_SUB_SHELL=false
+if (($RELATIVE_SHLVL > 0)); then
+   IS_RUNNING_AS_A_SUB_SHELL="true"
+fi
+
+IS_SUB_PANE_IN_TMUX_WINDOW="false"
+if $IS_RUNNING_INSIDE_TMUX && (($(/usr/local/bin/tmux list-panes | wc -l | xargs echo) > 1)) ; then
+  IS_SUB_PANE_IN_TMUX_WINDOW="true"
+fi
+
+IS_ALLOWED_TO_PRINT_LOGIN_GREETING="true"
+if $IS_RUNNING_AS_A_SUB_SHELL || $IS_SUB_PANE_IN_TMUX_WINDOW; then
+  IS_ALLOWED_TO_PRINT_LOGIN_GREETING="false"
+fi
+
+# # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# # Initialization code that may require console input (password prompts, [y/n]
+# # confirmations, etc.) must go above this block; everything else may go below.
 # if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
 #   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 # fi
-# 
-# However, this is not enabled for now to avoid seeing the prompt before the
-# login greeting (see commands called at the bottom of the file).
+# # Since we print some login greeting info (see commands called at the bottom
+# # of the file) we generally don't want to enable instant prompt to avoid
+# # seeing the prompt blink before the login greeting appears. Since in tmux
+# # sub-panels. e.i. panels other than the one that is automatically open with a
+# # new window, the login greeting is not shown (so save space and avoid
+# # redundancy), we could enable it there. But there are some parts of the prompt
+# # that can not be printed instantly, so it blinks anyway. So we keep it always
+# # disabled for now.
 
 # Path to your oh-my-zsh installation.
 export ZSH=~/.oh-my-zsh
@@ -60,6 +90,14 @@ zstyle ':completion:*:*:docker-*:*' option-stacking yes
 # DOC: https://github.com/zdharma/fast-syntax-highlighting/blob/master/CHANGELOG.md
 FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}comment]='fg=8'
 
+# Added as 'sub_shell_indicator' at the beginning of the POWERLEVEL9K_LEFT_PROMPT_ELEMENTS
+# array in ~/.p10k.zsh.
+# SOURCE: 13oct2021 https://github.com/romkatv/powerlevel10k/issues/169#issuecomment-521381144
+function prompt_sub_shell_indicator(){
+  $IS_RUNNING_AS_A_SUB_SHELL || return
+  p10k segment -t "%F{015}$(repeat ${RELATIVE_SHLVL} printf "↪")"
+}
+
 # Set personal aliases and functions, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
@@ -102,7 +140,7 @@ alias subl='/Applications/Sublime\ Text.app/Contents/SharedSupport/bin/subl'
 
 function __create_new_sublime_project_file() {
   local filename="$(basename $(pwd)).sublime-project"
-  [ -f "${filename}" ] && backup "${filename}"
+  [ -f "${filename}" ] && { backup "${filename}" 1>/dev/null || return 1; }
   cat << EOF > "${filename}"
 {
   "folders":
@@ -216,6 +254,10 @@ function is_this_the_root_of_a_git_repo() {
   is_this_in_a_git_repo && [[ -d .git ]]
 }
 
+function is_this_the_root_of_a_linked_worktree_of_a_git_repo() {
+  is_this_in_a_git_repo && [[ -f .git ]]
+}
+
 function show_directory_info() {
   local items_in_dir=(*(DN))
   case ${#items_in_dir} in
@@ -261,6 +303,16 @@ function show_git_repo_info() {
   return 0
 }
 
+function show_git_repo_info_in_linked_worktree() {
+  echo
+  git h
+  echo
+  printf "This is a linked worktree of the main"
+  printf " worktree at $(cat .git | sed -e 's/^gitdir: \(.*\)\/.git\/.*/\1/').\n"
+  echo
+  return 0
+}
+
 alias context='show_git_repo_info'
 
 # zsh-hook function executed whenever the current working directory is changed.
@@ -271,6 +323,8 @@ function chpwd() {
     # Nothing to do.
   elif is_this_the_root_of_a_git_repo; then
     show_git_repo_info
+  elif is_this_the_root_of_a_linked_worktree_of_a_git_repo; then
+    show_git_repo_info_in_linked_worktree
   else
     show_directory_info
   fi
@@ -281,7 +335,7 @@ function chpwd() {
 function backup() {
   if [ -z "${1}" ]
   then
-    echo "Missing file to backup. Nothing to do."
+    echo "Missing file to backup. Nothing to do." 1>&2
     return 1
   fi
   BACKUP_FILENAME="${1}.bak_$(date +"%Y%m%d%H%M%S")";
@@ -387,8 +441,10 @@ function list_outdated_brew_packages() {
   rm "${outdated_packages_file}"
 }
 
-mcal
-echo
+if $IS_ALLOWED_TO_PRINT_LOGIN_GREETING; then
+  mcal
+  echo
+fi
 
 list_outdated_brew_packages
 unset -f list_outdated_brew_packages
