@@ -268,13 +268,13 @@ function show_directory_info() {
       echo "One item in $(current_dir_without_expanding_home_directory):"
       la
       ;;
-    2|3|4|5|6|7|8)
+    2|3|4|5|6|7|8|9|10)
       echo "${#items_in_dir} items in $(current_dir_without_expanding_home_directory):"
       la
       ;;
     *)
       echo "${#items_in_dir} items in $(current_dir_without_expanding_home_directory). Most recently modified:"
-      la --timesort --date relative --color always | head -3
+      la --timesort --date relative --color always | head -5
       ;;
   esac
 }
