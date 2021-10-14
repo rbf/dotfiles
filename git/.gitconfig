@@ -254,7 +254,7 @@
 
   # Shorthand for 'git commit -m "commit message"' but without the need to quote the commit
   # message, and checking the max commit length.
-  cm = !"f() { COMMIT_MESSAGE=\"${*}\"; if git imp-check-commit-message-length \"${COMMIT_MESSAGE}\"; then git commit -m \"${COMMIT_MESSAGE}\"; else git imp-error \"Commit aborted.\"; exit 1; fi; }; f"
+  cm = !"f() { COMMIT_MESSAGE=\"${*}\"; git imp-check-commit-message-length \"${COMMIT_MESSAGE}\" && git commit -m \"${COMMIT_MESSAGE}\"; }; f"
 
   # Like 'git cam commit message' but simulating the --all commit flag to include in the commit the files
   # that have been modified and deleted. However, new files you have not told Git about are not affected.
@@ -651,9 +651,9 @@
 
   # We use this instead of the bash command 'column' because some versions of the command do not deal well with color codes to properly calculate the width.
   # SOURCE: https://superuser.com/questions/648665/bash-column-command-confused-by-ansi-color-escapes
-  imp-get-max-branch-name-length = !"f() { max_length=0; for b in $(git branch --list $([ \"${1}\" == 'include-remote-branches' ] && echo '--all') --no-color | tr -d '* ' | grep -v HEAD | sed 's|remotes/||g'); do lenght=${#b}; if (( max_length < lenght )); then max_length=${lenght}; fi; done; echo ${max_length}; }; f"
+  imp-get-max-branch-name-length = !"f() { max_length=0; for b in $(git branch --list $([ \"${1}\" == 'include-remote-branches' ] && echo '--all') --no-color | tr -d '* ' | grep -v HEAD | sed 's|remotes/||g'); do length=${#b}; if (( max_length < length )); then max_length=${length}; fi; done; echo ${max_length}; }; f"
 
-  imp-check-commit-message-length = !"f() { max_length=70; lenght=${#1}; if (( max_length < lenght )); then git imp-error \"Commit message too long (max 70 chars):\"; git imp-printf 2 \"${1:0:${max_length}}\"; git imp-error \"${1:${max_length}}\"; exit 1; else exit 0; fi; }; f"
+  imp-check-commit-message-length = !"f() { recommended_length=50; max_length=70; length=${#1}; if (( max_length < length )); then git imp-error \"commit message too long (max ${max_length} chars)\"; git imp-printf 2 \"${1:0:${recommended_length}}\"; git imp-printf 3 \"${1:${recommended_length}:(( max_length - recommended_length ))}\"; git imp-printf 1 \"${1:${max_length}}\\n\"; git imp-warn \"recommended length is < ${recommended_length} chars\"; exit 1; else exit 0; fi; }; f"
 
   imp-validate-token = !"f() { curl -sfm 5 https://api.github.com/user?access_token=${1} 2>&1 1>/dev/null; }; f"
 
