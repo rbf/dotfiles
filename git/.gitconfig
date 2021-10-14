@@ -276,10 +276,10 @@
 
   # This is an alias to 'git checkout' but without any arguments it will list all local branches
   # to choose the one we want to switch to (useful in systems without tab-autocompletion).
-  co = !"f() { : git checkout ; if [ -n \"${1}\" ]; then git checkout \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else echo \"There are no other branches beyond $(git rev-parse --abbrev-ref HEAD).\"; exit; fi; done <<< \"$(git branch | grep -v \"*\")\"; read -p \"Switch to branch number [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git checkout ${b[${bn}]}; else echo \"Invalid option ${bn}.\"; echo \"Aborting\"; fi; }; f"
+  co = !"f() { : git checkout ;  if ${RUNNING_INSIDE_A_WTC_SUB_SHELL:-false}; then git imp-error 'this is running inside a worktree sub-shell - checking out a different branch is discouraged'; git imp-warn 'type CTRL-D to exit'; exit 1; fi; if [ -n \"${1}\" ]; then git checkout \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else echo \"There are no other branches beyond $(git imp-current-branch-name).\"; exit; fi; done <<< \"$(git branch | grep -v \"*\")\"; read -p \"Switch to branch number [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git checkout ${b[${bn}]}; else git imp-error \"invalid option\"; fi; }; f"
 
   # Similar to 'git co' but for 'git merge'.
-  me = !"f() { : git merge ; if [ -n \"${1}\" ]; then git merge \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else echo \"There are no other branches beyond '$(git rev-parse --abbrev-ref HEAD)'.\"; exit; fi; done <<< \"$(git branch | grep -v \"*\")\"; read -p \"Branch number to merge into current branch '$(git rev-parse --abbrev-ref HEAD)' [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git merge ${b[${bn}]}; else echo \"Invalid option ${bn}.\"; echo \"Aborting\"; fi; }; f"
+  me = !"f() { : git merge ; if [ -n \"${1}\" ]; then git merge \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else echo \"There are no other branches beyond '$(git imp-current-branch-name)'.\"; exit; fi; done <<< \"$(git branch | grep -v \"*\")\"; read -p \"Branch number to merge into current branch '$(git imp-current-branch-name)' [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git merge ${b[${bn}]}; else git imp-error \"invalid option\"; fi; }; f"
 
   # The contrary of 'git add' to remove files from the stage to be committed.
   unstage = reset HEAD --
@@ -298,7 +298,7 @@
   braa = !echo "$ git branch -avv" && git branch -avv && echo && echo "$ git remote show origin" && git remote show origin
 
   # Publish the current branch to the origin remote.
-  br-publish = !"git push -u origin $(git rev-parse --abbrev-ref HEAD)"
+  br-publish = !"git push -u origin $(git imp-current-branch-name)"
 
   # Delete the branches that have been merged to the main branch.
   # SOURCE: https://www.atlassian.com/blog/git/advanced-git-aliases
@@ -306,6 +306,159 @@
   br-prune-merged = !"MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git imp-check-clean-tree && git checkout ${MAIN_BRANCH} && git branch --merged ${MAIN_BRANCH} | grep -v ${MAIN_BRANCH} | xargs $( [ $(uname) == 'Linux' ] && echo '--no-run-if-empty' ) git branch -dvv;"
   # Delete the branches that have been deleted from remote.
   br-prune-gone   = !"MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git imp-check-clean-tree && git checkout ${MAIN_BRANCH} && git remote -v prune origin && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs $( [ $(uname) == 'Linux' ] && echo '--no-run-if-empty' ) git branch -dvv"
+
+  # Work with working trees.
+  # DOC https://git-scm.com/docs/git-worktree
+  wt = worktree
+  wtl = worktree list
+  wt-br = !"f() { : git branch ; git worktree add .linked-worktrees/${1#origin/} ${2:-${1#origin/}}; }; f"
+  wtc = !"f() { git imp-prevent-inception || exit $?; if [ -n \"${1}\" ]; then git imp-error 'no arguments accepted'; exit 1; fi; wts=(); i=0; while read -r wt; do (( i++ )); if [ -n \"${wt}\" ]; then wts[${i}]="$wt"; echo \"$i: $wt\"; else echo 'There are no linked working trees.'; exit; fi; done <<< \"$(git worktree list | grep -v \"^$(pwd) \")\"; read -p \"Switch to worktree number [default: 1]: \" choice; if [ -n \"${wts[${choice:=1}]}\" ]; then shopt -s extglob; cd \"${wts[${choice}]%%+( )[a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9] \\[*}\"; shopt -u extglob; RUNNING_INSIDE_A_WTC_SUB_SHELL=true $SHELL; else git imp-error \"invalid option\"; fi; }; f"
+
+# TODO: Create command similar to 'git hotfix' for 'git feature'. Differences:
+#     - s/hotfix/feature/gi in messages and paths
+#     - do not require to branch off a branch existing in origin
+#     - do not require connection with origin, i.e. do not fetch before starting a new feature working tree
+#     - do not automatically push on exit when there are new commits, but ask instead
+#     - do not default to current branch, instead:
+#          - without arguments it lists all current open features and lets you pick which one to switch to
+#          - with one argument it partial matches on the list of open features and
+#            if no match is found, asks to create a new feature workspace based off that name
+
+  hotfix = !"f() { \
+    : git branch ; \
+    git imp-prevent-inception || exit $?; \
+    HOTFIX_EXPLANATION=\"$(git imp-underline git hotfix) will automatically create\"; \
+    HOTFIX_EXPLANATION+=\" a hotfix workspace for the branch you are on and put\"; \
+    HOTFIX_EXPLANATION+=\" you in it so that you can start working on\"; \
+    HOTFIX_EXPLANATION+=\" the hotfix immediately, even if you have unpushed commits\"; \
+    HOTFIX_EXPLANATION+=\" or uncommitted modifications in your original branch. Optionally you\"; \
+    HOTFIX_EXPLANATION+=\" can pass the branch you want to hotfix as argument. When you are done\"; \
+    HOTFIX_EXPLANATION+=\" with the hotfix and committed the changes, you can simply\"; \
+    HOTFIX_EXPLANATION+=\" exit the workspace (i.e. the sub-shell) with $(git imp-underline CTRL-D)\"; \
+    HOTFIX_EXPLANATION+=\" and the changes will be automatically pushed to origin.\"; \
+    HOTFIX_EXPLANATION+=\" If you exit the workspace without doing\"; \
+    HOTFIX_EXPLANATION+=\" any modifications, the local hotfix workspace will be cleaned\"; \
+    HOTFIX_EXPLANATION+=\" up, i.e. the working tree and new branch will be deleted.\"; \
+    case $# in \
+      0) \
+        echo; \
+        git imp-echo \"${HOTFIX_EXPLANATION}\"; \
+        echo; \
+        read -n 1 -s -r -p \"Press any key to continue or CTRL-C to abort...\"; \
+        printf \"$(tput el1)\\r\"; \
+        ;; \
+      1) \
+        : \
+        ;; \
+      *) \
+        git imp-error $(git imp-underline git hotfix) only takes one optional argument; \
+        echo; \
+        git imp-echo \"${HOTFIX_EXPLANATION}\"; \
+        echo; \
+        return 1; \
+        ;; \
+    esac; \
+    git fetch --all || exit 1 ; \
+    ORIGINAL_PWD=\"$(pwd)\"; \
+    BRANCH_TO_HOTFIX_FROM=\"${1:-$(git imp-current-branch-name)}\"; \
+    BRANCH_TO_HOTFIX_FROM=\"$(git rev-parse --abbrev-ref  \"origin/${BRANCH_TO_HOTFIX_FROM#origin/}\")\"; \
+    if ! git show-ref --verify --quiet \"refs/remotes/${BRANCH_TO_HOTFIX_FROM}\"; then \
+      git imp-error \"you can only hotfix a branch in origin\"; \
+      exit 1; \
+    fi; \
+    HOTFIX_BRANCH_NAME_PREFIX=\"$(git imp-sanitize-string-for-branch-name \"$(git config user.name)\")-hotfix-on\"; \
+    POTENTIALLY_EXISTING_WORKTREE_DIR=\"${BRANCH_TO_HOTFIX_FROM/#origin\\//.linked-worktrees/hotfixes/}\"; \
+    IS_ORPHAN_HOTFIX_BRANCH=\"false\"; \
+    if git branch -vv | grep ${POTENTIALLY_EXISTING_WORKTREE_DIR}\\) 1>/dev/null 2>&1; then \
+      COMMIT_TO_HOTFIX_FROM=\"${BRANCH_TO_HOTFIX_FROM##*-}\"; \
+      HOTFIX_BRANCH_NAME=\"${BRANCH_TO_HOTFIX_FROM#origin/}\"; \
+    elif [[ \"${BRANCH_TO_HOTFIX_FROM}\" =~ ^origin/${HOTFIX_BRANCH_NAME_PREFIX} ]]; then \
+      IS_ORPHAN_HOTFIX_BRANCH=\"true\"; \
+      COMMIT_TO_HOTFIX_FROM=\"${BRANCH_TO_HOTFIX_FROM##*-}\"; \
+      HOTFIX_BRANCH_NAME=\"${BRANCH_TO_HOTFIX_FROM#origin/}\"; \
+    else \
+      COMMIT_TO_HOTFIX_FROM=\"$(git rev-parse --short \"${BRANCH_TO_HOTFIX_FROM}\")\"; \
+      HOTFIX_BRANCH_NAME=\"${HOTFIX_BRANCH_NAME_PREFIX}-${BRANCH_TO_HOTFIX_FROM#origin/}-${COMMIT_TO_HOTFIX_FROM}\"; \
+    fi; \
+    LINKED_WORKTREE_DIR=\".linked-worktrees/hotfixes/${HOTFIX_BRANCH_NAME}\"; \
+    if $IS_ORPHAN_HOTFIX_BRANCH; then \
+      git imp-warn 'this looks like an orphan hotfix branch - recreating working tree'; \
+      git worktree add \"${LINKED_WORKTREE_DIR}\" || exit $?; \
+    elif [ -d \"${LINKED_WORKTREE_DIR}\" ]; then \
+      git imp-warn 'working tree for this hotfix already exists'; \
+    else \
+      git imp-warn 'creating a new working tree'; \
+      git worktree add \"${LINKED_WORKTREE_DIR}\" -b \"${HOTFIX_BRANCH_NAME}\" --no-track \"${BRANCH_TO_HOTFIX_FROM}\" || exit $?; \
+    fi; \
+    cd \"${LINKED_WORKTREE_DIR}\"; \
+    if $(git imp-check-if-branch-exists-in-origin ${HOTFIX_BRANCH_NAME}); then \
+      git branch --set-upstream-to=\"origin/${HOTFIX_BRANCH_NAME}\" \"${HOTFIX_BRANCH_NAME}\"; \
+      git merge --ff-only \"origin/${HOTFIX_BRANCH_NAME}\" || \
+        git imp-warn origin has some newer commits that cannot be fast-forwarded - consider git pull --rebase; \
+    fi; \
+    git imp-echo \"When done, $(git imp-underline exit this sub-shell with CTRL-D). If you have added any\" \
+                 \"commits, the new branch ${HOTFIX_BRANCH_NAME} will be then automatically pushed\" \
+                 \"to origin. If you exit without any modifications (i.e. new commits or modified\" \
+                 \"files) the local hotfix working tree will be automatically cleaned up.\" \
+                 \"Otherwise, it will be kept until you remove it with 'git worktree remove'.\" \
+                 \"You are now in the hotfix workspace at following commit:\"; \
+    git h -1; \
+    RUNNING_INSIDE_A_WTC_SUB_SHELL=true RUNNING_INSIDE_A_HOTFIX_SUB_SHELL=true $SHELL; \
+    if ! git imp-is-tree-clean; then \
+      git imp-warn \"there are uncommitted changes - local hotfix files will be kept\"; \
+      git imp-warn \"issue the same 'git hotfix' command to continue where you left\"; \
+      exit; \
+    fi; \
+    cd \"${ORIGINAL_PWD}\"; \
+    if [ \"$(git rev-parse --short \"${HOTFIX_BRANCH_NAME}\")\" = \"${COMMIT_TO_HOTFIX_FROM}\" ]; then \
+      git imp-warn \"No new commits added. Cleaning up local hotfix files...\"; \
+      IS_FETCH_NEEDED_BEFORE_PRUNE=false git hotfix-prune \"${HOTFIX_BRANCH_NAME}\" || exit $?; \
+    elif [ \"$(git rev-parse --short \"${HOTFIX_BRANCH_NAME}\")\" = \"$(git rev-parse --short \"origin/${HOTFIX_BRANCH_NAME}\" 2>/dev/null || echo 0)\" ]; then \
+      git imp-warn \"${HOTFIX_BRANCH_NAME} already up to date with origin. Nothing to push.\"; \
+      git imp-warn \"to remove the local hotfix workspace run 'git hotfix-prune ${HOTFIX_BRANCH_NAME}'\"; \
+    else \
+      NEW_COMMITS_COUNT=$(git rev-list --count origin/${HOTFIX_BRANCH_NAME}..${HOTFIX_BRANCH_NAME} 2>/dev/null || echo 0); \
+      if (( $NEW_COMMITS_COUNT == 0 )); then \
+        NEW_COMMITS_COUNT=$(git rev-list --count ${COMMIT_TO_HOTFIX_FROM}..${HOTFIX_BRANCH_NAME}); \
+      fi; \
+      git imp-success \"${NEW_COMMITS_COUNT} commit(s) added. Pushing the branch ${HOTFIX_BRANCH_NAME} to origin...\"; \
+      git push --set-upstream origin \"${HOTFIX_BRANCH_NAME}\"; \
+      git imp-warn \"to remove the local hotfix workspace run 'git hotfix-prune ${HOTFIX_BRANCH_NAME}'\"; \
+    fi; \
+  }; f"
+  hotfix-prune = !"f() { \
+    : git branch ; \
+    git imp-prevent-inception || exit $?; \
+    if (($# != 1)); then \
+      git imp-error $(git imp-underline git hotfix-prune) needs one argument; \
+      return 1; \
+    fi; \
+    if ${IS_FETCH_NEEDED_BEFORE_PRUNE:-true}; then \
+      git fetch --all || exit 1 ; \
+    fi; \
+    HOTFIX_TO_PRUNE=\"${1:?Missing hotfix to prune}\"; \
+    HOTFIX_BRANCH_NAME_PREFIX=\"$(git imp-sanitize-string-for-branch-name \"$(git config user.name)\")-hotfix-on\"; \
+    HOTFIX_BRANCH_NAME_SUFFIX='-.*-[[:alnum:]][[:alnum:]][[:alnum:]][[:alnum:]][[:alnum:]][[:alnum:]][[:alnum:]]'; \
+    if [[ ! \"${HOTFIX_TO_PRUNE}\" =~ ^${HOTFIX_BRANCH_NAME_PREFIX}${HOTFIX_BRANCH_NAME_SUFFIX}$ ]]; then \
+      git imp-error 'only local hotfix workspaces created by you can be pruned'; \
+      return 1; \
+    fi; \
+    LINKED_WORKTREE_DIR=\".linked-worktrees/hotfixes/${HOTFIX_TO_PRUNE}\"; \
+    if [ -d \"${LINKED_WORKTREE_DIR}\" ]; then \
+      if git worktree remove \"${LINKED_WORKTREE_DIR}\"; then \
+        git imp-echo \"Removed working tree '${LINKED_WORKTREE_DIR}'.\"; \
+      else \
+        exit 1; \
+      fi; \
+    else \
+      git imp-warn \"working tree ${LINKED_WORKTREE_DIR} not found\"; \
+    fi; \
+    if git show-ref --verify --quiet \"refs/remotes/origin/${HOTFIX_TO_PRUNE}\"; then \
+      git imp-warn \"the remote branch origin/${HOTFIX_TO_PRUNE} will not be deleted automatically\"; \
+      git imp-warn \"to delete the remote branch run 'git push origin --delete ${HOTFIX_TO_PRUNE}'\"; \
+    fi; \
+    git branch -d \"${HOTFIX_TO_PRUNE}\" || exit $?; \
+  }; f"
 
   # Fetch all remotes and print the state of all branches. This command does not modify anything locally.
   sync = !git fetch --progress --verbose --all --prune && echo && git bra
@@ -440,21 +593,61 @@
   squash-all = "!f(){ git imp-warn \"This will squash ALL $(git rev-list --count HEAD) commits into one. The commit history of the current repo will be LOST. Press CTRL-C to abort.\"; DEFAULT_COMMIT_MSG='initial commit'; read -p \"Commit message: [default: '${DEFAULT_COMMIT_MSG}'] \" COMMIT_MSG; git reset $(git commit-tree HEAD^{tree} -m \"${COMMIT_MSG:-$DEFAULT_COMMIT_MSG}\") && git h && git imp-success 'Done!'; };f"
   init-from-template = "!f(){ if git imp-check-repo 2>/dev/null; then git imp-error 'This is already a git repo.'; exit 1; fi; if [ -n \"${1}\" ]; then TEMPLATE_REPO_URL=\"${1}\"; shift; else git imp-error 'Provide the URL of the template repo.'; exit 1; fi; git init && git fetch --depth=1 -n \"${TEMPLATE_REPO_URL}\" && git reset --hard $(git commit-tree FETCH_HEAD^{tree} -m \"initial commit\") && git imp-success \"Repo initialized from template ${TEMPLATE_REPO_URL}!\"; };f"
 
-  update-gitconfig = !"f() { if [ -L ~/.gitconfig ]; then git imp-error '~/.gitconfig is a simbolic link. Update the original file instead. The command update-gitconfig works for standalone files installed via curl. Aborting update.'; exit 1; fi; GH_LOCAL_FILE=~/.gitconfig.local && touch \"${GH_LOCAL_FILE}\" && GH_PREV_USER_NAME=\"$(git config user.name || echo '')\" && GH_PREV_USER_EMAIL=\"$(git config user.email || echo '')\" && GH_PREV_TOKEN=\"$(git config github.token || echo '')\" && GH_CONFIG_BACKUP_FILENAME=~/.gitconfig_backups/.gitconfig_$(date +\"%Y%m%d%H%M%S\").bak && echo \"Saving a backup of the current ~/.gitconfig file as ${GH_CONFIG_BACKUP_FILENAME}...\" && mkdir -p ~/.gitconfig_backups && cp -v ~/.gitconfig \"${GH_CONFIG_BACKUP_FILENAME}\" && echo && echo \"Downloading .gitconfig from rbf.li/gitconfig ...\" && curl --progress-bar -L rbf.li/gitconfig -o ~/.gitconfig && echo && if [ -n \"${GH_PREV_USER_NAME}\" ] && [ -n \"${GH_PREV_USER_EMAIL}\" ]; then echo \"Ensuring that the user name (${GH_PREV_USER_NAME}) and email (${GH_PREV_USER_EMAIL}) are setup in ${GH_LOCAL_FILE} file...\"; git config --file ${GH_LOCAL_FILE} user.name \"${GH_PREV_USER_NAME}\" && git config --file ${GH_LOCAL_FILE} user.email \"${GH_PREV_USER_EMAIL}\"; else echo \"Please add your username and email to the ${GH_LOCAL_FILE} file to properly author your commits! Run:\" && echo \"git config --file ${GH_LOCAL_FILE} user.name YOUR_USER_NAME && git config --file ${GH_LOCAL_FILE} user.email YOUR_USER_EMAIL\"; fi && if [ -n \"${GH_PREV_TOKEN}\" ]; then echo \"Ensuring that the existent GitHub token is setup in ${GH_LOCAL_FILE} file...\" && git config --file ${GH_LOCAL_FILE} github.token \"${GH_PREV_TOKEN}\"; fi && if which diff 1>/dev/null 2>/dev/null; then echo && echo \"Lines changed from previous version:\" && echo && diff --side-by-side --suppress-common-lines --minimal --report-identical-files \"${GH_CONFIG_BACKUP_FILENAME}\" ~/.gitconfig; fi; }; f" #'
+  update-gitconfig = !"f() { if [ -L ~/.gitconfig ]; then git imp-error '~/.gitconfig is a simbolic link. Update the original file instead. The command update-gitconfig works for standalone files installed via curl'; exit 1; fi; GH_LOCAL_FILE=~/.gitconfig.local && touch \"${GH_LOCAL_FILE}\" && GH_PREV_USER_NAME=\"$(git config user.name || echo '')\" && GH_PREV_USER_EMAIL=\"$(git config user.email || echo '')\" && GH_PREV_TOKEN=\"$(git config github.token || echo '')\" && GH_CONFIG_BACKUP_FILENAME=~/.gitconfig_backups/.gitconfig_$(date +\"%Y%m%d%H%M%S\").bak && echo \"Saving a backup of the current ~/.gitconfig file as ${GH_CONFIG_BACKUP_FILENAME}...\" && mkdir -p ~/.gitconfig_backups && cp -v ~/.gitconfig \"${GH_CONFIG_BACKUP_FILENAME}\" && echo && echo \"Downloading .gitconfig from rbf.li/gitconfig ...\" && curl --progress-bar -L rbf.li/gitconfig -o ~/.gitconfig && echo && if [ -n \"${GH_PREV_USER_NAME}\" ] && [ -n \"${GH_PREV_USER_EMAIL}\" ]; then echo \"Ensuring that the user name (${GH_PREV_USER_NAME}) and email (${GH_PREV_USER_EMAIL}) are setup in ${GH_LOCAL_FILE} file...\"; git config --file ${GH_LOCAL_FILE} user.name \"${GH_PREV_USER_NAME}\" && git config --file ${GH_LOCAL_FILE} user.email \"${GH_PREV_USER_EMAIL}\"; else echo \"Please add your username and email to the ${GH_LOCAL_FILE} file to properly author your commits! Run:\" && echo \"git config --file ${GH_LOCAL_FILE} user.name YOUR_USER_NAME && git config --file ${GH_LOCAL_FILE} user.email YOUR_USER_EMAIL\"; fi && if [ -n \"${GH_PREV_TOKEN}\" ]; then echo \"Ensuring that the existent GitHub token is setup in ${GH_LOCAL_FILE} file...\" && git config --file ${GH_LOCAL_FILE} github.token \"${GH_PREV_TOKEN}\"; fi && if which diff 1>/dev/null 2>/dev/null; then echo && echo \"Lines changed from previous version:\" && echo && diff --side-by-side --suppress-common-lines --minimal --report-identical-files \"${GH_CONFIG_BACKUP_FILENAME}\" ~/.gitconfig; fi; }; f" #'
 
   # Following imp-* aliases are meant to be internally used
 
   # SOURCE: 16sep2021 https://stackoverflow.com/a/67625120
   imp-main-branch-name = !"git branch | cut -c 3- | grep --color=never -E '^master$|^main$'"
 
-  imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@/\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\"; }; c"
-  # Like imp-printf but with a newline at the end.
-  imp-echo = !"c() { echo $(git imp-printf \"$@\") >&2; }; c"
-  imp-error = !"c() { echo $(git imp-printf 1 \"$@\") >&2; exit 1; }; c"
-  imp-warn = !"c() { echo $(git imp-printf 3 \"$@\") >&2; }; c"
+  imp-current-branch-name = rev-parse --abbrev-ref HEAD
 
-  imp-check-repo = !"f() { if [ -z \"$(git rev-parse --git-dir 2> /dev/null)\" ]; then git imp-error \"It doesn't seem to be a git repo here.\"; exit 1; else exit 0; fi; }; f" #'
-  imp-check-clean-tree = !"f() { if ! git diff-index --quiet HEAD -- 2> /dev/null; then git imp-error \"There are uncommitted changes. Please commit or stash them.\"; exit 1; else exit 0; fi; }; f" #'
+  imp-check-if-branch-exists-in-origin = !"f() { git rev-parse --abbrev-ref origin/\"${@?Missing branch name}\" 1>/dev/null 2>&1; }; f"
+
+  imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@/\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\" | fold -w 105 -s; }; c"
+  # Like imp-printf but with a newline at the end.
+  imp-echo = !"c() { git imp-printf \"$@\n\"; }; c"
+  imp-error = !"c() { git imp-printf 1 \"error: $@\n\" >&2; exit 1; }; c"
+  imp-warn = !"c() { git imp-printf 3 \"hint: $@\n\" >&2; }; c"
+  imp-success = !"c() { git imp-printf 2 \"success: $@\n\"; }; c"
+
+  imp-underline = !"c() { echo \"$(tput smul)$@$(tput rmul)\"; }; c"
+
+  imp-check-repo = !"f() { if [ -z \"$(git rev-parse --git-dir 2> /dev/null)\" ]; then git imp-error \"It doesn't seem to be a git repo here.\"; exit 1; else exit 0; fi; }; f"
+  imp-is-tree-clean = !"[ -z \"$(git status --porcelain)\" ]"
+  imp-check-clean-tree = !"f() { if ! git imp-is-tree-clean; then git imp-error \"There are uncommitted changes. Please commit or stash them.\"; exit 1; fi; }; f"
+
+  imp-prevent-inception = !"f() { \
+    if ${RUNNING_INSIDE_A_HOTFIX_SUB_SHELL:-false}; then \
+      git imp-error 'no hotfix inception allowed - this is already running inside a hotfix sub-shell'; \
+      git imp-warn 'type CTRL-D to exit and finish the hotfix'; \
+      exit 1; \
+    fi; \
+    if ${RUNNING_INSIDE_A_WTC_SUB_SHELL:-false}; then \
+      git imp-error 'this is running inside a worktree sub-shell'; \
+      git imp-warn 'type CTRL-D to exit'; \
+      exit 1; \
+    fi; \
+ }; f"
+
+  # First alias written in multiple lines using \ at the end of each line.
+  # Note that it has to be treated as written in one line still, i.e. each
+  # command must be manually terminated with a semicolon.
+  # SOURCE: 14oct2021 https://unix.stackexchange.com/a/631653
+  # SOURCE: 14oct2021 https://stackoverflow.com/a/44811468
+  imp-sanitize-string-for-branch-name = !"f() { \
+    if [ -z \"${*}\" ]; then \
+      git imp-error 'Must provide a string to sanitize.'; \
+      exit 1; \
+    fi; \
+    echo \"${*}\" \
+     | iconv -t ASCII//TRANSLIT \
+     | tr -d '['\"'\"'\\\"`~´¨^]' \
+     | tr -sc '[[:alnum:]]' '-' \
+     | tr "[:upper:]" "[:lower:]" \
+     | sed  -e 's/[^[:alnum:]]*$//' \
+            -e 's/^[^[:alnum:]]*//'; \
+  }; f"
 
   # We use this instead of the bash command 'column' because some versions of the command do not deal well with color codes to properly calculate the width.
   # SOURCE: https://superuser.com/questions/648665/bash-column-command-confused-by-ansi-color-escapes

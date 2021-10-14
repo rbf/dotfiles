@@ -153,6 +153,10 @@ xcuserdata/
 ####################################
 git-untracked/
 
+# General folder for linked working trees
+####################################
+.linked-worktrees/
+
 # Jekyll
 ####################################
 .sass-cache/
