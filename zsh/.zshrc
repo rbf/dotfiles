@@ -279,6 +279,35 @@ function show_directory_info() {
   esac
 }
 
+# Accepts input as argument or from sdtin.
+#
+# Examples:
+#
+# $ sanitize '"Låst Nàmê, Fïrst Ñämé" <email.addreß@example.org>'
+# last-name-first-name-email-address-example-org
+#
+# $ cat << EOF | sanitize
+# [{>>Lòrêm<<}] Ípsüm çër ø úr \\prent- \og <turfræðibran> staðall í síðan um 1500,
+# þegar óþekr!? tók röð A:F Það "glaði/því/sýnibó".
+# Ligatures sœur, Straße & encyclopædia are properly transliterated. | tr -cd '[:alnum:]' >>>!
+# Other alphabets абвгд-ежзий-кл-мн-опрст-уфхцч-шщъыьэюя,「おはよう。春樹兄さん。寝癖ついてるよ。」 and emoji 🙅‍♀️ are omitted. <<
+# EOF
+# lorem-ipsum-cer-o-ur-prent-og-turfraedibran-stadall-i-sidan-um-1500-thegar-othekr-tok-rod-a-f-\
+# thad-gladi-thvi-synibo-ligatures-soeur-strasse-encyclopaedia-are-properly-transliterated-tr-cd-\
+# alnum-other-alphabets-and-emoji-are-omitted
+#
+# SOURCE: 14oct2021 https://unix.stackexchange.com/a/631653
+# SOURCE: 14oct2021 https://stackoverflow.com/a/44811468
+# SOURCE: 14oct2021 https://stackoverflow.com/a/37511665
+function sanitize() {
+  echo $(if [ -p /dev/stdin ]; then cat -; else echo "${*}"; fi) \
+     | tr -sc '[:alnum:]' '-' \
+     | iconv -c -f utf-8 -t ASCII//TRANSLIT \
+     | tr -dc '[:alnum:]-' \
+     | tr '[:upper:]' '[:lower:]' \
+     | sed -e 's/[^[:alnum:]]*$//' -e 's/--*/-/g' -e 's/^[^[:alnum:]]*//'
+}
+
 function current_dir_without_expanding_home_directory() {
   # SOURCE: 01jul2021 https://unix.stackexchange.com/a/207214
   dirs -p | head -1
