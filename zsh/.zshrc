@@ -282,21 +282,27 @@ function is_this_the_root_of_a_linked_worktree_of_a_git_repo() {
 
 function show_directory_info() {
   local items_in_dir=(*(DN))
-  case ${#items_in_dir} in
-    0)
-      echo "$(current_dir_without_expanding_home_directory) is empty."
+  local non_hidden_items_in_dir=(*(N))
+  local comon_lsd_args=(--long --date=relative --timesort)
+  case ${#items_in_dir}-${#non_hidden_items_in_dir} in
+    0-0)
+      echo "$(pretty_print_current_dir) is empty."
       ;;
-    1)
-      echo "One item in $(current_dir_without_expanding_home_directory):"
-      la
+    1-*)
+      echo "One item in $(pretty_print_current_dir):"
+      ls $comon_lsd_args --almost-all
       ;;
-    2|3|4|5|6|7|8|9|10)
-      echo "${#items_in_dir} items in $(current_dir_without_expanding_home_directory):"
-      la
+    2-*|3-*|4-*|5-*|6-*|7-*|8-*|9-*|10-*|11-*|12-*|13-*|14-*|15-*)
+      echo "${#items_in_dir} items in $(pretty_print_current_dir):"
+      ls $comon_lsd_args --almost-all
+      ;;
+    *-2|*-3|*-4|*-5|*-6|*-7|*-8|*-9|*-10|*-11|*-12|*-13|*-14|*-15)
+      echo "${#items_in_dir} items in $(pretty_print_current_dir). ${#non_hidden_items_in_dir} non-hidden items:"
+      ls $comon_lsd_args
       ;;
     *)
-      echo "${#items_in_dir} items in $(current_dir_without_expanding_home_directory). Most recently modified:"
-      la --timesort --date relative --color always | head -5
+      echo "${#items_in_dir} items in $(pretty_print_current_dir). 5 most recently modified:"
+      ls $comon_lsd_args --almost-all --color=always | tail -5
       ;;
   esac
 }
@@ -330,9 +336,16 @@ function slugify() {
      | sed  -e 's/^--*//' -e 's/---*/-/g' -e 's/--*$//'
 }
 
-function current_dir_without_expanding_home_directory() {
+function pretty_print_current_dir() {
+  # Like pwd but without expanding home directory.
   # SOURCE: 01jul2021 https://unix.stackexchange.com/a/207214
-  dirs -p | head -1
+  local current_path="$(dirs -p | head -1)"
+  if [[ "${current_path}" == '~' ]]; then
+    # Print the full path for the home directory instead of just ~.
+    echo "home directory $(pwd) (~)"
+  else
+    echo "${current_path}"
+  fi
 }
 
 function show_last_modified_files_in_tree() {
@@ -364,9 +377,7 @@ function show_git_repo_info_in_linked_worktree() {
 }
 
 function context() {
-  if is_this_the_home_directory; then
-    # Nothing to do.
-  elif is_this_the_root_of_a_git_repo; then
+  if is_this_the_root_of_a_git_repo; then
     show_git_repo_info
   elif is_this_the_root_of_a_linked_worktree_of_a_git_repo; then
     show_git_repo_info_in_linked_worktree
@@ -375,7 +386,6 @@ function context() {
   fi
 }
 alias c='context'
-
 
 # zsh-hook function executed whenever the current working directory is changed.
 # SOURCE: 01jul2021 https://stackoverflow.com/a/3964198
