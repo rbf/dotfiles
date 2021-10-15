@@ -363,12 +363,7 @@ function show_git_repo_info_in_linked_worktree() {
   return 0
 }
 
-alias context='show_git_repo_info'
-
-# zsh-hook function executed whenever the current working directory is changed.
-# SOURCE: 01jul2021 https://stackoverflow.com/a/3964198
-# DOC: https://zsh.sourceforge.io/Doc/Release/Functions.html#Hook-Functions
-function chpwd() {
+function context() {
   if is_this_the_home_directory; then
     # Nothing to do.
   elif is_this_the_root_of_a_git_repo; then
@@ -378,6 +373,15 @@ function chpwd() {
   else
     show_directory_info
   fi
+}
+alias c='context'
+
+
+# zsh-hook function executed whenever the current working directory is changed.
+# SOURCE: 01jul2021 https://stackoverflow.com/a/3964198
+# DOC: https://zsh.sourceforge.io/Doc/Release/Functions.html#Hook-Functions
+function chpwd() {
+  context
 }
 
 # Duplicate a file adding the extention .bak_[timestamp]
