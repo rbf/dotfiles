@@ -494,7 +494,7 @@ function list_outdated_brew_packages() {
 if $IS_ALLOWED_TO_PRINT_LOGIN_GREETING; then
   mcal
   echo
+  list_outdated_brew_packages
 fi
 
-list_outdated_brew_packages
 unset -f list_outdated_brew_packages
