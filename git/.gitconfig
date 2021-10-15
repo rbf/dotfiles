@@ -311,7 +311,7 @@
   # DOC https://git-scm.com/docs/git-worktree
   wt = worktree
   wtl = worktree list
-  wt-br = !"f() { : git branch ; git worktree add .linked-worktrees/${1#origin/} ${2:-${1#origin/}}; }; f"
+  wt-br = !"f() { : git branch ; case $# in 0) git imp-error 'missing branch name';; 1) git worktree add .linked-worktrees/${1#origin/} ${1#origin/};; *) git imp-error 'only one are argument accepted: branch name';; esac; }; f"
   wtc = !"f() { git imp-prevent-inception || exit $?; if [ -n \"${1}\" ]; then git imp-error 'no arguments accepted'; exit 1; fi; wts=(); i=0; while read -r wt; do (( i++ )); if [ -n \"${wt}\" ]; then wts[${i}]="$wt"; echo \"$i: $wt\"; else echo 'There are no linked working trees.'; exit; fi; done <<< \"$(git worktree list | grep -v \"^$(pwd) \")\"; read -p \"Switch to worktree number [default: 1]: \" choice; if [ -n \"${wts[${choice:=1}]}\" ]; then shopt -s extglob; cd \"${wts[${choice}]%%+( )[a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9] \\[*}\"; shopt -u extglob; RUNNING_INSIDE_A_WTC_SUB_SHELL=true $SHELL; else git imp-error \"invalid option\"; fi; }; f"
 
 # TODO: Create command similar to 'git hotfix' for 'git feature'. Differences:
