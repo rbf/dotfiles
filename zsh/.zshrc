@@ -327,7 +327,7 @@ function slugify() {
      | iconv -c -f utf-8 -t ASCII//TRANSLIT \
      | tr -dc '[:alnum:]-' \
      | tr '[:upper:]' '[:lower:]' \
-     | sed -e 's/[^[:alnum:]]*$//' -e 's/--*/-/g' -e 's/^[^[:alnum:]]*//'
+     | sed  -e 's/^--*//' -e 's/---*/-/g' -e 's/--*$//'
 }
 
 function current_dir_without_expanding_home_directory() {
