@@ -305,10 +305,10 @@ function show_directory_info() {
 #
 # Examples:
 #
-# $ sanitize '"Låst Nàmê, Fïrst Ñämé" <email.addreß@example.org>'
+# $ slugify '"Låst Nàmê, Fïrst Ñämé" <email.addreß@example.org>'
 # last-name-first-name-email-address-example-org
 #
-# $ cat << EOF | sanitize
+# $ cat << EOF | slugify
 # [{>>Lòrêm<<}] Ípsüm çër ø úr \\prent- \og <turfræðibran> staðall í síðan um 1500,
 # þegar óþekr!? tók röð A:F Það "glaði/því/sýnibó".
 # Ligatures sœur, Straße & encyclopædia are properly transliterated. | tr -cd '[:alnum:]' >>>!
@@ -321,7 +321,7 @@ function show_directory_info() {
 # SOURCE: 14oct2021 https://unix.stackexchange.com/a/631653
 # SOURCE: 14oct2021 https://stackoverflow.com/a/44811468
 # SOURCE: 14oct2021 https://stackoverflow.com/a/37511665
-function sanitize() {
+function slugify() {
   echo $(if [ -p /dev/stdin ]; then cat -; else echo "${*}"; fi) \
      | tr -sc '[:alnum:]' '-' \
      | iconv -c -f utf-8 -t ASCII//TRANSLIT \
