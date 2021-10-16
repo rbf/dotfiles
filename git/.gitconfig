@@ -297,8 +297,38 @@
   bra = !git br-details refs/remotes
   braa = !echo "$ git branch -avv" && git branch -avv && echo && echo "$ git remote show origin" && git remote show origin
 
-  # Publish the current branch to the origin remote.
-  br-publish = !"git push -u origin $(git imp-current-branch-name)"
+  # Publish the current branch to the origin remote and open the PR/MR URL if
+  # found.
+  # NOTE: The trailing integers in 'trap "rm ${TMP_LOG_FILE}" 0 2 3 15' are the
+  # signals upon which to run the first argument. 0: exit shell, 2: Interrupt,
+  # 3: Quit, 15: Terminate.
+  # SOURCE: 16oct2021 https://unix.stackexchange.com/a/181939
+  br-publish = !"f() { \
+      export CURRENT_ALIAS_NAME=br-publish; \
+      if [ $# -ne 0 ]; then \
+        git imp-error-alias does not accept arguments; \
+        git imp-warn-alias pushes the current branch to origin and sets the new \
+          remote branch as upstream. If the response from the server includes \
+          URL to open a PR, it will be open in your default browser as well.; \
+        exit 1; \
+      fi; \
+      TMP_LOG_FILE=$(mktemp /tmp/git_push.log.XXXXXX) || exit 1; \
+      trap \"rm ${TMP_LOG_FILE}\" 0 2 3 15; \
+      git push -u origin $(git imp-current-branch-name) 2>&1 | tee ${TMP_LOG_FILE} ; \
+      CONTRIBUTION_REQUEST_URL=\"$(grep -o \"https://\\S\\+\\(pull\\|merge_requests\\)/new\\S*\\(/\\|=\\)$(git imp-current-branch-name)\" ${TMP_LOG_FILE})\"; \
+      [ -z ${CONTRIBUTION_REQUEST_URL} ] && exit; \
+      CONTRIBUTION_REQUEST_TYPE='pull'; \
+      [[ ${CONTRIBUTION_REQUEST_URL} =~ merge_request ]] && CONTRIBUTION_REQUEST_TYPE='merge'; \
+      CONTRIBUTION_REQUEST_URL_DOMAIN=$(echo ${CONTRIBUTION_REQUEST_URL} | grep -o '\\w\\+\\.\\w\\{2,3\\}'); \
+      if open ${CONTRIBUTION_REQUEST_URL}; then \
+        git imp-success \"the URL to create a ${CONTRIBUTION_REQUEST_TYPE} request\" \
+                        \"for '$(git imp-current-branch-name)' on ${CONTRIBUTION_REQUEST_URL_DOMAIN}\" \
+                        \"has been open\"; \
+      else \
+        git imp-error-alias is unable to automatically open the URL to ${CONTRIBUTION_REQUEST_TYPE} request; \
+        git imp-warn the ${CONTRIBUTION_REQUEST_TYPE} request URL is ${CONTRIBUTION_REQUEST_URL}; \
+      fi; \
+    }; f"
 
   # Delete the branches that have been merged to the main branch.
   # SOURCE: https://www.atlassian.com/blog/git/advanced-git-aliases
@@ -604,7 +634,7 @@
 
   imp-check-if-branch-exists-in-origin = !"f() { git rev-parse --abbrev-ref origin/\"${@?Missing branch name}\" 1>/dev/null 2>&1; }; f"
 
-  imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@/\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\" | fold -w 105 -s; }; c"
+  imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\" | fold -w 105 -s; }; c"
   # Like imp-printf but with a newline at the end.
   imp-echo = !"c() { git imp-printf \"$@\n\"; }; c"
   imp-error = !"c() { git imp-printf 1 \"error: $@\n\" >&2; exit 1; }; c"
@@ -612,6 +642,10 @@
   imp-success = !"c() { git imp-printf 2 \"success: $@\n\"; }; c"
 
   imp-underline = !"c() { echo \"$(tput smul)$@$(tput rmul)\"; }; c"
+  imp-current-alias-name = !"c() { git imp-underline git ${CURRENT_ALIAS_NAME:?not set, empty or not exported}; }; c"
+
+  imp-error-alias = !"c() { git imp-error $(git imp-current-alias-name) ${@}; }; c"
+  imp-warn-alias = !"c() { git imp-warn $(git imp-current-alias-name) ${@}; }; c"
 
   imp-check-repo = !"f() { if [ -z \"$(git rev-parse --git-dir 2> /dev/null)\" ]; then git imp-error \"It doesn't seem to be a git repo here.\"; exit 1; else exit 0; fi; }; f"
   imp-is-tree-clean = !"[ -z \"$(git status --porcelain)\" ]"
