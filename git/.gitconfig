@@ -312,25 +312,22 @@
           URL to open a PR, it will be open in your default browser as well.; \
         exit 1; \
       fi; \
+      git imp-check-clean-tree || exit $?; \
       git fetch --all; \
       UPSTREAM_BRANCH_NAME=$(git imp-upstream-branch-name); \
-      if [ -n ${UPSTREAM_BRANCH_NAME} ]; then \
+      if [ -n \"${UPSTREAM_BRANCH_NAME}\" ]; then \
         git imp-error \"'$(git imp-current-branch-name)' branch is already published to its upstream '${UPSTREAM_BRANCH_NAME}'\"; \
         git imp-warn \"try 'git push' instead\"; \
         exit 1; \
       fi; \
-      if [ -n $(git branch --contains $(git imp-main-branch-name) --list $(git imp-current-branch-name)) ]; then \
+      if [ -z \"$(git branch --contains $(git imp-main-branch-name) --list $(git imp-current-branch-name))\" ]; then \
         git imp-error \"'$(git imp-current-branch-name)' branch is not up to date with '$(git imp-main-branch-name)'\"; \
         git imp-warn \"try 'git rebase $(git imp-main-branch-name)' before publishing\"; \
         exit 1; \
       fi; \
       NEW_COMMITS_COUNT=$(git rev-list --count $(git imp-main-branch-name)..$(git imp-current-branch-name); exit $?; ) || exit $?; \
       if (( $NEW_COMMITS_COUNT < 1 )); then \
-        git imp-error no new commits on top of $(git imp-main-branch-name) branch - nothing to publish yet; \
-        exit 1; \
-      fi; \
-      if ! git imp-check-clean-tree; then \
-        git imp-error \"there are uncommitted changes or untracked files - commit or stash them before publishing this branch\"; \
+        git imp-error \"no new commits on top of '$(git imp-main-branch-name)' branch - nothing to publish yet\"; \
         exit 1; \
       fi; \
       TMP_LOG_FILE=$(mktemp /tmp/git_push.log.XXXXXX) || exit 1; \
@@ -673,7 +670,7 @@
 
   imp-check-repo = !"f() { if [ -z \"$(git rev-parse --git-dir 2> /dev/null)\" ]; then git imp-error \"It doesn't seem to be a git repo here.\"; exit 1; else exit 0; fi; }; f"
   imp-is-tree-clean = !"[ -z \"$(git status --porcelain)\" ]"
-  imp-check-clean-tree = !"f() { if ! git imp-is-tree-clean; then git imp-error \"There are uncommitted changes. Please commit or stash them.\"; exit 1; fi; }; f"
+  imp-check-clean-tree = !"f() { if ! git imp-is-tree-clean; then git imp-error \"there are uncommitted changes or untracked files - commit or stash them before continuing\"; exit 1; fi; }; f"
 
   imp-prevent-inception = !"f() { \
     if ${RUNNING_INSIDE_A_HOTFIX_SUB_SHELL:-false}; then \
