@@ -329,6 +329,10 @@
         git imp-error no new commits on top of $(git imp-main-branch-name) branch - nothing to publish yet; \
         exit 1; \
       fi; \
+      if ! git imp-check-clean-tree; then \
+        git imp-error \"there are uncommitted changes or untracked files - commit or stash them before publishing this branch\"; \
+        exit 1; \
+      fi; \
       TMP_LOG_FILE=$(mktemp /tmp/git_push.log.XXXXXX) || exit 1; \
       trap \"rm ${TMP_LOG_FILE}\" 0 2 3 15; \
       git push -u origin $(git imp-current-branch-name) 2>&1 | tee ${TMP_LOG_FILE} ; \
