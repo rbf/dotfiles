@@ -312,6 +312,11 @@
           URL to open a PR, it will be open in your default browser as well.; \
         exit 1; \
       fi; \
+      NEW_COMMITS_COUNT=$(git rev-list --count $(git imp-main-branch-name)..$(git imp-current-branch-name); exit $?; ) || exit $?; \
+      if (( $NEW_COMMITS_COUNT < 1 )); then \
+        git imp-error no new commits on top of $(git imp-main-branch-name) branch - nothing to publish yet; \
+        exit 1; \
+      fi; \
       TMP_LOG_FILE=$(mktemp /tmp/git_push.log.XXXXXX) || exit 1; \
       trap \"rm ${TMP_LOG_FILE}\" 0 2 3 15; \
       git push -u origin $(git imp-current-branch-name) 2>&1 | tee ${TMP_LOG_FILE} ; \
