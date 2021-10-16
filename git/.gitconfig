@@ -312,6 +312,13 @@
           URL to open a PR, it will be open in your default browser as well.; \
         exit 1; \
       fi; \
+      git fetch --all; \
+      UPSTREAM_BRANCH_NAME=$(git imp-upstream-branch-name); \
+      if [ -n ${UPSTREAM_BRANCH_NAME} ]; then \
+        git imp-error \"'$(git imp-current-branch-name)' branch is already published to its upstream '${UPSTREAM_BRANCH_NAME}'\"; \
+        git imp-warn \"try 'git push' instead\"; \
+        exit 1; \
+      fi; \
       NEW_COMMITS_COUNT=$(git rev-list --count $(git imp-main-branch-name)..$(git imp-current-branch-name); exit $?; ) || exit $?; \
       if (( $NEW_COMMITS_COUNT < 1 )); then \
         git imp-error no new commits on top of $(git imp-main-branch-name) branch - nothing to publish yet; \
@@ -638,6 +645,9 @@
   imp-current-branch-name = rev-parse --abbrev-ref HEAD
 
   imp-check-if-branch-exists-in-origin = !"f() { git rev-parse --abbrev-ref origin/\"${@?Missing branch name}\" 1>/dev/null 2>&1; }; f"
+
+  # SOURCE: 16oct2021 https://stackoverflow.com/a/9753364
+  imp-upstream-branch-name = !"git for-each-ref --format='%(upstream:short)' \"$(git symbolic-ref -q HEAD)\""
 
   imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\" | fold -w 105 -s; }; c"
   # Like imp-printf but with a newline at the end.
