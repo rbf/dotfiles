@@ -319,6 +319,11 @@
         git imp-warn \"try 'git push' instead\"; \
         exit 1; \
       fi; \
+      if [ -n $(git branch --contains $(git imp-main-branch-name) --list $(git imp-current-branch-name)) ]; then \
+        git imp-error \"'$(git imp-current-branch-name)' branch is not up to date with '$(git imp-main-branch-name)'\"; \
+        git imp-warn \"try 'git rebase $(git imp-main-branch-name)' before publishing\"; \
+        exit 1; \
+      fi; \
       NEW_COMMITS_COUNT=$(git rev-list --count $(git imp-main-branch-name)..$(git imp-current-branch-name); exit $?; ) || exit $?; \
       if (( $NEW_COMMITS_COUNT < 1 )); then \
         git imp-error no new commits on top of $(git imp-main-branch-name) branch - nothing to publish yet; \
