@@ -228,6 +228,15 @@
 
 [log]
   decorate = short
+  # Like the default, but padding the days with a leading 0, for column width consistency.
+  date = format-local:%a %b %d %T %Y
+
+[pretty]
+  custom-original            = %C(yellow)%h%Cgreen %ad %Creset| %s%C(red)%d %C(blue)[%an]%Creset
+  custom                     = %C(yellow)%h%Cgreen %ad %Creset| %s %C(blue)[%an]%C(red bold)%d%Creset
+  custom-padded              = %C(yellow)%h%Cgreen %>(16)%ad %Creset| %<(70)%s %C(blue)[%an]%C(red bold)%d%Creset
+  custom-with-details        = %C(yellow)%h%Cgreen %ad %Creset| %s %C(blue)[%an]%C(red bold)%d%Creset %C(green dim)(%ar)%C(white dim) Committed %cr by %cn (%G?) %Creset%+b%n%n%-N%Creset
+  custom-with-details-padded = %C(yellow)%h%Cgreen %>(24)%ad %Creset| %<(70)%s %C(blue)[%an]%C(red bold)%d%Creset %C(green dim)(%ar)%C(white dim) Committed %cr by %cn (%G?) %Creset%+b%n%n%-N%Creset
 
 [push]
   default = upstream
@@ -535,40 +544,51 @@
   unwip = !"f() { LAST_COMMIT_MESSAGE=\"$(git log -1 --pretty=tformat:%s)\"; [ \"${LAST_COMMIT_MESSAGE:0:5}\" == \"[WIP]\" ] && ( echo \"Undoing last WIP commit: ${LAST_COMMIT_MESSAGE}\" && git reset HEAD^ -- && echo \"Now at:\" && git log -1 --oneline ) || ( echo \"The last commit is not a [WIP] commit! Nothing to do.\"; git log -1 --oneline ) }; f"
 
   ## Aliases related to the commit history (git log)
+  # They include more details such as a graphical representation of the history and the branches
+  # (i.e. --graph), the author of the commit and the branch and tag names.
   # DOC: https://git-scm.com/docs/git-log
-
-  # A nicer version of the logs, including a graphical representation of the
-  # history and the branches, the author of the commit and the branch and tag
-  # names.
-  # If the output is not paginated properly check the documentation for
+  #
+  # NOTE: If the output is not paginated properly check the documentation for
   # 'core.pager' and 'pager.<cmd>' settings. The order of preference for the
   # pager is the $GIT_PAGER environment variable, then core.pager configuration,
   # then $PAGER, and then the default chosen at compile time (usually less).
   # DOC: https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-config.html
-  history = log --pretty=tformat:\"%C(yellow)%h%Cgreen %ad %Creset| %s%C(red)%d %C(blue)[%an]%Creset\" --graph --date=relative
 
-  # Include commits from all local and remote branches. Do a 'got fetch' before if
-  # you want to make sure that the command reports the last state in the remotes.
-  # NOTE: ': git log ;' notation allows the shell to know from which command the tab-autocompletion should be used.
-  # DOC: https://git-scm.com/docs/git-log#git-log---all
-  hist    = ! ": git log ; git history --all"
+  # Unlimited number of commits in the current branch, including commit body and
+  # notes, if present.
+  hist     = log --pretty=custom-with-details-padded --graph
 
-  # Shorthand to list the last 5 commits in the current branch. Userful to check the current state of the branch.
+  # Like 'git hist' but show commits for all branches.
+  hista    = hist --all
+
+  # Shorthand to list the last 5 commits in the current branch, with less
+  # information than 'git hist' and 'git hista'. Useful to check the current
+  # state of the branch.
   # DOC: https://git-scm.com/docs/git-log#git-log---max-countltnumbergt
-  h       = ! ": git log ; git history --max-count 5"
+  h       = log --pretty=custom-padded --graph --date=human --max-count 5
+
+  # Like 'git h' but show commits for all branches.
+  ha      = h --all
+
+  # Display detailed information for all commits in all branches but doing a
+  # 'git fetch --all' before to make sure that the command reports the last
+  # state in the remotes. NOTE: ': git log ;' notation allows the shell to know
+  # from which command the tab-autocompletion should be used.
+  # DOC: https://git-scm.com/docs/git-log#git-log---all
+  history = ! ": git log ; git fetch --all && git log --graph --all --pretty=custom-with-details"
 
   # Like 'git h' but including a summary of how files were changed in each commit.
   # DOC: https://git-scm.com/docs/git-log#git-log---raw
   # DOC: https://git-scm.com/docs/git-log#git-log---shortstat
-  hs      = ! ": git log ; git h --shortstat --raw"
+  hs      = h --pretty=custom-with-details --shortstat --raw
 
   # Like 'git hs' but including a the full commit diff in each commit.
   # DOC: https://git-scm.com/docs/git-log#git-log---patch
-  hdiff   = ! ": git log ; git hs --patch"
+  hdiff   = h --pretty=custom-with-details --patch
 
   # Like 'git hdiff' but showing a word diff instead of a line diff.
   # DOC: https://git-scm.com/docs/git-log#git-log---word-diffltmodegt
-  hd      = ! ": git log ; git hdiff --word-diff=color"
+  hd      = hdiff --word-diff=color
 
   lastcommit      = show HEAD
   lc              = lastcommit
