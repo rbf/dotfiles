@@ -320,9 +320,9 @@
         git imp-warn \"try 'git push' instead\"; \
         exit 1; \
       fi; \
-      if [ -z \"$(git branch --contains $(git imp-main-branch-name) --list $(git imp-current-branch-name))\" ]; then \
-        git imp-error \"'$(git imp-current-branch-name)' branch is not up to date with '$(git imp-main-branch-name)'\"; \
-        git imp-warn \"try 'git rebase $(git imp-main-branch-name)' before publishing\"; \
+      if ! git imp-is-current-branch-up-to-date-with-upstream-main; then \
+        git imp-error \"'$(git imp-current-branch-name)' branch is not up to date with '$(git imp-upstream-main-branch-name)'\"; \
+        git imp-warn \"try 'git rebase $(git imp-upstream-main-branch-name)' before publishing\"; \
         exit 1; \
       fi; \
       NEW_COMMITS_COUNT=$(git rev-list --count $(git imp-main-branch-name)..$(git imp-current-branch-name); exit $?; ) || exit $?; \
@@ -653,7 +653,11 @@
   imp-check-if-branch-exists-in-origin = !"f() { git rev-parse --abbrev-ref origin/\"${@?Missing branch name}\" 1>/dev/null 2>&1; }; f"
 
   # SOURCE: 16oct2021 https://stackoverflow.com/a/9753364
-  imp-upstream-branch-name = !"git for-each-ref --format='%(upstream:short)' \"$(git symbolic-ref -q HEAD)\""
+  imp-upstream-branch-name = !"git for-each-ref --format='%(upstream:short)' \"$(git symbolic-ref -q \"${1:-HEAD}\")\""
+
+  imp-upstream-main-branch-name = !"git imp-upstream-branch-name \"refs/heads/$(git imp-main-branch-name)\""
+
+  imp-is-current-branch-up-to-date-with-upstream-main = !"[ -n \"$(git branch --contains \"$(git imp-upstream-main-branch-name)\" --list \"$(git imp-current-branch-name)\")\" ]"
 
   imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\" | fold -w 105 -s; }; c"
   # Like imp-printf but with a newline at the end.
