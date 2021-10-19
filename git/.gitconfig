@@ -533,6 +533,12 @@
   ds = d --stat --raw
   dsc = d --cached --stat --raw
 
+  # Diffs using delta in horizontal mode to allow comparing changes in long lines.
+  dh = -c delta.side-by-side=false diff
+  dhc = dh --cached
+  dhs = dh --stat --raw
+  dhsc = dh --cached --stat --raw
+
   # Diffs using the default pages, i.e. less.
   dp = ! ": git diff ; GIT_PAGER='less -FRXK' git diff"
   dpw = dp --word-diff=color
