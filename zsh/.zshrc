@@ -435,6 +435,11 @@ function is_macos_in_dark_mode() {
 #   echo 'export PATH="/usr/local/sbin:$PATH"' >> ~/.zshrc
 export PATH="/usr/local/sbin:$PATH"
 
+# Allow gpg to find the current terminal to sign git commits.
+# SOURCE: 20oct2021 https://stackoverflow.com/a/42265848
+# DOC: https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key#telling-git-about-your-gpg-key
+export GPG_TTY=$TTY
+
 # The BAT_THEME seems also to be picked up by git d when using delta (although
 # not specified in delta's docs).
 # DOC: https://github.com/sharkdp/bat#highlighting-theme

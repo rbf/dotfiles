@@ -1,0 +1,7 @@
+# Here you can freely modify the configuration defined in the .gitconfig file,
+# including your user name and email address. This file will not be overridden
+# when the gitconfig is updated with "git update-gitconfig"
+
+# [user]
+#   name = <your name>
+#   email = <your email>
