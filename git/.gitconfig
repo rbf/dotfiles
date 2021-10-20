@@ -232,11 +232,10 @@
   date = format-local:%a %b %d %T %Y
 
 [pretty]
-  custom-original            = %C(yellow)%h%Cgreen %ad %Creset| %s%C(red)%d %C(blue)[%an]%Creset
-  custom                     = %C(yellow)%h%Cgreen %ad %Creset| %s %C(blue)[%an]%C(red bold)%d%Creset
-  custom-padded              = %C(yellow)%h%Cgreen %>(16)%ad %Creset| %<(70)%s %C(blue)[%an]%C(red bold)%d%Creset
-  custom-with-details        = %C(yellow)%h%Cgreen %ad %Creset| %s %C(blue)[%an]%C(red bold)%d%Creset %C(green dim)(%ar)%C(white dim) Committed %cr by %cn (%G?) %Creset%+b%n%n%-N%Creset
-  custom-with-details-padded = %C(yellow)%h%Cgreen %>(24)%ad %Creset| %<(70)%s %C(blue)[%an]%C(red bold)%d%Creset %C(green dim)(%ar)%C(white dim) Committed %cr by %cn (%G?) %Creset%+b%n%n%-N%Creset
+  original = %C(yellow)%h%C(green) %ad %C(reset)| %s%C(red)%d %C(blue)[%an]%C(reset)
+  h        = %C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%d%C(reset)
+  hist     = %C(yellow)%<(21)%h%C(green)%>(24)%ad %C(reset)| %s %C(blue)[%an] %C(dim)<%ae>%C(reset)%C(red bold)%d%C(reset)%n%C(dim)%C(yellow)%<(21)%(describe)%C(green)%<(24)%ar | %C(white)Committed %cr by %cn <%ce> (Signed: %G?% GS)%C(yellow) %<(9,trunc)%b%C(dim)%C(blue) %<(9,trunc)%N%C(reset)
+  history  = %C(yellow)%<(21)%h%C(green)%>(24)%ad %C(reset)| %s %C(blue)[%an] %C(dim)<%ae>%C(reset)%C(red bold)%d%C(reset)%n%C(dim)%C(yellow)%<(21)%(describe)%C(green)%<(24)%ar | %C(white)Committed %cr by %cn <%ce> (Signed: %G?% GS)%+b%n%n%-N%n%C(reset)
 
 [push]
   default = upstream
@@ -561,35 +560,35 @@
 
   # Unlimited number of commits in the current branch, including commit body and
   # notes, if present.
-  hist     = log --pretty=custom-with-details-padded --graph
+  hist     = log --pretty=hist --abbrev=20
 
   # Like 'git hist' but show commits for all branches.
-  hista    = hist --all
+  hista    = hist --all --graph
 
   # Shorthand to list the last 5 commits in the current branch, with less
   # information than 'git hist' and 'git hista'. Useful to check the current
   # state of the branch.
   # DOC: https://git-scm.com/docs/git-log#git-log---max-countltnumbergt
-  h       = log --pretty=custom-padded --graph --date=human --max-count 5
+  h       = log --pretty=h --date=human --max-count 5
 
   # Like 'git h' but show commits for all branches.
-  ha      = h --all
+  ha      = h --all --graph
 
   # Display detailed information for all commits in all branches but doing a
   # 'git fetch --all' before to make sure that the command reports the last
   # state in the remotes. NOTE: ': git log ;' notation allows the shell to know
   # from which command the tab-autocompletion should be used.
   # DOC: https://git-scm.com/docs/git-log#git-log---all
-  history = ! ": git log ; git fetch --all && git log --graph --all --pretty=custom-with-details"
+  history = ! ": git log ; git fetch --all && git log --graph --all --pretty=history --abbrev=20"
 
   # Like 'git h' but including a summary of how files were changed in each commit.
   # DOC: https://git-scm.com/docs/git-log#git-log---raw
   # DOC: https://git-scm.com/docs/git-log#git-log---shortstat
-  hs      = h --pretty=custom-with-details --shortstat --raw
+  hs      = h --graph --pretty=hist --abbrev=20 --shortstat --raw
 
   # Like 'git hs' but including a the full commit diff in each commit.
   # DOC: https://git-scm.com/docs/git-log#git-log---patch
-  hdiff   = h --pretty=custom-with-details --patch
+  hdiff   = h --graph --pretty=hist --abbrev=20 --patch
 
   # Like 'git hdiff' but showing a word diff instead of a line diff.
   # DOC: https://git-scm.com/docs/git-log#git-log---word-diffltmodegt
@@ -621,7 +620,7 @@
   # Show only the commits that have NOT been merged into the main branch.
   # DOC: https://git-scm.com/docs/git-log#git-log---cherry
   unmerged = ! ": git log ; MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git history --cherry ${MAIN_BRANCH}..HEAD"
-  tags = log --pretty=tformat:\"%C(yellow)%h%Cgreen %ad %C(red)%d\" --date=relative --simplify-by-decoration --branches --all
+  tags = log --pretty=tformat:\"%C(yellow)%h%C(green) %ad %C(red)%d\" --date=relative --simplify-by-decoration --branches --all
 
   type = cat-file -t
   dump = cat-file -p
