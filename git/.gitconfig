@@ -68,6 +68,17 @@
   # SOURCE: 03oct2021 https://stackoverflow.com/a/18781512
   pager = less -FRXK
 
+[checkout]
+  # Setting a default remote is useful only when several remotes are setup, e.g.
+  # 'origin' and 'upstream'. It allows to write:
+  #   - 'git checkout <branch>' instead of 'git checkout --track <remote>/<branch>'
+  #   - 'git worktree add <path> <branch>' instead of 'git worktree add --track -b <branch> <path> <remote>/<branch>'
+  # DOC: See 'checkout.defaultRemote' in 'git config --help'.
+  # DOC: See 'add' in 'git worktree --help'.
+  # DOC: See '--guess' in 'git checkout --help'.
+  # SOURCE: 21oct2021 https://stackoverflow.com/a/60724734
+  defaultRemote = origin
+
 [diff]
   # Interesting geeky read about diff algorithms: http://fabiensanglard.net/git_code_review/diff.php
   # DOC: https://git-scm.com/docs/git-config#git-config-diffalgorithm
