@@ -536,14 +536,24 @@
   sh = !git sync-hard
 
   difft = difftool
-  
-  # Diffs using delta as setup in pager.diff above.
-  d    = diff
-  dc   = d --cached
 
-  # Diffs using delta in horizontal mode to allow comparing changes in long lines.
+  # Diffs using delta as setup in pager.diff in vertical mode (i.e.
+  # side-by-side) for easy comparing changes in short lines.
+  dv   = -c delta.side-by-side=true diff
+  dvc  = dv --cached
+
+  # Diffs using delta as setup in pager.diff in horizontal mode to allow
+  # comparing changes in long lines.
   dh   = -c delta.side-by-side=false diff
   dhc  = dh --cached
+
+  # Diffs using the delta aliases defined above, automatically choosing between
+  # horizontal and side-by-side modes depending on max line length in diff.
+  # SOURCE: 21oct2021 https://stackoverflow.com/a/1655488
+  d    = !MAX_DIFF_LINE_LENGTH=$(GIT_PAGER='' git diff ${*} | grep '^[+-]' | awk '{print length}' | sort -nr | head -1 || echo 0) \
+          && TERMINAL_HALF_WIDTH=$(( $(tput cols) / 2 )) \
+          && ((MAX_DIFF_LINE_LENGTH > (TERMINAL_HALF_WIDTH - 6))) && git dh ${*} || git dv
+  dc   = d --cached
 
   # Diffs using the 'less' as pager instead of 'delta'.
   dp   = ! ": git diff ; GIT_PAGER='less -FRXK' git diff"
