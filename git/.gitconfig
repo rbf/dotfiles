@@ -622,6 +622,9 @@
   # DOC: https://git-scm.com/docs/git-log#git-log---word-diffltmodegt
   hd      = hdiff --word-diff=color
 
+  commit-info = log --pretty=history --abbrev=20 --max-count 1
+  ci = commit-info
+
   lastcommit      = view HEAD
   lc              = lastcommit
 
