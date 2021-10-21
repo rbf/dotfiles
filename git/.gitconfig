@@ -89,7 +89,8 @@
     diff = delta
     log = delta
     reflog = delta
-    show = delta
+    # Use 'git view' to use delta.
+    show = less -FRXK
 
 [interactive]
     diffFilter = delta --color-only
@@ -98,7 +99,7 @@
 # SOURCE: 28jun2021 https://github.com/dandavison/delta
 
 [delta]
-  side-by-side = true
+  side-by-side = false
   line-numbers = true
   features = decorations
 
@@ -535,6 +536,15 @@
   sync-hard = !"MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git imp-check-clean-tree && git sync && git checkout ${MAIN_BRANCH} && git pull --ff-only --verbose && git br-prune-gone && git gc && git bra"
   sh = !git sync-hard
 
+
+  viewh = -c pager.show=delta -c delta.side-by-side=false show
+  viewv = -c pager.show=delta -c delta.side-by-side=true  show
+
+  # 'git show' using the delta aliases defined above, automatically choosing
+  # between horizontal and side-by-side modes depending on max line length in
+  # diff.
+  view  = ! git imp-is-output-too-wide-for-terminal-for-command show ${*} && git viewh ${*} || git viewv
+
   difft = difftool
 
   # Diffs using delta as setup in pager.diff in vertical mode (i.e.
@@ -549,10 +559,7 @@
 
   # Diffs using the delta aliases defined above, automatically choosing between
   # horizontal and side-by-side modes depending on max line length in diff.
-  # SOURCE: 21oct2021 https://stackoverflow.com/a/1655488
-  d    = !MAX_DIFF_LINE_LENGTH=$(GIT_PAGER='' git diff ${*} | grep '^[+-]' | awk '{print length}' | sort -nr | head -1 || echo 0) \
-          && TERMINAL_HALF_WIDTH=$(( $(tput cols) / 2 )) \
-          && ((MAX_DIFF_LINE_LENGTH > (TERMINAL_HALF_WIDTH - 6))) && git dh ${*} || git dv
+  d    = ! git imp-is-output-too-wide-for-terminal-for-command diff ${*} && git dh ${*} || git dv
   dc   = d --cached
 
   # Diffs using the 'less' as pager instead of 'delta'.
@@ -615,7 +622,7 @@
   # DOC: https://git-scm.com/docs/git-log#git-log---word-diffltmodegt
   hd      = hdiff --word-diff=color
 
-  lastcommit      = show HEAD
+  lastcommit      = view HEAD
   lc              = lastcommit
 
   # The following three aliases are shorthands for 'hs', 'hdiff' and 'hd' but
@@ -732,7 +739,19 @@
       git imp-warn 'type CTRL-D to exit'; \
       exit 1; \
     fi; \
- }; f"
+  }; f"
+
+  # SOURCE: 21oct2021 https://stackoverflow.com/a/1655488
+  imp-is-output-too-wide-for-terminal-for-command = !"f() { \
+    MAX_DIFF_LINE_LENGTH=$(GIT_PAGER='' git ${*} \
+                              | grep '^[+-]' \
+                              | awk '{print length}' \
+                              | sort -nr \
+                              | head -1 \
+                            || echo 0); \
+    TERMINAL_HALF_WIDTH=$(( $(tput cols) / 2 )); \
+    ((MAX_DIFF_LINE_LENGTH > (TERMINAL_HALF_WIDTH - 6))); \
+  }; f"
 
   # First alias written in multiple lines using \ at the end of each line.
   # Note that it has to be treated as written in one line still, i.e. each
