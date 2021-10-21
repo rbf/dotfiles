@@ -246,8 +246,8 @@
 [pretty]
   original = %C(yellow)%h%C(green) %ad %C(reset)| %s%C(red)%d %C(blue)[%an]%C(reset)
   h        = %C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%d%C(reset)
-  hist     = %C(yellow)%<(21)%h%C(green)%>(24)%ad %C(reset)| %s %C(blue)[%an] %C(dim)<%ae>%C(reset)%C(red bold)%d%C(reset)%n%C(dim)%C(yellow)%<(21)%(describe)%C(green)%<(24)%ar | %C(white)Committed %cr by %cn <%ce> (Signed: %G?% GS)%C(yellow) %<(9,trunc)%b%C(dim)%C(blue) %<(9,trunc)%N%C(reset)
-  history  = %C(yellow)%<(21)%h%C(green)%>(24)%ad %C(reset)| %s %C(blue)[%an] %C(dim)<%ae>%C(reset)%C(red bold)%d%C(reset)%n%C(dim)%C(yellow)%<(21)%(describe)%C(green)%<(24)%ar | %C(white)Committed %cr by %cn <%ce> (Signed: %G?% GS)%+b%n%n%-N%n%C(reset)
+  hist     = %C(yellow)%<(21)%h%C(green)%>(24)%ad %C(reset)| %s %C(blue)[%an] %C(dim)<%ae>%C(no-dim)%C(red bold)%d%C(reset)%n%C(dim)%C(yellow)%<(21)%(describe)%C(green)%<(24)%ar | %C(blue)Authored %ah. %C(white)Committed %ch by %cn <%ce>. Signed %G?% GS %C(yellow) %<(9,trunc)%b%C(dim)%C(blue) %<(9,trunc)%N%C(reset)
+  history  = %C(yellow)%<(21)%h%C(green)%>(24)%ad %C(reset)| %s %C(blue)[%an] %C(dim)<%ae>%C(no-dim)%C(red bold)%d%C(reset)%n%C(dim)%C(yellow)%<(21)%(describe)%C(green)%<(24)%ar | %C(blue)Authored %ah. %C(white)Committed %ch by %cn <%ce>. Signed %G?% GS%+b%n%n%-N%n%C(reset)
 
 [push]
   default = upstream
