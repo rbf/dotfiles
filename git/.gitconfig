@@ -284,7 +284,7 @@
 
   # Shorthand for 'git commit -m "commit message"' but without the need to quote the commit
   # message, and checking the max commit length.
-  cm = !"f() { COMMIT_MESSAGE=\"${*}\"; git imp-check-commit-message-length \"${COMMIT_MESSAGE}\" && git commit -m \"${COMMIT_MESSAGE}\"; }; f"
+  cm = !"f() { COMMIT_MESSAGE=\"${*}\"; git imp-check-commit-message-length \"${COMMIT_MESSAGE}\" && git commit -m \"${COMMIT_MESSAGE}\"; }; git imp-is-a-commit-possible && f"
 
   # Like 'git cam commit message' but simulating the --all commit flag to include in the commit the files
   # that have been modified and deleted. However, new files you have not told Git about are not affected.
@@ -293,7 +293,7 @@
   cam = ! git add --update && git cm
 
   # SOURCE: 27sep2021  https://stackoverflow.com/a/3828861
-  fixup = !"f() { if [[ \"${1}\" == \"-a\" ]]; then flag='-a'; shift; elif [[ -n \"${2}\" ]]; then git imp-error 'Only -a flag is accepted.'; return 1; fi; git commit ${flag} --fixup=\"${1}\" && git rebase --interactive --autosquash \"${1}\"~1; }; f"
+  fixup = !"f() { COMMIT_TO_FIXUP=${1:-HEAD}; if [[ \"$(git rev-parse --short ${COMMIT_TO_FIXUP})\" == \"$(git rev-parse --short HEAD)\" ]]; then git atlc; else git imp-is-a-commit-possible && git commit --fixup=${COMMIT_TO_FIXUP} && git rebase --interactive --autosquash ${COMMIT_TO_FIXUP}~1; fi; }; f"
 
   # Like 'git cam commit message' but automatically pushing to origin after commit.
   camp = !"f() { git cam \"${*}\" && git push; }; f"
