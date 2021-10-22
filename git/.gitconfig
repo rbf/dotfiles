@@ -611,10 +611,12 @@
   # Like 'git his' but shows the commit graph and commits for all branches.
   hisa     = hisg --all
 
-  # Shorthand to 'git his' the last 5 commits in the current branch. Useful to
-  # check the current state of the branch.
+  # Shorthand to 'git his' all commits in the current branch not yet pushed to
+  # origin or the last 5 commits, whichever is bigger. Useful to check the
+  # current state of the branch.
   # DOC: https://git-scm.com/docs/git-log#git-log---max-countltnumbergt
-  h       = his --max-count 5
+  h       = !git his --max-count=$(c=$(git rev-list --count $(git imp-upstream-branch-name)..HEAD) && ((c>4)) && echo $((c + 1)) || echo 5)
+
   # Like 'git h' but shows the commit graph.
   hg      = h --graph
   # Like 'git h' but shows the commit graph and commits for all branches.
