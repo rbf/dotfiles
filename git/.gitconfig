@@ -240,14 +240,19 @@
 
 [log]
   decorate = short
+  # Like the default, but designed to be shown alonside %{a,c}r and %{a,c}D:
+  # - does not show year and seconds
+  # - shows timezone
+  # - 0-padded days for column width consistency
+  date = format-local:%a %b %d %R %Z
   # Like the default, but padding the days with a leading 0, for column width consistency.
-  date = format-local:%a %b %d %T %Y
+  # date = format-local:%a %b %d %T %Y
 
 [pretty]
   original = %C(yellow)%h%C(green) %ad %C(reset)| %s%C(red)%d %C(blue)[%an]%C(reset)
+  graph    = %C(yellow)%h %C(reset)%s %C(blue)[%an]%C(red bold)%d%C(reset)
   h        = %C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%d%C(reset)
-  hist     = %C(yellow)%<(21)%h%C(green)%>(24)%ad %C(reset)| %s %C(blue)[%an] %C(dim)<%ae>%C(no-dim)%C(red bold)%d%C(reset)%n%C(dim)%C(yellow)%<(21)%(describe)%C(green)%<(24)%ar | %C(blue)Authored %ah. %C(white)Committed %ch by %cn <%ce>. Signed %G?% GS %C(yellow) %<(9,trunc)%b%C(dim)%C(blue) %<(9,trunc)%N%C(reset)
-  history  = %C(yellow)%<(21)%h%C(green)%>(24)%ad %C(reset)| %s %C(blue)[%an] %C(dim)<%ae>%C(no-dim)%C(red bold)%d%C(reset)%n%C(dim)%C(yellow)%<(21)%(describe)%C(green)%<(24)%ar | %C(blue)Authored %ah. %C(white)Committed %ch by %cn <%ce>. Signed %G?% GS%+b%n%n%-N%n%C(reset)
+  hist     = %C(yellow)%H%C(magenta)% (describe)%C(red bold)%d%n%s%n%C(green) %>(13)%ar | %>(31)%aD | %ad %C(white)| %C(blue)authored  by %an <%ae>%n%C(white dim) %>(13)%cr | %>(31)%cD | %cd % | committed by %cn <%ce> | signed %G?% GS%n%n%-b%n%n%-N%n%C(reset)
 
 [push]
   default = upstream
@@ -536,7 +541,6 @@
   sync-hard = !"MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git imp-check-clean-tree && git sync && git checkout ${MAIN_BRANCH} && git pull --ff-only --verbose && git br-prune-gone && git gc && git bra"
   sh = !git sync-hard
 
-
   viewh = -c pager.show=delta -c delta.side-by-side=false show
   viewv = -c pager.show=delta -c delta.side-by-side=true  show
 
@@ -588,7 +592,7 @@
 
   # Unlimited number of commits in the current branch, including commit body and
   # notes, if present.
-  hist     = log --pretty=hist --abbrev=20
+  hist     = log --pretty=hist
 
   # Like 'git hist' but show commits for all branches.
   hista    = hist --all --graph
@@ -602,31 +606,36 @@
   # Like 'git h' but show commits for all branches.
   ha      = h --all --graph
 
-  # Display detailed information for all commits in all branches but doing a
-  # 'git fetch --all' before to make sure that the command reports the last
-  # state in the remotes. NOTE: ': git log ;' notation allows the shell to know
-  # from which command the tab-autocompletion should be used.
+  # Display detailed information for all commits in all branches like 'git
+  # hista' but doing a 'git fetch --all' before to make sure that the command
+  # reports the last state in the remotes.
+  # NOTE: ': git log ;' notation allows the shell to know from which command the
+  # tab-autocompletion should be used.
   # DOC: https://git-scm.com/docs/git-log#git-log---all
-  history = ! ": git log ; git fetch --all && git log --graph --all --pretty=history --abbrev=20"
+  history = ! ": git log ; git fetch --all; git log --graph --all --pretty=hist"
 
-  # Like 'git h' but including a summary of how files were changed in each commit.
+  hista-graph = hista --pretty=graph
+  hg          = hista-graph
+
+  # Like 'git hist' but including a summary of how files were changed in each
+  # commit.
   # DOC: https://git-scm.com/docs/git-log#git-log---raw
   # DOC: https://git-scm.com/docs/git-log#git-log---shortstat
-  hs      = h --graph --pretty=hist --abbrev=20 --shortstat --raw
+  hs      = hist --graph --pretty=hist --shortstat --raw
 
   # Like 'git hs' but including a the full commit diff in each commit.
   # DOC: https://git-scm.com/docs/git-log#git-log---patch
-  hdiff   = h --graph --pretty=hist --abbrev=20 --patch
+  hdiff   = h --graph --pretty=hist --patch
 
   # Like 'git hdiff' but showing a word diff instead of a line diff.
   # DOC: https://git-scm.com/docs/git-log#git-log---word-diffltmodegt
   hd      = hdiff --word-diff=color
 
-  commit-info = log --pretty=history --abbrev=20 --max-count 1
+  commit-info = log --pretty=hist --stat -1
   ci = commit-info
 
-  lastcommit      = view HEAD
-  lc              = lastcommit
+  commit-info-and-diff = commit-info --patch
+  cid = commit-info-and-diff
 
   # The following three aliases are shorthands for 'hs', 'hdiff' and 'hd' but
   # showing only the very last commit.
