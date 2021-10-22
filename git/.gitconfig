@@ -592,17 +592,27 @@
   # Unlimited number of commits in the current branch, including commit body and
   # notes, if present.
   hist     = log --pretty=hist
+  # Like 'git hist' but shows the commit graph.
+  histg    = hist --graph
+  # Like 'git hist' but shows the commit graph and commits for all branches.
+  hista    = histg --all
 
-  # Like 'git hist' but show commits for all branches.
-  hista    = hist --all --graph
+  # Compact version of the history with less information than 'git hist{,a,g}'
+  # in one line, vertically aligned and truncated to terminal width.
+  his      = !git log --date=human --pretty=tformat:'%C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%<|('$(tput cols)',trunc)%d%C(reset)'
+  # Like 'git his' but shows the commit graph.
+  hisg     = his --graph
+  # Like 'git his' but shows the commit graph and commits for all branches.
+  hisa     = hisg --all
 
-  # Shorthand to list the last 5 commits in the current branch, with less
-  # information than 'git hist' and 'git hista'. Useful to check the current
-  # state of the branch.
+  # Shorthand to 'git his' the last 5 commits in the current branch. Useful to
+  # check the current state of the branch.
   # DOC: https://git-scm.com/docs/git-log#git-log---max-countltnumbergt
-  h       = !git log --date=human --max-count 5 --pretty=tformat:'%C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%<|('$(tput cols)',trunc)%d%C(reset)'
-  # Like 'git h' but show commits for all branches.
-  ha      = h --all --graph
+  h       = his --max-count 5
+  # Like 'git h' but shows the commit graph.
+  hg      = h --graph
+  # Like 'git h' but shows the commit graph and commits for all branches.
+  ha      = hg --all
 
   # Display detailed information for all commits in all branches like 'git
   # hista' but doing a 'git fetch --all' before to make sure that the command
@@ -614,7 +624,7 @@
 
   hista-graph = hista --pretty=graph
   # Like 'git hista-graph' but truncated to terminal width.
-  hg = !git hista --pretty=tformat:'%C(yellow)%h %C(reset)%s %C(blue)[%an]%C(red bold)%<|('$(tput cols)',trunc)%d%C(reset)'
+  g = !git hista --pretty=tformat:'%C(yellow)%h %C(reset)%s %C(blue)[%an]%C(red bold)%<|('$(tput cols)',trunc)%d%C(reset)'
 
   # Like 'git hist' but including a summary of how files were changed in each
   # commit.
