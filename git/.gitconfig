@@ -251,7 +251,6 @@
 [pretty]
   original = %C(yellow)%h%C(green) %ad %C(reset)| %s%C(red)%d %C(blue)[%an]%C(reset)
   graph    = %C(yellow)%h %C(reset)%s %C(blue)[%an]%C(red bold)%d%C(reset)
-  h        = %C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%d%C(reset)
   hist     = %C(yellow)%H%C(magenta)% (describe)%C(red bold)%d%n%s%n%C(green) %>(13)%ar | %>(31)%aD | %ad %C(white)| %C(blue)authored  by %an <%ae>%n%C(white dim) %>(13)%cr | %>(31)%cD | %cd % | committed by %cn <%ce> | signed %G?% GS%n%n%-b%n%n%-N%n%C(reset)
 
 [push]
@@ -601,8 +600,7 @@
   # information than 'git hist' and 'git hista'. Useful to check the current
   # state of the branch.
   # DOC: https://git-scm.com/docs/git-log#git-log---max-countltnumbergt
-  h       = log --pretty=h --date=human --max-count 5
-
+  h       = !git log --date=human --max-count 5 --pretty=tformat:'%C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%<|('$(tput cols)',trunc)%d%C(reset)'
   # Like 'git h' but show commits for all branches.
   ha      = h --all --graph
 
@@ -615,7 +613,8 @@
   history = ! ": git log ; git fetch --all; git log --graph --all --pretty=hist"
 
   hista-graph = hista --pretty=graph
-  hg          = hista-graph
+  # Like 'git hista-graph' but truncated to terminal width.
+  hg = !git hista --pretty=tformat:'%C(yellow)%h %C(reset)%s %C(blue)[%an]%C(red bold)%<|('$(tput cols)',trunc)%d%C(reset)'
 
   # Like 'git hist' but including a summary of how files were changed in each
   # commit.
