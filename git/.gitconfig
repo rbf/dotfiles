@@ -318,7 +318,7 @@
   # NOTE: The short version with the same options (to use it e.g. directly in the terminal)
   # is 'git status -sb'.
   # DOC: https://git-scm.com/docs/git-status#git-status--s
-  st = status --short --branch
+  st = !git status --short --branch && git imp-check-latest-pushed-commit-for-current-branch
 
   # This is an alias to 'git branch' but without any arguments it will list a detailed list of the branches.
   br = !"f() { : git branch ; if [ -n \"${1}\" ]; then git branch \"${@}\"; else git br-details \"${@}\"; fi; }; f"
@@ -738,6 +738,24 @@
 
   imp-is-current-branch-up-to-date-with-upstream-main = !"[ -n \"$(git branch --contains \"$(git imp-upstream-main-branch-name)\" --list \"$(git imp-current-branch-name)\")\" ]"
 
+  # SOURCE: 22oct2021 https://stackoverflow.com/a/1549155
+  imp-check-latest-pushed-commit-for-current-branch = !"f() {\
+    CURRENT_BRANCH_NAME=$(git imp-current-branch-name); \
+    UPSTREAM_BRANCH_NAME=$(git imp-upstream-branch-name); \
+    if [ -z \"${UPSTREAM_BRANCH_NAME}\" ]; then \
+      exit; \
+    elif [ \"$(git rev-parse --short \"${CURRENT_BRANCH_NAME}\")\" = \"$(git rev-parse --short \"${UPSTREAM_BRANCH_NAME}\")\" ]; then \
+      exit; \
+    fi; \
+    MOST_RECENT_COMMON_ANCESTOR=$(git merge-base \"${CURRENT_BRANCH_NAME}\" \"${UPSTREAM_BRANCH_NAME}\"); \
+    if (( $(git rev-list --count $(git imp-upstream-branch-name)..HEAD) > 0 )); then \
+      FORMAT_BRANCHES=\"%C(green)${CURRENT_BRANCH_NAME}%C(white) in %C(red)${UPSTREAM_BRANCH_NAME}%C(white)\"; \
+    elif (( $(git rev-list --count HEAD..$(git imp-upstream-branch-name)) > 0 )); then \
+      FORMAT_BRANCHES=\"%C(red)${UPSTREAM_BRANCH_NAME}%C(white) in %C(green)${CURRENT_BRANCH_NAME}%C(white)\"; \
+    fi; \
+    git log --max-count=1 --pretty=format:\"%n%C(white)Most recent commit from ${FORMAT_BRANCHES} is from %C(bold)%cr%C(reset)%C(white dim) - %C(yellow)%h %C(white)on %cd%C(reset)%n%n\" ${MOST_RECENT_COMMON_ANCESTOR}; \
+  }; f"
+
   imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\" | fold -w 105 -s; }; c"
   # Like imp-printf but with a newline at the end.
   imp-echo = !"c() { git imp-printf \"$@\n\"; }; c"
@@ -751,7 +769,7 @@
   imp-error-alias = !"c() { git imp-error $(git imp-current-alias-name) ${@}; }; c"
   imp-warn-alias = !"c() { git imp-warn $(git imp-current-alias-name) ${@}; }; c"
 
-  imp-is-there-something-to-commit = !"if git status --porcelain | grep '^M[ MD]\\|^A[ MD]\\|^D \\|^R[ MD]\\|^C[ MD]' 1>/dev/null 2>&1; then exit; else git imp-error there are no changes staged to commit; if git imp-is-tree-clean; then git imp-warn there are no changes or untracked files to stage; else git imp-warn \"try 'git add .' or its alias 'git aa' to stage all changes, including untracked files\"; git st; fi; exit 1; fi;"
+  imp-is-there-something-to-commit = !"if git status --porcelain | grep '^M[ MD]\\|^A[ MD]\\|^D \\|^R[ MD]\\|^C[ MD]' 1>/dev/null 2>&1; then exit; else git imp-error there are no changes staged to commit; if git imp-is-tree-clean; then git imp-warn there are no changes or untracked files to stage; else git imp-warn \"try 'git add .' or its alias 'git aa' to stage all changes, including untracked files\"; git status --short --branch; fi; exit 1; fi;"
   imp-is-there-nothing-preventing-a-commit = !"if git status --porcelain | grep '^DD\\|^AU\\|^UD\\|^UA\\|^DU\\|^AA\\|^UU' 1>&2; then git imp-error solve the unmerged files before committing; exit 1; fi;"
   imp-is-there-something-untracked = !"if git status --porcelain | grep '^??' 1>&2; then git imp-warn there are untracked files and will not be added to the commit; fi;"
   imp-is-a-commit-possible = !git imp-is-there-something-to-commit && git imp-is-there-nothing-preventing-a-commit && git imp-is-there-something-untracked
