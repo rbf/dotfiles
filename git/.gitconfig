@@ -708,6 +708,10 @@
   # DOC: https://www.git-scm.com/docs/git-check-ignore
   ignored = !git check-ignore -v **/*
 
+  trace = !GIT_TRACE=1 git
+  debug = trace
+  t = trace
+
   ## GitHub related
 
   web = !"f() { URL=\"http://github.com/$(git imp-get-own-and-repo)\" || exit 1; BRANCH=\"$(git branch -avv | egrep '\\*.*\\[.*\\]' | sed 's|\\* \\([^ ]*\\)  .*|\\1|')\"; [ -n \"${BRANCH}\" ] && URL=\"${URL}/tree/${BRANCH}\" && URL=\"${URL//#/%23}\"; echo Opening URL: $URL; open \"${URL}\"; }; f"
