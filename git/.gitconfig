@@ -630,7 +630,7 @@
   # NOTE: ': git log ;' notation allows the shell to know from which command the
   # tab-autocompletion should be used.
   # DOC: https://git-scm.com/docs/git-log#git-log---all
-  history = ! ": git log ; git fetch --all; git log --graph --all --pretty=hist"
+  history = ! ": git log ; git sync; echo; git log --graph --all --pretty=hist"
 
   hista-graph = hista --pretty=graph
   # Like 'git hista-graph' but truncated to terminal width.
