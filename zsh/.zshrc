@@ -361,6 +361,8 @@ function show_git_repo_info() {
   show_last_modified_files_in_tree
   echo
   git fetch --all
+  git st-upstream-remote-main
+  echo
   git br
   echo
   git h

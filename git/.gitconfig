@@ -318,7 +318,34 @@
   # NOTE: The short version with the same options (to use it e.g. directly in the terminal)
   # is 'git status -sb'.
   # DOC: https://git-scm.com/docs/git-status#git-status--s
-  st = !git status --short --branch && git imp-check-latest-pushed-commit-for-current-branch && git imp-check-main-branch-up-to-date-with-upstream-remote
+  st = !git st-upstream-remote && git status --short --branch && git imp-check-latest-pushed-commit-for-current-branch
+  st-upstream-remote = !"f() {\
+    git remote | grep ^origin$ 1>/dev/null || return 0; \
+    git remote | grep ^upstream$ 1>/dev/null || return 0; \
+    BRANCH_NAME=${1:-$(git imp-current-branch-name)}; \
+    ORIGIN_MAIN_BRANCH_NAME=origin/${BRANCH_NAME}; \
+    UPSTREAM_MAIN_BRANCH_NAME=upstream/${BRANCH_NAME}; \
+    git imp-check-if-branch-exists ${UPSTREAM_MAIN_BRANCH_NAME} || return 0; \
+    [ \"$(git imp-current-branch-name)\" = ${BRANCH_NAME} ] || printf \"$(tput dim)\"; \
+    printf \"## $(tput setaf 1)${ORIGIN_MAIN_BRANCH_NAME}$(tput sgr0)...$(tput setaf 5)${UPSTREAM_MAIN_BRANCH_NAME}$(tput sgr0)\"; \
+    NUMBER_OF_NEW_COMMITS_IN_ORIGIN=$(git rev-list --count ${UPSTREAM_MAIN_BRANCH_NAME}..${ORIGIN_MAIN_BRANCH_NAME}); \
+    NUMBER_OF_NEW_COMMITS_IN_UPSTREAM=$(git rev-list --count ${ORIGIN_MAIN_BRANCH_NAME}..${UPSTREAM_MAIN_BRANCH_NAME}); \
+    case \"${NUMBER_OF_NEW_COMMITS_IN_ORIGIN}-${NUMBER_OF_NEW_COMMITS_IN_UPSTREAM}\" in \
+      0-0) \
+        echo; \
+        ;; \
+      *-0) \
+        echo \" [ahead $(tput setaf 1)${NUMBER_OF_NEW_COMMITS_IN_ORIGIN}$(tput sgr0)]\";\
+        ;; \
+      0-*) \
+        echo \" [behind $(tput setaf 5)${NUMBER_OF_NEW_COMMITS_IN_UPSTREAM}$(tput sgr0)]\";\
+        ;; \
+      *-*) \
+        echo \" [ahead $(tput setaf 1)${NUMBER_OF_NEW_COMMITS_IN_ORIGIN}$(tput sgr0), behind $(tput setaf 5)${NUMBER_OF_NEW_COMMITS_IN_UPSTREAM}$(tput sgr0)]\";\
+        ;; \
+    esac; \
+  }; f"
+  st-upstream-remote-main = !git st-upstream-remote $(git imp-main-branch-name)
 
   # This is an alias to 'git branch' but without any arguments it will list a detailed list of the branches.
   br = !"f() { : git branch ; if [ -n \"${1}\" ]; then git branch \"${@}\"; else git br-details \"${@}\"; fi; }; f"
@@ -769,31 +796,6 @@
       FORMAT_BRANCHES=\"%C(green)${CURRENT_BRANCH_NAME}%C(white) in %C(red)${UPSTREAM_BRANCH_NAME}%C(white)\"; \
     fi; \
     git log --max-count=1 --pretty=format:\"You haven't ${PULLED_OR_PUSHED} in a while: the most recent commit from ${FORMAT_BRANCHES} is from %C(bold)%cr%C(reset).%C(white dim) %C(yellow)%h %C(white)on %cd%C(reset)\" ${MOST_RECENT_COMMON_ANCESTOR}; \
-  }; f"
-
-  imp-check-main-branch-up-to-date-with-upstream-remote = !"f() {\
-    git remote | grep ^origin$ 1>/dev/null || exit; \
-    git remote | grep ^upstream$ 1>/dev/null || exit; \
-    ORIGIN_MAIN_BRANCH_NAME=$(git imp-upstream-main-branch-name); \
-    UPSTREAM_MAIN_BRANCH_NAME=${ORIGIN_MAIN_BRANCH_NAME/origin/upstream}; \
-    git imp-check-if-branch-exists ${UPSTREAM_MAIN_BRANCH_NAME} || exit; \
-    printf \"## $(tput setaf 1)${ORIGIN_MAIN_BRANCH_NAME}$(tput sgr0)...$(tput setaf 5)${UPSTREAM_MAIN_BRANCH_NAME}$(tput sgr0)\"; \
-    NUMBER_OF_NEW_COMMITS_IN_ORIGIN=$(git rev-list --count ${UPSTREAM_MAIN_BRANCH_NAME}..${ORIGIN_MAIN_BRANCH_NAME}); \
-    NUMBER_OF_NEW_COMMITS_IN_UPSTREAM=$(git rev-list --count ${ORIGIN_MAIN_BRANCH_NAME}..${UPSTREAM_MAIN_BRANCH_NAME}); \
-    case \"${NUMBER_OF_NEW_COMMITS_IN_ORIGIN}-${NUMBER_OF_NEW_COMMITS_IN_UPSTREAM}\" in \
-      0-0) \
-        echo; \
-        ;; \
-      *-0) \
-        echo \" [ahead $(tput setaf 1)${NUMBER_OF_NEW_COMMITS_IN_ORIGIN}$(tput sgr0)]\";\
-        ;; \
-      0-*) \
-        echo \" [behind $(tput setaf 5)${NUMBER_OF_NEW_COMMITS_IN_UPSTREAM}$(tput sgr0)]\";\
-        ;; \
-      *-*) \
-        echo \" [ahead $(tput setaf 1)${NUMBER_OF_NEW_COMMITS_IN_ORIGIN}$(tput sgr0), behind $(tput setaf 5)${NUMBER_OF_NEW_COMMITS_IN_UPSTREAM}$(tput sgr0)]\";\
-        ;; \
-    esac; \
   }; f"
 
   imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\" | fold -w 105 -s; }; c"
