@@ -345,7 +345,7 @@
         ;; \
     esac; \
   }; f"
-  st-upstream-remote-main = !git st-upstream-remote $(git imp-main-branch-name)
+  st-upstream-remote-main = !git st-upstream-remote "$(git imp-main-branch-name)"
 
   # This is an alias to 'git branch' but without any arguments it will list a detailed list of the branches.
   br = !"f() { : git branch ; if [ -n \"${1}\" ]; then git branch \"${@}\"; else git br-details \"${@}\"; fi; }; f"
@@ -739,6 +739,14 @@
   debug = trace
   t = trace
 
+  # Append empty new line if output of command is not empty.
+  spaced-after = !"f() { \
+    OUTPUT=\"$(git -c color.ui=always ${*:?Missing command}; exit $?)\"; \
+    RES=$?; \
+    [ -n \"${OUTPUT}\" ] && printf \"${OUTPUT}\\n\\n\"; \
+    return $RES; \
+  }; f"
+
   ## GitHub related
 
   web = !"f() { URL=\"http://github.com/$(git imp-get-own-and-repo)\" || exit 1; BRANCH=\"$(git branch -avv | egrep '\\*.*\\[.*\\]' | sed 's|\\* \\([^ ]*\\)  .*|\\1|')\"; [ -n \"${BRANCH}\" ] && URL=\"${URL}/tree/${BRANCH}\" && URL=\"${URL//#/%23}\"; echo Opening URL: $URL; open \"${URL}\"; }; f"
@@ -760,7 +768,7 @@
   # Following imp-* aliases are meant to be internally used
 
   # SOURCE: 16sep2021 https://stackoverflow.com/a/67625120
-  imp-main-branch-name = !"git branch | cut -c 3- | grep --color=never -E '^master$|^main$'"
+  imp-main-branch-name = !git -c color.ui=never branch | cut -c 3- | grep --color=never -E '^master$|^main$'
 
   imp-current-branch-name = rev-parse --abbrev-ref HEAD
 
