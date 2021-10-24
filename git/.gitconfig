@@ -777,6 +777,8 @@
 
   imp-current-branch-name = rev-parse --abbrev-ref HEAD
 
+  imp-is-main-branch-checked-out = ![ "$(git imp-current-branch-name)" = "$(git imp-main-branch-name)" ]
+
   imp-check-if-branch-exists           = !"f() { git rev-parse --abbrev-ref \"${@?Missing branch name}\" 1>/dev/null 2>&1; }; f"
   imp-check-if-branch-exists-in-origin = !"f() { git rev-parse --abbrev-ref origin/\"${@?Missing branch name}\" 1>/dev/null 2>&1; }; f"
 

@@ -360,13 +360,13 @@ function show_last_modified_files_in_tree() {
 function show_git_repo_info() {
   show_last_modified_files_in_tree
   echo
-  git fetch --all
-  git st-upstream-remote-main
+  git fetch --all --prune --progress
   echo
   git br
   echo
   git h
   echo
+  git imp-is-main-branch-checked-out || git spaced-after st-upstream-remote-main
   git st
   return 0
 }
