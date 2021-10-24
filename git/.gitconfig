@@ -279,6 +279,11 @@
   # Short for Add All.
   aa = add .
 
+  # Short for 'git add --patch'. From the doc in 'git add --help': "This
+  # effectively runs add --interactive, but bypasses the initial command menu
+  # and directly jumps to the patch subcommand."
+  ap = add --patch
+
   # Short for Amend (or Add) To Last Commit.
   atlc = !git imp-is-a-commit-possible && git commit --amend -C HEAD
 
