@@ -775,9 +775,11 @@
 
   # Append empty new line if output of command is not empty.
   spaced-after = !"f() { \
-    OUTPUT=\"$(git -c color.ui=always ${*:?Missing command}; exit $?)\"; \
+    TMP_LOG_FILE=$(mktemp /tmp/git_spaced.log.XXXXXX) || exit 1; \
+    trap \"rm ${TMP_LOG_FILE}\" 0 2 3 15; \
+    git -c color.ui=always ${*:?Missing command} | tee ${TMP_LOG_FILE}; \
     RES=$?; \
-    [ -n \"${OUTPUT}\" ] && printf \"${OUTPUT}\\n\\n\"; \
+    [ -s ${TMP_LOG_FILE} ] && echo; \
     return $RES; \
   }; f"
 
