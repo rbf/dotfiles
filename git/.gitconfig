@@ -611,7 +611,7 @@
   # 'git show' using the delta aliases defined above, automatically choosing
   # between horizontal and side-by-side modes depending on max line length in
   # diff.
-  view  = ! git imp-is-output-too-wide-for-terminal-for-command show ${*} && git viewh ${*} || git viewv
+  view  = ! git imp-is-output-too-wide-for-terminal-for-command show ${@} && git viewh ${@} || git viewv
 
   difft = difftool
 
@@ -627,7 +627,7 @@
 
   # Diffs using the delta aliases defined above, automatically choosing between
   # horizontal and side-by-side modes depending on max line length in diff.
-  d    = !": git diff ; git imp-is-output-too-wide-for-terminal-for-command diff ${*} && git dh ${*} || git dv"
+  d    = !": git diff ; git imp-is-output-too-wide-for-terminal-for-command diff ${@} && git dh ${@} || git dv"
   dc   = d --cached
 
   # Diffs using the 'less' as pager instead of 'delta'.
