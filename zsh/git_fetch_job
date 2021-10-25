@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Schedule regular 'git fetch' every hour between 6h and 21h with the following line:
+#   crontab -l | { cat; echo "5 6-21 * * * $(pwd)/zsh/git_fetch_job"; } | crontab -
+# You might see a dialog to confirm that Terminal.app might update the settings of your computer.
+# Also you might have to allow cron to access your disk. See links below.
+# SOURCE: 11oct2021 https://serverfault.com/a/1012212
+# SOURCE: 11oct2021 https://stackoverflow.com/a/879022
+# SOURCE: 11oct2021 https://osxdaily.com/2020/04/27/fix-cron-permissions-macos-full-disk-access/
+
+set -euo pipefail
+
+CACHE_GIT_DIR=~/.cache/git
+CACHE_GIT_FETCH_LOGFILE="${CACHE_GIT_DIR}/fetch_$(date +"%Y%m_%b").log"
+REPO_DIRS=()
+REPO_DIRS+=(~/dev/gitlab)
+REPO_DIRS+=(~/dev/github)
+
+mkdir -p "${CACHE_GIT_DIR}"
+
+cat << EOF >> "${CACHE_GIT_FETCH_LOGFILE}"
+---
+$(date)
+Starting updates in git repos in ${REPO_DIRS[@]}...
+
+$(find ${REPO_DIRS[@]} \
+    -name .git \
+    -type d \
+    -maxdepth 3 \
+    -execdir echo \; \
+    -execdir date \; \
+    -execdir pwd \; \
+    -execdir echo '$ git fetch --all --verbose --progress --prune' \;\
+    -execdir git fetch --all --verbose --progress --prune \; 2>&1)
+
+$(date)
+Finished updates in git repos in ${REPO_DIRS}.
+
+
+EOF

@@ -472,13 +472,7 @@ alias bat='BAT_THEME="$(dynamic_bat_theme_name)" bat'
 # Put your personal modifications on ~/.zshrc.local, which won't be overwritten.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
-# Schedule the regular 'brew update' with the following line (i.e. everyday at 9:23h and 21:23h):
-#   crontab -l | { cat; echo "23 9,21 * * * $(pwd)/zsh/brew_update_job"; } | crontab -
-# You might see a dialog to confirm that Terminal.app might update the settings of your computer.
-# Also you might have to allow cron to access your disk. See links below.
-# SOURCE: 11oct2021 https://serverfault.com/a/1012212
-# SOURCE: 11oct2021 https://stackoverflow.com/a/879022
-# SOURCE: 11oct2021 https://osxdaily.com/2020/04/27/fix-cron-permissions-macos-full-disk-access/
+# See 'zsh/brew_update_job' file for details.
 function list_outdated_brew_packages() {
   local outdated_packages_file=~/.cache/brew/outdated
   local outdated_packages=()
