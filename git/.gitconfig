@@ -752,9 +752,36 @@
     return $RES; \
   }; f"
 
-  ## GitHub related
+  imp-get-own-and-repo = !"f() { OWN_AND_REPO=\"$(git config --get remote.origin.url | sed \"s|.*[/:]\\(.*/.*\\)\\.git|\\1|\")\"; [ -n \"${OWN_AND_REPO}\" ] && echo \"${OWN_AND_REPO}\" || git imp-error \"Remote origin url not found.\"; }; f"
 
-  web = !"f() { URL=\"http://github.com/$(git imp-get-own-and-repo)\" || exit 1; BRANCH=\"$(git branch -avv | egrep '\\*.*\\[.*\\]' | sed 's|\\* \\([^ ]*\\)  .*|\\1|')\"; [ -n \"${BRANCH}\" ] && URL=\"${URL}/tree/${BRANCH}\" && URL=\"${URL//#/%23}\"; echo Opening URL: $URL; open \"${URL}\"; }; f"
+  web = !"f() { \
+    : git pull ; \
+    TARGET_REMOTE=\"${1:-origin}\"; \
+    OBJECT_NAME=\"${2:-$(git imp-current-branch-name)}\"; \
+    OBJECT_NAME=\"${OBJECT_NAME#${TARGET_REMOTE}/}\"; \
+    REMOTE_URL=\"$(git remote get-url --push ${TARGET_REMOTE}; exit $?)\" || exit $?; \
+    BASE_URL=\"https://$(echo \"${REMOTE_URL}\" | sed -e 's/^git@//; s/.git$//; s/:/\\//')\"; \
+    if [ \"${OBJECT_NAME}\" = \"$(git imp-main-branch-name)\" ]; then \
+      git imp-warn \"opening '${TARGET_REMOTE}' repository root webpage\"; \
+    elif ! git imp-check-if-branch-exists \"${TARGET_REMOTE}/${OBJECT_NAME}\"; then \
+      git imp-warn \"opening '${TARGET_REMOTE}' repository root webpage since '${OBJECT_NAME}' does not exit in '${TARGET_REMOTE}'\"; \
+    else \
+      git imp-warn \"opening '${TARGET_REMOTE}' repository webpage for branch '${OBJECT_NAME}'\"; \
+      case \"${BASE_URL}\" in \
+        https://gitlab.com/*) \
+          BASE_URL+='/-'; \
+          ;; \
+      esac; \
+      BASE_URL+=\"/tree/${OBJECT_NAME}\"; \
+    fi; \
+    if open \"${BASE_URL}\"; then \
+      git imp-success \"${BASE_URL} opened\"; \
+    else \
+      git imp-error \"unable to open ${BASE_URL}\"; \
+    fi; \
+  }; f"
+
+  ## GitHub related
 
   token = !"f() { if TKN_FROM=\"$(git imp-get-token --location)\"; then echo \"Valid GitHub token found in ${TKN_FROM}.\"; echo \"To manage or rewoke your application tokens go to: https://github.com/settings/applications\"; exit 0; else [ -n \"${TKN_FROM}\" ] && git imp-warn \"I found a token in ${TKN_FROM} but I cannot validate it right now.\"; exit 1; fi; }; f"
 
