@@ -266,6 +266,9 @@
 [init]
   defaultBranch = main
 
+[fetch]
+  throttle-threshold-in-minutes = 60
+
 # To understand the structure of this aliases see https://www.atlassian.com/blog/git/advanced-git-aliases
 [alias]
 
@@ -283,6 +286,28 @@
   # effectively runs add --interactive, but bypasses the initial command menu
   # and directly jumps to the patch subcommand."
   ap = add --patch
+
+  unthrottled-fetch = throttled-fetch --bypass-throttling
+
+  throttled-fetch = !"f() { \
+    : git fetch ; \
+    IS_THROTTLE_IGNORED=false; \
+    if [ \"${1}\" = '--bypass-throttling' ]; then \
+      IS_THROTTLE_IGNORED=true; \
+      shift; \
+    fi; \
+    THRESHOLD_IN_MINUTES=\"$(git config --get fetch.throttle-threshold-in-minutes || echo 30)\"; \
+    CACHE_GIT_DIR=~/.cache/git/fetch; \
+    mkdir -p "${CACHE_GIT_DIR}"; \
+    REPO_HASH=\"$(echo \"$(pwd) $(git remote get-url --push origin)\" | shasum -a256 | tr -dc '[:alnum:]')\"; \
+    TOUCH_FILE=${CACHE_GIT_DIR}/${REPO_HASH}.repo; \
+    if $IS_THROTTLE_IGNORED || [ -z \"$(find \"${TOUCH_FILE}\" -mtime -${THRESHOLD_IN_MINUTES}m -print 2>/dev/null)\" ]; then \
+      git fetch ${@} && touch \"${TOUCH_FILE}\"; \
+    elif [[ \"${*}\" =~ --verbose ]]; then \
+      git imp-warn a fetch for this repo was done less than ${THRESHOLD_IN_MINUTES} minutes ago - skipping fetch; \
+      git imp-warn \"try 'git unthrottled-fetch' if you want to bypass throttling\"; \
+    fi; \
+  }; f"
 
   # Short for Amend (or Add) To Last Commit.
   atlc = !git imp-is-a-commit-possible && git commit --amend -C HEAD
@@ -375,7 +400,7 @@
         exit 1; \
       fi; \
       git imp-check-clean-tree || exit $?; \
-      git fetch --all; \
+      git throttled-fetch --all; \
       UPSTREAM_BRANCH_NAME=$(git imp-upstream-branch-name); \
       if [ -n \"${UPSTREAM_BRANCH_NAME}\" ]; then \
         git imp-error \"'$(git imp-current-branch-name)' branch is already published to its upstream '${UPSTREAM_BRANCH_NAME}'\"; \
@@ -468,7 +493,7 @@
         return 1; \
         ;; \
     esac; \
-    git fetch --all || exit 1 ; \
+    git sync || exit 1 ; \
     ORIGINAL_PWD=\"$(pwd)\"; \
     BRANCH_TO_HOTFIX_FROM=\"${1:-$(git imp-current-branch-name)}\"; \
     BRANCH_TO_HOTFIX_FROM=\"$(git rev-parse --abbrev-ref  \"origin/${BRANCH_TO_HOTFIX_FROM#origin/}\")\"; \
@@ -544,7 +569,7 @@
       return 1; \
     fi; \
     if ${IS_FETCH_NEEDED_BEFORE_PRUNE:-true}; then \
-      git fetch --all || exit 1 ; \
+      git unthrottled-fetch --all || exit 1 ; \
     fi; \
     HOTFIX_TO_PRUNE=\"${1:?Missing hotfix to prune}\"; \
     HOTFIX_BRANCH_NAME_PREFIX=\"$(git imp-sanitize-string-for-branch-name \"$(git config user.name)\")-hotfix-on\"; \
@@ -571,7 +596,7 @@
   }; f"
 
   # Fetch all remotes and print the state of all branches. This command does not modify anything locally.
-  sync = !git fetch --progress --verbose --all --prune && echo && git bra
+  sync = !git unthrottled-fetch --progress --verbose --all --prune && echo && git bra
   s = sync
   # Like 'git sync' but switching to the main branch, updating it and removing all local branches that have been merged to the main branch.
   # DOC: https://git-scm.com/docs/git-pull#git-pull---ff-only
@@ -661,7 +686,7 @@
   hm      = !git his --max-count=$(c=$(git rev-list --count $(git imp-main-branch-name)..HEAD) && echo $((c + 1)))
 
   # Display detailed information for all commits in all branches like 'git
-  # hista' but doing a 'git fetch --all' before to make sure that the command
+  # hista' but doing a 'git sync' before to make sure that the command
   # reports the last state in the remotes.
   # NOTE: ': git log ;' notation allows the shell to know from which command the
   # tab-autocompletion should be used.

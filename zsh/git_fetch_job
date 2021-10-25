@@ -10,8 +10,8 @@
 
 set -euo pipefail
 
-CACHE_GIT_DIR=~/.cache/git
-CACHE_GIT_FETCH_LOGFILE="${CACHE_GIT_DIR}/fetch_$(date +"%Y%m_%b").log"
+CACHE_GIT_DIR=~/.cache/git/fetch
+CACHE_GIT_FETCH_LOGFILE="${CACHE_GIT_DIR}/$(date +"%Y%m_%b").log"
 REPO_DIRS=()
 REPO_DIRS+=(~/dev/gitlab)
 REPO_DIRS+=(~/dev/github)
@@ -23,15 +23,20 @@ cat << EOF >> "${CACHE_GIT_FETCH_LOGFILE}"
 $(date)
 Starting updates in git repos in ${REPO_DIRS[@]}...
 
-$(find ${REPO_DIRS[@]} \
+EOF
+
+find ${REPO_DIRS[@]} \
     -name .git \
     -type d \
     -maxdepth 3 \
     -execdir echo \; \
     -execdir date \; \
     -execdir pwd \; \
-    -execdir echo '$ git fetch --all --verbose --progress --prune' \;\
-    -execdir git fetch --all --verbose --progress --prune \; 2>&1)
+    -execdir echo '$ git throttled-fetch --all --verbose --progress --prune' \;\
+    -execdir git throttled-fetch --all --verbose --progress --prune \; \
+    1>"${CACHE_GIT_FETCH_LOGFILE}" 2>&1
+
+cat << EOF >> "${CACHE_GIT_FETCH_LOGFILE}"
 
 $(date)
 Finished updates in git repos in ${REPO_DIRS}.

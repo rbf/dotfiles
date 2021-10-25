@@ -360,8 +360,7 @@ function show_last_modified_files_in_tree() {
 function show_git_repo_info() {
   show_last_modified_files_in_tree
   echo
-  git fetch --all --prune --progress
-  echo
+  git spaced-after throttled-fetch --all --prune --progress
   git br
   echo
   git h
