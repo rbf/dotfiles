@@ -805,13 +805,16 @@
       PULLED_OR_PUSHED=pulled; \
       FORMAT_BRANCHES=\"%C(red)${UPSTREAM_BRANCH_NAME}%C(white) in %C(green)${CURRENT_BRANCH_NAME}%C(white)\"; \
     elif (( $(git rev-list --count $(git imp-upstream-branch-name)..HEAD) > 0 )); then \
-      THRESHOLD_IN_HOURS=8; \
-      ((($(date +'%s') - $(git log --pretty=format:'%ct' -1 ${MOST_RECENT_COMMON_ANCESTOR})) < (60 * 60 * THRESHOLD_IN_HOURS))) && exit; \
+      THRESHOLD_IN_HOURS=1; \
+      ((($(date +'%s') - $(git log --pretty=format:'%ct' -1 $(git imp-child-commit-in-current-branch ${MOST_RECENT_COMMON_ANCESTOR}))) < (60 * 60 * THRESHOLD_IN_HOURS))) && exit; \
       PULLED_OR_PUSHED=pushed; \
       FORMAT_BRANCHES=\"%C(green)${CURRENT_BRANCH_NAME}%C(white) in %C(red)${UPSTREAM_BRANCH_NAME}%C(white)\"; \
     fi; \
     git log --max-count=1 --pretty=format:\"You haven't ${PULLED_OR_PUSHED} in a while: the most recent commit from ${FORMAT_BRANCHES} is from %C(bold)%cr%C(reset).%C(white dim) %C(yellow)%h %C(white)on %cd%C(reset)\" ${MOST_RECENT_COMMON_ANCESTOR}; \
   }; f"
+
+  # SOURCE: 25oct2021 https://stackoverflow.com/questions/1761825/referencing-the-child-of-a-commit-in-git/20141722#20141722
+  imp-child-commit-in-current-branch = !"f() { git log --pretty=tformat:'%H' HEAD...${1?-missing commit-ish} | tail -1; }; f"
 
   imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\" | fold -w 105 -s; }; c"
   # Like imp-printf but with a newline at the end.
