@@ -656,6 +656,10 @@
   # Like 'git h' but shows the commit graph and commits for all branches.
   ha      = hg --all
 
+  # Like 'git h' but shows all commits in the current branch since branching the
+  # main branch.
+  hm      = !git his --max-count=$(c=$(git rev-list --count $(git imp-main-branch-name)..HEAD) && echo $((c + 1)))
+
   # Display detailed information for all commits in all branches like 'git
   # hista' but doing a 'git fetch --all' before to make sure that the command
   # reports the last state in the remotes.
