@@ -276,6 +276,10 @@
   # SOURCE: http://blog.blindgaenger.net/advanced_git_aliases.html
   this = !git init && git add . && git commit -m \"initial commit\"
 
+  rl = repo list
+  ro = repo open
+  rc = repo clone
+
   repo = !"f() { \
     git imp-prevent-inception || exit $?; \
     export CURRENT_ALIAS_NAME='repo'; \
@@ -301,12 +305,9 @@
         git imp-error-alias - missing command; \
         f help \
         ;; \
-      --*) \
+      *) \
         git imp-error-alias - invalid command ${COMMAND}; \
         f help \
-        ;; \
-      *) \
-        git imp-repo-open \"${COMMAND}\" \"${@}\" || f help; \
         ;; \
     esac; \
   }; f"
