@@ -520,6 +520,8 @@
 	<false/>
 	<key>Bell</key>
 	<true/>
+	<key>CommandString</key>
+	<string></string>
 	<key>CursorBlink</key>
 	<false/>
 	<key>CursorColor</key>
@@ -631,7 +633,7 @@
 	<data>
 	YnBsaXN0MDDUAQIDBAUGBwpYJHZlcnNpb25ZJGFyY2hpdmVyVCR0b3BYJG9iamVjdHMS
 	AAGGoF8QD05TS2V5ZWRBcmNoaXZlctEICVRyb290gAGkCwwVFlUkbnVsbNQNDg8QERIT
-	FFZOU1NpemVYTlNmRmxhZ3NWTlNOYW1lViRjbGFzcyNAKgAAAAAAABAQgAKAA18QIE1l
+	FFZOU1NpemVYTlNmRmxhZ3NWTlNOYW1lViRjbGFzcyNAKAAAAAAAABAQgAKAA18QIE1l
 	c2xvTEdTTmVyZEZvbnRDb21wbGV0ZS1SZWd1bGFy0hcYGRpaJGNsYXNzbmFtZVgkY2xh
 	c3Nlc1ZOU0ZvbnSiGRtYTlNPYmplY3QIERokKTI3SUxRU1heZ253foWOkJKUt7zH0Nfa
 	AAAAAAAAAQEAAAAAAAAAHAAAAAAAAAAAAAAAAAAAAOM=
@@ -642,6 +644,8 @@
 	<integer>1</integer>
 	<key>ProfileCurrentVersion</key>
 	<real>2.0699999999999998</real>
+	<key>RunCommandAsShell</key>
+	<true/>
 	<key>SelectionColor</key>
 	<data>
 	YnBsaXN0MDDUAQIDBAUGBwpYJHZlcnNpb25ZJGFyY2hpdmVyVCR0b3BYJG9iamVjdHMS
@@ -747,24 +751,38 @@
 	</data>
 	<key>ShouldLimitScrollback</key>
 	<integer>0</integer>
+	<key>ShowActiveProcessArgumentsInTabTitle</key>
+	<false/>
 	<key>ShowActiveProcessArgumentsInTitle</key>
-	<true/>
+	<false/>
+	<key>ShowActiveProcessInTabTitle</key>
+	<false/>
 	<key>ShowActiveProcessInTitle</key>
+	<false/>
+	<key>ShowActivityIndicatorInTab</key>
 	<true/>
 	<key>ShowCommandKeyInTitle</key>
-	<true/>
+	<false/>
 	<key>ShowComponentsWhenTabHasCustomTitle</key>
 	<false/>
+	<key>ShowDimensionsInTitle</key>
+	<true/>
+	<key>ShowRepresentedURLInTabTitle</key>
+	<false/>
 	<key>ShowRepresentedURLInTitle</key>
+	<false/>
+	<key>ShowRepresentedURLPathInTabTitle</key>
 	<true/>
 	<key>ShowRepresentedURLPathInTitle</key>
-	<true/>
+	<false/>
 	<key>ShowShellCommandInTitle</key>
-	<true/>
+	<false/>
+	<key>ShowTTYNameInTabTitle</key>
+	<false/>
 	<key>ShowTTYNameInTitle</key>
 	<false/>
 	<key>ShowWindowSettingsNameInTitle</key>
-	<false/>
+	<true/>
 	<key>TextBoldColor</key>
 	<data>
 	YnBsaXN0MDDUAQIDBAUGBwpYJHZlcnNpb25ZJGFyY2hpdmVyVCR0b3BYJG9iamVjdHMS
@@ -975,6 +993,8 @@
 	<false/>
 	<key>VisualBellOnlyWhenMuted</key>
 	<false/>
+	<key>WindowTitle</key>
+	<string>Terminal</string>
 	<key>columnCount</key>
 	<integer>101</integer>
 	<key>name</key>
@@ -982,8 +1002,10 @@
 	<key>rowCount</key>
 	<integer>29</integer>
 	<key>shellExitAction</key>
-	<integer>2</integer>
+	<integer>1</integer>
 	<key>type</key>
 	<string>Window Settings</string>
+	<key>warnOnShellCloseAction</key>
+	<integer>2</integer>
 </dict>
 </plist>
