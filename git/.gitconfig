@@ -311,105 +311,6 @@
     esac; \
   }; f"
 
-  imp-repo-clone = !"f() { \
-    export CURRENT_ALIAS_NAME='repo clone'; \
-    REPO_URL=\"${1}\"; \
-    shift; \
-    case \"${REPO_URL}\" in \
-      git@*.com:*.git) \
-        REPO_DIR=\"${REPO_URL#git@}\"; \
-        REPO_DIR=\"${REPO_DIR%.git}\"; \
-        REPO_DIR=\"${REPO_DIR/.com://}\"; \
-        REPO_DIR=\"${REPO_DIR_BASE}/${REPO_DIR}\"; \
-        ;; \
-      *) \
-        git imp-error-alias \"accepts only repo SSH URLs in the following form: 'git@*.com:*.git'\"; \
-        return 1; \
-        ;; \
-    esac; \
-    if [ -d \"${REPO_DIR}\" ]; then \
-      cd \"${REPO_DIR}\"; \
-      if [ -z \"$(command ls -A)\" ]; then \
-        git imp-warn-alias \"- the folder '${REPO_DIR}' already exists but is empty\"; \
-      elif ! git remote 1>/dev/null 2>&1; then \
-        git imp-error-alias \"- the folder '${REPO_DIR}' already exists and is not empty\"; \
-        return 1; \
-      elif [ \"${REPO_URL}\" = \"$(git remote get-url --push origin)\" ]; then \
-        git imp-warn-alias \"- '${REPO_URL}' is already checked out at '${REPO_DIR}'\"; \
-        IS_CLONING_PENDING=false; \
-      else \
-        git imp-error-alias \"- the folder '${REPO_DIR}' already exists but repo '$(git remote get-url --push origin)' is checked out instead of '${REPO_URL}'\"; \
-        return 1; \
-      fi; \
-    else \
-      if mkdir -p \"${REPO_DIR}\"; then \
-        git imp-success-alias \" - successfully created directory '${REPO_DIR}'\"; \
-        cd \"${REPO_DIR}\"; \
-      else \
-        git imp-error-alias \" - unable to create directory '${REPO_DIR}'\"; \
-        return 1; \
-      fi; \
-    fi; \
-    if ${IS_CLONING_PENDING:-true}; then \
-      if git clone --progress -- \"${REPO_URL}\" \"${REPO_DIR}\"; then \
-        git imp-success-alias \"${REPO_URL} - successfully cloned at '${REPO_DIR}'\"; \
-      else \
-        git imp-error-alias \"${REPO_URL} - unable to clone at '${REPO_DIR}'\"; \
-        return 1; \
-      fi; \
-    fi; \
-    git imp-repo-open \"${REPO_DIR}\"; \
-  }; f"
-
-  imp-repo-list-print = !"f() { git -c color.ui=always log --max-count=1 --date=human --pretty=tformat:\"%C(dim)$(pwd | sed -e \"s:${REPO_DIR_BASE}/::\" -e 's:/: %C(no-dim)%C(white bold):') %>|(${1:-30})%C(no-bold)%C(dim)* %C(yellow)%h%C(green) %>(16)%ad %C(white)| %<(70)%s %C(blue)[%an] %G?%C(normal)%C(red bold)%<|($(tput cols),trunc)%d%C(reset)\"; }; f"
-
-  imp-repo-list = !"f() { \
-    export CURRENT_ALIAS_NAME='repo list'; \
-    case \"${1}\" in \
-      --porcelain) \
-        shift; \
-        find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir pwd \\; ; \
-        return 0; \
-        ;; \
-      --*) \
-        git imp-error-alias \"- unrecognized option ${1}\"; \
-        ;; \
-    esac; \
-    MAX_REPO_LENGTH=$(($(f --porcelain \"${*}\" \
-                          | awk '{print length}' \
-                          | sort -nr \
-                          | head -1 ) + 1 - ${#REPO_DIR_BASE})); \
-    find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} \\; ; \
-  }; f"
-
-  imp-repo-open = !"f() { \
-    export CURRENT_ALIAS_NAME='repo open'; \
-    REPO_PATTERN=\"${*#${REPO_DIR_BASE}/}\"; \
-    if [ -z \"${REPO_PATTERN}\" ]; then \
-      git imp-error-alias - missing pattern; \
-      return 1; \
-    fi; \
-    MATCHED_REPOS=($(git imp-repo-list --porcelain \"${REPO_PATTERN}\")); \
-    case ${#MATCHED_REPOS[@]} in \
-      0) \
-        git imp-error-alias \"- no repo found matching '${REPO_PATTERN}'\"; \
-        git imp-repo-list; \
-        return 1; \
-        ;; \
-      1) \
-        git imp-success-alias ${MATCHED_REPOS[0]}; \
-        echo; \
-        cd \"${MATCHED_REPOS[0]}\"; \
-        IS_CONTEXT_TO_BE_PRINTED=true RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
-        ;; \
-      *) \
-        git imp-error-alias \"- ambiguous pattern: ${#MATCHED_REPOS[@]} repos found matching '${REPO_PATTERN}'\"; \
-        git imp-repo-list \"${REPO_PATTERN}\"; \
-        return 1; \
-        ;; \
-    esac; \
-  }; f"
-
   # Clone a repo but get only the current commit instead of the full history. Useful for installing tools.
   shallow-clone = clone --depth=1
 
@@ -981,6 +882,105 @@
   imp-upstream-main-branch-name = !"git imp-upstream-branch-name \"refs/heads/$(git imp-main-branch-name)\""
 
   imp-is-current-branch-up-to-date-with-upstream-main = !"[ -n \"$(git branch --contains \"$(git imp-upstream-main-branch-name)\" --list \"$(git imp-current-branch-name)\")\" ]"
+
+  imp-repo-clone = !"f() { \
+    export CURRENT_ALIAS_NAME='repo clone'; \
+    REPO_URL=\"${1}\"; \
+    shift; \
+    case \"${REPO_URL}\" in \
+      git@*.com:*.git) \
+        REPO_DIR=\"${REPO_URL#git@}\"; \
+        REPO_DIR=\"${REPO_DIR%.git}\"; \
+        REPO_DIR=\"${REPO_DIR/.com://}\"; \
+        REPO_DIR=\"${REPO_DIR_BASE}/${REPO_DIR}\"; \
+        ;; \
+      *) \
+        git imp-error-alias \"accepts only repo SSH URLs in the following form: 'git@*.com:*.git'\"; \
+        return 1; \
+        ;; \
+    esac; \
+    if [ -d \"${REPO_DIR}\" ]; then \
+      cd \"${REPO_DIR}\"; \
+      if [ -z \"$(command ls -A)\" ]; then \
+        git imp-warn-alias \"- the folder '${REPO_DIR}' already exists but is empty\"; \
+      elif ! git remote 1>/dev/null 2>&1; then \
+        git imp-error-alias \"- the folder '${REPO_DIR}' already exists and is not empty\"; \
+        return 1; \
+      elif [ \"${REPO_URL}\" = \"$(git remote get-url --push origin)\" ]; then \
+        git imp-warn-alias \"- '${REPO_URL}' is already checked out at '${REPO_DIR}'\"; \
+        IS_CLONING_PENDING=false; \
+      else \
+        git imp-error-alias \"- the folder '${REPO_DIR}' already exists but repo '$(git remote get-url --push origin)' is checked out instead of '${REPO_URL}'\"; \
+        return 1; \
+      fi; \
+    else \
+      if mkdir -p \"${REPO_DIR}\"; then \
+        git imp-success-alias \" - successfully created directory '${REPO_DIR}'\"; \
+        cd \"${REPO_DIR}\"; \
+      else \
+        git imp-error-alias \" - unable to create directory '${REPO_DIR}'\"; \
+        return 1; \
+      fi; \
+    fi; \
+    if ${IS_CLONING_PENDING:-true}; then \
+      if git clone --progress -- \"${REPO_URL}\" \"${REPO_DIR}\"; then \
+        git imp-success-alias \"${REPO_URL} - successfully cloned at '${REPO_DIR}'\"; \
+      else \
+        git imp-error-alias \"${REPO_URL} - unable to clone at '${REPO_DIR}'\"; \
+        return 1; \
+      fi; \
+    fi; \
+    git imp-repo-open \"${REPO_DIR}\"; \
+  }; f"
+
+  imp-repo-list-print = !"f() { git -c color.ui=always log --max-count=1 --date=human --pretty=tformat:\"%C(dim)$(pwd | sed -e \"s:${REPO_DIR_BASE}/::\" -e 's:/: %C(no-dim)%C(white bold):') %>|(${1:-30})%C(no-bold)%C(dim)* %C(yellow)%h%C(green) %>(16)%ad %C(white)| %<(70)%s %C(blue)[%an] %G?%C(normal)%C(red bold)%<|($(tput cols),trunc)%d%C(reset)\"; }; f"
+
+  imp-repo-list = !"f() { \
+    export CURRENT_ALIAS_NAME='repo list'; \
+    case \"${1}\" in \
+      --porcelain) \
+        shift; \
+        find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir pwd \\; ; \
+        return 0; \
+        ;; \
+      --*) \
+        git imp-error-alias \"- unrecognized option ${1}\"; \
+        ;; \
+    esac; \
+    MAX_REPO_LENGTH=$(($(f --porcelain \"${*}\" \
+                          | awk '{print length}' \
+                          | sort -nr \
+                          | head -1 ) + 1 - ${#REPO_DIR_BASE})); \
+    find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} \\; ; \
+  }; f"
+
+  imp-repo-open = !"f() { \
+    export CURRENT_ALIAS_NAME='repo open'; \
+    REPO_PATTERN=\"${*#${REPO_DIR_BASE}/}\"; \
+    if [ -z \"${REPO_PATTERN}\" ]; then \
+      git imp-error-alias - missing pattern; \
+      return 1; \
+    fi; \
+    MATCHED_REPOS=($(git imp-repo-list --porcelain \"${REPO_PATTERN}\")); \
+    case ${#MATCHED_REPOS[@]} in \
+      0) \
+        git imp-error-alias \"- no repo found matching '${REPO_PATTERN}'\"; \
+        git imp-repo-list; \
+        return 1; \
+        ;; \
+      1) \
+        git imp-success-alias ${MATCHED_REPOS[0]}; \
+        echo; \
+        cd \"${MATCHED_REPOS[0]}\"; \
+        IS_CONTEXT_TO_BE_PRINTED=true RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
+        ;; \
+      *) \
+        git imp-error-alias \"- ambiguous pattern: ${#MATCHED_REPOS[@]} repos found matching '${REPO_PATTERN}'\"; \
+        git imp-repo-list \"${REPO_PATTERN}\"; \
+        return 1; \
+        ;; \
+    esac; \
+  }; f"
 
   # SOURCE: 22oct2021 https://stackoverflow.com/a/1549155
   imp-check-latest-pushed-commit-for-current-branch = !"f() {\
