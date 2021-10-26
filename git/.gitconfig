@@ -345,12 +345,7 @@
         return 1; \
       fi; \
     fi; \
-    echo; \
-    git spaced-after throttled-fetch --all --progress; \
-    git h; \
-    echo; \
-    git st; \
-    RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
+    git imp-repo-open \"${REPO_DIR}\"; \
   }; f"
 
   imp-repo-list-print = !"f() { git -c color.ui=always log --max-count=1 --date=human --pretty=tformat:\"%C(dim)$(pwd | sed -e \"s:${REPO_DIR_BASE}/::\" -e 's:/: %C(no-dim)%C(white bold):') %>|(${1:-30})%C(no-bold)%C(dim)* %C(yellow)%h%C(green) %>(16)%ad %C(white)| %<(70)%s %C(blue)[%an] %G?%C(normal)%C(red bold)%<|($(tput cols),trunc)%d%C(reset)\"; }; f"
@@ -376,14 +371,15 @@
 
   imp-repo-open = !"f() { \
     export CURRENT_ALIAS_NAME='repo open'; \
-    if [ -z \"${1}\" ]; then \
+    REPO_PATTERN=\"${*#${REPO_DIR_BASE}/}\"; \
+    if [ -z \"${REPO_PATTERN}\" ]; then \
       git imp-error-alias - missing pattern; \
       return 1; \
     fi; \
-    MATCHED_REPOS=($(git imp-repo-list --porcelain \"${*}\")); \
+    MATCHED_REPOS=($(git imp-repo-list --porcelain \"${REPO_PATTERN}\")); \
     case ${#MATCHED_REPOS[@]} in \
       0) \
-        git imp-error-alias \"- no repo found matching '${*}'\"; \
+        git imp-error-alias \"- no repo found matching this pattern: '${REPO_PATTERN}'\"; \
         return 1; \
         ;; \
       1) \
@@ -393,8 +389,8 @@
         IS_CONTEXT_TO_BE_PRINTED=true RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
         ;; \
       *) \
-        git imp-error-alias \"- ${#MATCHED_REPOS[@]} repos found matching '${*}'\"; \
-        git imp-repo-list \"${*}\"; \
+        git imp-error-alias \"- ${#MATCHED_REPOS[@]} repos found matching this pattern '${REPO_PATTERN}'\"; \
+        git imp-repo-list \"${REPO_PATTERN}\"; \
         return 1; \
         ;; \
     esac; \
