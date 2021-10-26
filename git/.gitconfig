@@ -407,7 +407,7 @@
 
   # This is an alias to 'git checkout' but without any arguments it will list all local branches
   # to choose the one we want to switch to (useful in systems without tab-autocompletion).
-  co = !"f() { : git checkout ;  if ${RUNNING_INSIDE_A_WTC_SUB_SHELL:-false}; then git imp-error 'this is running inside a worktree sub-shell - checking out a different branch is discouraged'; git imp-warn 'type CTRL-D to exit'; exit 1; fi; if [ -n \"${1}\" ]; then git checkout \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else git imp-error \"there are no other branches beyond '$(git imp-current-branch-name)' that can be checked out here\"; git imp-warn \"if you are looking for a branch, try 'git br':\"; git br; exit 1; fi; done <<< \"$(git branch | grep -v \"*\" | grep -v \"+\")\"; read -p \"Switch to branch number [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git checkout ${b[${bn}]}; else git imp-error \"invalid option\"; fi; }; f"
+  co = !"f() { : git checkout ; git imp-prevent-inception || exit $?; if [ -n \"${1}\" ]; then git checkout \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else git imp-error \"there are no other branches beyond '$(git imp-current-branch-name)' that can be checked out here\"; git imp-warn \"if you are looking for a branch, try 'git br':\"; git br; exit 1; fi; done <<< \"$(git branch | grep -v \"*\" | grep -v \"+\")\"; read -p \"Switch to branch number [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git checkout ${b[${bn}]}; else git imp-error \"invalid option\"; fi; }; f"
 
   # Similar to 'git co' but for 'git merge'.
   me = !"f() { : git merge ; if [ -n \"${1}\" ]; then git merge \"${@}\"; exit; fi; b=(); c=0; while read -r l; do (( c++ )); if [ -n \"${l}\" ]; then b[${c}]="$l"; echo \"$c: $l\"; else echo \"There are no other branches beyond '$(git imp-current-branch-name)'.\"; exit; fi; done <<< \"$(git branch | grep -v \"*\")\"; read -p \"Branch number to merge into current branch '$(git imp-current-branch-name)' [default: ${b[1]}]: \" bn; bn=\"$(echo ${bn:-1} | sed 's/.*[^0-9].*//g')\"; if [ -n \"${b[${bn}]}\" ]; then git merge ${b[${bn}]}; else git imp-error \"invalid option\"; fi; }; f"
@@ -518,7 +518,7 @@
   wt = worktree
   wtl = worktree list
   wt-br = !"f() { : git branch ; case $# in 0) git imp-error 'missing branch name';; 1) git worktree add .linked-worktrees/${1#origin/} ${1#origin/};; *) git imp-error 'only one are argument accepted: branch name';; esac; }; f"
-  wtc = !"f() { git imp-prevent-inception || exit $?; if [ -n \"${1}\" ]; then git imp-error 'no arguments accepted'; exit 1; fi; wts=(); i=0; while read -r wt; do (( i++ )); if [ -n \"${wt}\" ]; then wts[${i}]="$wt"; echo \"$i: $wt\"; else echo 'There are no linked working trees.'; exit; fi; done <<< \"$(git worktree list | grep -v \"^$(pwd) \")\"; read -p \"Switch to worktree number [default: 1]: \" choice; if [ -n \"${wts[${choice:=1}]}\" ]; then shopt -s extglob; cd \"${wts[${choice}]%%+( )[a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9] \\[*}\"; shopt -u extglob; RUNNING_INSIDE_A_WTC_SUB_SHELL=true $SHELL; else git imp-error \"invalid option\"; fi; }; f"
+  wtc = !"f() { git imp-prevent-inception || exit $?; export CURRENT_ALIAS_NAME='wtc'; if [ -n \"${1}\" ]; then git imp-error 'no arguments accepted'; exit 1; fi; wts=(); i=0; while read -r wt; do (( i++ )); if [ -n \"${wt}\" ]; then wts[${i}]="$wt"; echo \"$i: $wt\"; else echo 'There are no linked working trees.'; exit; fi; done <<< \"$(git worktree list | grep -v \"^$(pwd) \")\"; read -p \"Switch to worktree number [default: 1]: \" choice; if [ -n \"${wts[${choice:=1}]}\" ]; then shopt -s extglob; cd \"${wts[${choice}]%%+( )[a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9] \\[*}\"; shopt -u extglob; RUNNING_INSIDE_SUB_SHELL=true $SHELL; else git imp-error \"invalid option\"; fi; }; f"
 
 # TODO: Create command similar to 'git hotfix' for 'git feature'. Differences:
 #     - s/hotfix/feature/gi in messages and paths
@@ -533,6 +533,7 @@
   hotfix = !"f() { \
     : git branch ; \
     git imp-prevent-inception || exit $?; \
+    export CURRENT_ALIAS_NAME='hotfix'; \
     HOTFIX_EXPLANATION=\"$(git imp-underline git hotfix) will automatically create\"; \
     HOTFIX_EXPLANATION+=\" a hotfix workspace for the branch you are on and put\"; \
     HOTFIX_EXPLANATION+=\" you in it so that you can start working on\"; \
@@ -609,7 +610,7 @@
                  \"Otherwise, it will be kept until you remove it with 'git worktree remove'.\" \
                  \"You are now in the hotfix workspace at following commit:\"; \
     git h -1; \
-    RUNNING_INSIDE_A_WTC_SUB_SHELL=true RUNNING_INSIDE_A_HOTFIX_SUB_SHELL=true $SHELL; \
+    RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
     if ! git imp-is-tree-clean; then \
       git imp-warn \"there are uncommitted changes - local hotfix files will be kept\"; \
       git imp-warn \"issue the same 'git hotfix' command to continue where you left\"; \
@@ -967,7 +968,7 @@
     if (( ${#TEXT} < ($(tput cols) - 20) )); then \
       printf \"${TEXT}\"; \
     else \
-      printf \"${TEXT}\" | fold -w 105 -s; \
+      printf \"${TEXT}\" | fold -w 76 -s; \
     fi; \
   }; c"
 
@@ -1006,18 +1007,8 @@
   imp-check-clean-tree = !"f() { if ! git imp-is-tree-clean; then git imp-error \"there are uncommitted changes or untracked files - commit or stash them before continuing\"; exit 1; fi; }; f"
 
   imp-prevent-inception = !"f() { \
-    if ${RUNNING_INSIDE_A_HOTFIX_SUB_SHELL:-false}; then \
-      git imp-error 'no hotfix inception allowed - this is already running inside a hotfix sub-shell'; \
-      git imp-warn 'type CTRL-D to exit and finish the hotfix'; \
-      return 1; \
-    fi; \
-    if ${RUNNING_INSIDE_A_WTC_SUB_SHELL:-false}; then \
-      git imp-error 'this is running inside a worktree sub-shell'; \
-      git imp-warn 'type CTRL-D to exit'; \
-      return 1; \
-    fi; \
     if ${RUNNING_INSIDE_SUB_SHELL:-false}; then \
-      git imp-error-alias 'does not allow inception - type CTRL-D to exit this sub-shell'; \
+      git imp-error-alias 'started this sub-shell and does not allow shellception - type CTRL-D to exit this sub-shell'; \
       return 1; \
     fi; \
   }; f"
