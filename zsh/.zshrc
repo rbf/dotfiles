@@ -518,4 +518,10 @@ if ${IS_CONTEXT_TO_BE_PRINTED:-false}; then
   context
 fi
 
+if ${IS_SUBLP_TO_BE_CALLED:-false}; then
+  echo
+  sublp
+  echo
+fi
+
 unset -f list_outdated_brew_packages
