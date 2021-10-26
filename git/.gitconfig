@@ -276,6 +276,77 @@
   # SOURCE: http://blog.blindgaenger.net/advanced_git_aliases.html
   this = !git init && git add . && git commit -m \"initial commit\"
 
+  repo = !"f() { \
+    git imp-prevent-inception || exit $?; \
+    export CURRENT_ALIAS_NAME='repo'; \
+    export REPO_DIR_BASE=~/dev/repos; \
+    COMMAND=\"${1}\"; \
+    shift; \
+    case ${COMMAND} in \
+      clone) \
+        git imp-repo-clone \"${@}\"; \
+        ;; \
+      *) \
+        git imp-error-alias \"accepts following command: 'clone <SSH URL>'\"; \
+        ;; \
+    esac; \
+  }; f"
+
+  imp-repo-clone = !"f() { \
+    export CURRENT_ALIAS_NAME='repo clone'; \
+    REPO_URL=\"${1}\"; \
+    shift; \
+    case \"${REPO_URL}\" in \
+      git@*.com:*.git) \
+        REPO_DIR=\"${REPO_URL#git@}\"; \
+        REPO_DIR=\"${REPO_DIR%.git}\"; \
+        REPO_DIR=\"${REPO_DIR/.com://}\"; \
+        REPO_DIR=\"${REPO_DIR_BASE}/${REPO_DIR}\"; \
+        ;; \
+      *) \
+        git imp-error-alias \"accepts only repo SSH URLs in the following form: 'git@*.com:*.git'\"; \
+        return 1; \
+        ;; \
+    esac; \
+    if [ -d \"${REPO_DIR}\" ]; then \
+      cd \"${REPO_DIR}\"; \
+      if [ -z \"$(command ls -A)\" ]; then \
+        git imp-warn-alias \"- the folder '${REPO_DIR}' already exists but is empty\"; \
+      elif ! git remote 1>/dev/null 2>&1; then \
+        git imp-error-alias \"- the folder '${REPO_DIR}' already exists and is not empty\"; \
+        return 1; \
+      elif [ \"${REPO_URL}\" = \"$(git remote get-url --push origin)\" ]; then \
+        git imp-warn-alias \"- '${REPO_URL}' is already checked out at '${REPO_DIR}'\"; \
+        IS_CLONING_PENDING=false; \
+      else \
+        git imp-error-alias \"- the folder '${REPO_DIR}' already exists but repo '$(git remote get-url --push origin)' is checked out instead of '${REPO_URL}'\"; \
+        return 1; \
+      fi; \
+    else \
+      if mkdir -p \"${REPO_DIR}\"; then \
+        git imp-success-alias \" - successfully created directory '${REPO_DIR}'\"; \
+        cd \"${REPO_DIR}\"; \
+      else \
+        git imp-error-alias \" - unable to create directory '${REPO_DIR}'\"; \
+        return 1; \
+      fi; \
+    fi; \
+    if ${IS_CLONING_PENDING:-true}; then \
+      if git clone --progress -- \"${REPO_URL}\" \"${REPO_DIR}\"; then \
+        git imp-success-alias \"${REPO_URL} - successfully cloned at '${REPO_DIR}'\"; \
+      else \
+        git imp-error-alias \"${REPO_URL} - unable to clone at '${REPO_DIR}'\"; \
+        return 1; \
+      fi; \
+    fi; \
+    echo; \
+    git spaced-after throttled-fetch --all --progress; \
+    git h; \
+    echo; \
+    git st; \
+    RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
+  }; f"
+
   # Clone a repo but get only the current commit instead of the full history. Useful for installing tools.
   shallow-clone = clone --depth=1
 
@@ -878,7 +949,28 @@
   # SOURCE: 25oct2021 https://stackoverflow.com/questions/1761825/referencing-the-child-of-a-commit-in-git/20141722#20141722
   imp-child-commit-in-current-branch = !"f() { git log --pretty=tformat:'%H' HEAD...${1?-missing commit-ish} | tail -1; }; f"
 
-  imp-printf = !"c() { if [ ! -z \"${1##*[!0-9]*}\" ]; then C=$1; shift; if [ ! -z \"${1##*[!0-9]*}\" ]; then B=$1; DO_BACKGROUND=true; shift; else DO_BACKGROUND=false; fi; else DO_COLOR=false; fi; printf \"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\" | fold -w 105 -s; }; c"
+  imp-printf = !"c() { \
+    if [ ! -z \"${1##*[!0-9]*}\" ]; then \
+      C=$1; \
+      shift; \
+      if [ ! -z \"${1##*[!0-9]*}\" ]; then \
+        B=$1; \
+        DO_BACKGROUND=true; \
+        shift; \
+      else \
+        DO_BACKGROUND=false; \
+      fi; \
+    else \
+      DO_COLOR=false; \
+    fi; \
+    TEXT=\"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\"; \
+    if (( ${#TEXT} < ($(tput cols) - 20) )); then \
+      printf \"${TEXT}\"; \
+    else \
+      printf \"${TEXT}\" | fold -w 105 -s; \
+    fi; \
+  }; c"
+
   # Like imp-printf but with a newline at the end.
   imp-echo = !"c() { git imp-printf \"$@\n\"; }; c"
   imp-error = !"c() { git imp-printf 1 \"error: $@\n\" >&2; exit 1; }; c"
@@ -890,6 +982,7 @@
 
   imp-error-alias = !"c() { git imp-error $(git imp-current-alias-name) ${@}; }; c"
   imp-warn-alias = !"c() { git imp-warn $(git imp-current-alias-name) ${@}; }; c"
+  imp-success-alias = !"c() { git imp-success $(git imp-current-alias-name) ${@}; }; c"
 
   imp-is-there-something-to-commit = !"if git status --porcelain | grep '^M[ MD]\\|^A[ MD]\\|^D \\|^R[ MD]\\|^C[ MD]' 1>/dev/null 2>&1; then exit; else git imp-error there are no changes staged to commit; if git imp-is-tree-clean; then git imp-warn there are no changes or untracked files to stage; else git imp-warn \"try 'git add .' or its alias 'git aa' to stage all changes, including untracked files\"; git status --short --branch; fi; exit 1; fi;"
   imp-is-there-nothing-preventing-a-commit = !"if git status --porcelain | grep '^DD\\|^AU\\|^UD\\|^UA\\|^DU\\|^AA\\|^UU' 1>&2; then git imp-error solve the unmerged files before committing; exit 1; fi;"
@@ -916,12 +1009,16 @@
     if ${RUNNING_INSIDE_A_HOTFIX_SUB_SHELL:-false}; then \
       git imp-error 'no hotfix inception allowed - this is already running inside a hotfix sub-shell'; \
       git imp-warn 'type CTRL-D to exit and finish the hotfix'; \
-      exit 1; \
+      return 1; \
     fi; \
     if ${RUNNING_INSIDE_A_WTC_SUB_SHELL:-false}; then \
       git imp-error 'this is running inside a worktree sub-shell'; \
       git imp-warn 'type CTRL-D to exit'; \
-      exit 1; \
+      return 1; \
+    fi; \
+    if ${RUNNING_INSIDE_SUB_SHELL:-false}; then \
+      git imp-error-alias 'does not allow inception - type CTRL-D to exit this sub-shell'; \
+      return 1; \
     fi; \
   }; f"
 
