@@ -292,8 +292,21 @@
       open) \
         git imp-repo-open \"${@}\"; \
         ;; \
+      help) \
+        git imp-warn-alias \"[open] <repo name pattern>\"; \
+        git imp-warn-alias \"clone <ssh url>\"; \
+        git imp-warn-alias \"list [<repo name pattern>]\"; \
+        ;; \
+      '') \
+        git imp-error-alias - missing command; \
+        f help \
+        ;; \
+      --*) \
+        git imp-error-alias - invalid command ${COMMAND}; \
+        f help \
+        ;; \
       *) \
-        git imp-error-alias \"accepts following command: 'clone <SSH URL>', 'list', 'open'\"; \
+        git imp-repo-open \"${COMMAND}\" \"${@}\" || f help; \
         ;; \
     esac; \
   }; f"
@@ -379,7 +392,8 @@
     MATCHED_REPOS=($(git imp-repo-list --porcelain \"${REPO_PATTERN}\")); \
     case ${#MATCHED_REPOS[@]} in \
       0) \
-        git imp-error-alias \"- no repo found matching this pattern: '${REPO_PATTERN}'\"; \
+        git imp-error-alias \"- no repo found matching '${REPO_PATTERN}'\"; \
+        git imp-repo-list; \
         return 1; \
         ;; \
       1) \
@@ -389,7 +403,7 @@
         IS_CONTEXT_TO_BE_PRINTED=true RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
         ;; \
       *) \
-        git imp-error-alias \"- ${#MATCHED_REPOS[@]} repos found matching this pattern '${REPO_PATTERN}'\"; \
+        git imp-error-alias \"- ambiguous pattern: ${#MATCHED_REPOS[@]} repos found matching '${REPO_PATTERN}'\"; \
         git imp-repo-list \"${REPO_PATTERN}\"; \
         return 1; \
         ;; \
