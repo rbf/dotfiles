@@ -289,8 +289,11 @@
       list) \
         git imp-repo-list \"${@}\"; \
         ;; \
+      open) \
+        git imp-repo-open \"${@}\"; \
+        ;; \
       *) \
-        git imp-error-alias \"accepts following command: 'clone <SSH URL>', 'list'\"; \
+        git imp-error-alias \"accepts following command: 'clone <SSH URL>', 'list', 'open'\"; \
         ;; \
     esac; \
   }; f"
@@ -354,14 +357,47 @@
 
   imp-repo-list = !"f() { \
     export CURRENT_ALIAS_NAME='repo list'; \
-    export GREP_COLOR='01;32'; \
-    MAX_REPO_LENGTH=$(($(find \"${REPO_DIR_BASE}\" -type d -name .git -maxdepth 4 \
-                          | grep --color=never \"${REPO_DIR_BASE}.*${@:-.*}\" \
+    case \"${1}\" in \
+      --porcelain) \
+        shift; \
+        find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir pwd \\; ; \
+        return 0; \
+        ;; \
+      --*) \
+        git imp-error-alias \"- unrecognized option ${1}\"; \
+        ;; \
+    esac; \
+    MAX_REPO_LENGTH=$(($(f --porcelain \"${*}\" \
                           | awk '{print length}' \
                           | sort -nr \
-                          | head -1 ) - 4 - ${#REPO_DIR_BASE})); \
-    find \"${REPO_DIR_BASE}\" -type d -name .git -maxdepth 4 -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} \\; \
-      | grep --color=never \"${@:-.*}.*\\*\"; \
+                          | head -1 ) + 1 - ${#REPO_DIR_BASE})); \
+    find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} \\; ; \
+  }; f"
+
+  imp-repo-open = !"f() { \
+    export CURRENT_ALIAS_NAME='repo open'; \
+    if [ -z \"${1}\" ]; then \
+      git imp-error-alias - missing pattern; \
+      return 1; \
+    fi; \
+    MATCHED_REPOS=($(git imp-repo-list --porcelain \"${*}\")); \
+    case ${#MATCHED_REPOS[@]} in \
+      0) \
+        git imp-error-alias \"- no repo found matching '${*}'\"; \
+        return 1; \
+        ;; \
+      1) \
+        git imp-success-alias ${MATCHED_REPOS[0]}; \
+        echo; \
+        cd \"${MATCHED_REPOS[0]}\"; \
+        IS_CONTEXT_TO_BE_PRINTED=true RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
+        ;; \
+      *) \
+        git imp-error-alias \"- ${#MATCHED_REPOS[@]} repos found matching '${*}'\"; \
+        git imp-repo-list \"${*}\"; \
+        return 1; \
+        ;; \
+    esac; \
   }; f"
 
   # Clone a repo but get only the current commit instead of the full history. Useful for installing tools.

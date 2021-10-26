@@ -514,4 +514,8 @@ if $IS_ALLOWED_TO_PRINT_LOGIN_GREETING; then
   list_outdated_brew_packages
 fi
 
+if ${IS_CONTEXT_TO_BE_PRINTED:-false}; then
+  context
+fi
+
 unset -f list_outdated_brew_packages
