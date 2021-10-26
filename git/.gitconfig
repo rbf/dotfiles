@@ -1048,14 +1048,15 @@
   imp-warn-alias = !"c() { git imp-warn $(git imp-current-alias-name) ${@}; }; c"
   imp-success-alias = !"c() { git imp-success $(git imp-current-alias-name) ${@}; }; c"
 
-  imp-is-there-something-to-commit = !"if git status --porcelain | grep '^M[ MD]\\|^A[ MD]\\|^D \\|^R[ MD]\\|^C[ MD]' 1>/dev/null 2>&1; then exit; else git imp-error there are no changes staged to commit; if git imp-is-tree-clean; then git imp-warn there are no changes or untracked files to stage; else git imp-warn \"try 'git add .' or its alias 'git aa' to stage all changes, including untracked files\"; git status --short --branch; fi; exit 1; fi;"
+  imp-are-there-staged-modifications = !"if git status --porcelain | grep '^M[ MD]\\|^A[ MD]\\|^D \\|^R[ MD]\\|^C[ MD]' 1>/dev/null 2>&1; then exit; else git imp-error there are no changes staged to commit; if git imp-is-tree-clean; then git imp-warn there are no changes or untracked files to stage; else git imp-warn \"try 'git add .' or its alias 'git aa' to stage all changes, including untracked files\"; git status --short --branch; fi; exit 1; fi;"
+  imp-are-there-unstaged-modifications = !"if git status --porcelain | grep '^.[MD]' 1>/dev/null 2>&1; then exit 0; else exit 1; fi;"
   imp-is-there-nothing-preventing-a-commit = !"if git status --porcelain | grep '^DD\\|^AU\\|^UD\\|^UA\\|^DU\\|^AA\\|^UU' 1>&2; then git imp-error solve the unmerged files before committing; exit 1; fi;"
   imp-is-there-something-untracked = !"if git status --porcelain | grep '^??' 1>&2; then git imp-warn there are untracked files and will not be added to the commit; fi;"
-  imp-is-a-commit-possible = !git imp-is-there-something-to-commit && git imp-is-there-nothing-preventing-a-commit && git imp-is-there-something-untracked
+  imp-is-a-commit-possible = !git imp-are-there-staged-modifications && git imp-is-there-nothing-preventing-a-commit && git imp-is-there-something-untracked
 
   imp-is-cam-reasonable = !"f() { \
       export CURRENT_ALIAS_NAME=cam; \
-      if git status --porcelain | grep '^M[MD]\\|^A[MD]\\|^R[MD]\\|^C[MD]' 1>/dev/null 2>&1; then \
+      if git imp-are-there-staged-modifications 1>/dev/null 2>&1 && git imp-are-there-unstaged-modifications 1>/dev/null 2>&1; then \
         git imp-error-alias does not seem reasonable here - there staged and unstaged changes; \
         git status --short --branch; \
         git imp-warn \"consider using 'git cm' instead\"; \
