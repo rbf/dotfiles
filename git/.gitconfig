@@ -989,9 +989,17 @@
         ;; \
       1) \
         git imp-success-alias ${MATCHED_REPOS[0]}; \
-        echo; \
-        cd \"${MATCHED_REPOS[0]}\"; \
-        IS_CONTEXT_TO_BE_PRINTED=true RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
+        if $IS_RUNNING_INSIDE_TMUX; then \
+          tmux new-window -c \"${MATCHED_REPOS[0]}\" \
+                          -n $(basename \"${MATCHED_REPOS[0]}\") \
+                          -e IS_ALLOWED_TO_PRINT_LOGIN_GREETING=false \
+                          -e IS_CONTEXT_TO_BE_PRINTED=true || \
+            git imp-error-alias - error while opening new window in tmux; \
+        else \
+          echo; \
+          cd \"${MATCHED_REPOS[0]}\"; \
+          IS_CONTEXT_TO_BE_PRINTED=true RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
+        fi; \
         ;; \
       *) \
         git imp-error-alias \"- ambiguous pattern: ${#MATCHED_REPOS[@]} repos found matching '${REPO_PATTERN}'\"; \
