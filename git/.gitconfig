@@ -994,20 +994,20 @@
     MOST_RECENT_COMMON_ANCESTOR=$(git merge-base \"${CURRENT_BRANCH_NAME}\" \"${UPSTREAM_BRANCH_NAME}\"); \
     if (( $(git rev-list --count HEAD..$(git imp-upstream-branch-name)) > 0 )); then \
       THRESHOLD_IN_HOURS=1; \
-      ((($(date +'%s') - $(git log --pretty=format:'%ct' -1 ${MOST_RECENT_COMMON_ANCESTOR})) < (60 * 60 * THRESHOLD_IN_HOURS))) && exit; \
+      ((($(date +'%s') - $(git log --pretty=format:'%at' -1 ${MOST_RECENT_COMMON_ANCESTOR})) < (60 * 60 * THRESHOLD_IN_HOURS))) && exit; \
       echo; \
       echo \"You haven't pulled in a while.\"; \
       FORMAT_BRANCHES=\"%C(red bold)${UPSTREAM_BRANCH_NAME}%C(white no-bold) in %C(green bold)${CURRENT_BRANCH_NAME}%C(white no-bold)\"; \
-      git log --max-count=1 --pretty=format:\"The most recent commit in %C(red bold)${UPSTREAM_BRANCH_NAME}%C(white no-bold) is from %C(bold)%cr%C(reset).%C(white dim) %C(yellow)%h %C(white)on %cd%C(reset)\" ${UPSTREAM_BRANCH_NAME}; \
+      git log --max-count=1 --pretty=format:\"The most recent commit in %C(red bold)${UPSTREAM_BRANCH_NAME}%C(white no-bold) is from %C(bold)%ar%C(reset).%C(white dim) %C(yellow)%h %C(white)on %ad%C(reset)\" ${UPSTREAM_BRANCH_NAME}; \
     elif (( $(git rev-list --count $(git imp-upstream-branch-name)..HEAD) > 0 )); then \
       MOST_RECENT_COMMON_ANCESTOR_CHILD=$(git imp-child-commit-in-current-branch ${MOST_RECENT_COMMON_ANCESTOR}); \
       THRESHOLD_IN_HOURS=1; \
-      ((($(date +'%s') - $(git log --pretty=format:'%ct' -1 ${MOST_RECENT_COMMON_ANCESTOR_CHILD})) < (60 * 60 * THRESHOLD_IN_HOURS))) && exit; \
+      ((($(date +'%s') - $(git log --pretty=format:'%at' -1 ${MOST_RECENT_COMMON_ANCESTOR_CHILD})) < (60 * 60 * THRESHOLD_IN_HOURS))) && exit; \
       echo; \
-      git log --max-count=1 --pretty=format:\"You haven't pushed since at least %C(bold)%cr%C(reset).%n\" ${MOST_RECENT_COMMON_ANCESTOR_CHILD}; \
+      git log --max-count=1 --pretty=format:\"It seems you haven't pushed since at least %C(bold)%ar%C(reset).%n\" ${MOST_RECENT_COMMON_ANCESTOR_CHILD}; \
       FORMAT_BRANCHES=\"%C(green bold)${CURRENT_BRANCH_NAME}%C(white no-bold) in %C(red bold)${UPSTREAM_BRANCH_NAME}%C(white no-bold)\"; \
     fi; \
-    git log --max-count=1 --pretty=format:\"The most recent commit from ${FORMAT_BRANCHES} is from %C(bold)%cr%C(reset).%C(white dim) %C(yellow)%h %C(white)on %cd%C(reset)\" ${MOST_RECENT_COMMON_ANCESTOR}; \
+    git log --max-count=1 --pretty=format:\"The most recent commit from ${FORMAT_BRANCHES} is from %C(bold)%ar%C(reset).%C(white dim) %C(yellow)%h %C(white)on %ad%C(reset)\" ${MOST_RECENT_COMMON_ANCESTOR}; \
   }; f"
 
   # SOURCE: 25oct2021 https://stackoverflow.com/questions/1761825/referencing-the-child-of-a-commit-in-git/20141722#20141722
