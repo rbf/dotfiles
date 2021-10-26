@@ -13,8 +13,7 @@ set -euo pipefail
 CACHE_GIT_DIR=~/.cache/git/fetch
 CACHE_GIT_FETCH_LOGFILE="${CACHE_GIT_DIR}/$(date +"%Y%m_%b").log"
 REPO_DIRS=()
-REPO_DIRS+=(~/dev/gitlab)
-REPO_DIRS+=(~/dev/github)
+REPO_DIRS+=(~/dev/repos)
 
 mkdir -p "${CACHE_GIT_DIR}"
 
@@ -28,7 +27,7 @@ EOF
 find ${REPO_DIRS[@]} \
     -name .git \
     -type d \
-    -maxdepth 3 \
+    -maxdepth 4 \
     -execdir echo \; \
     -execdir date \; \
     -execdir pwd \; \
