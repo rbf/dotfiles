@@ -494,7 +494,7 @@ function list_outdated_brew_packages() {
       echo
       ;;
     *)
-      echo "${#outdated_packages} brew packages outdated:"
+      echo "${#outdated_packages} brew packages outdated as per $(date -r "${outdated_packages_file}"):"
       printf '  %s\n' "${outdated_packages[@]}"
       echo
       echo "Run 'brew upgrade' to upgrade them all."
