@@ -954,7 +954,7 @@
             -e \"s:^github/: $(igh)%C(dim)GitHub   /:\" \
             -e \"s:^gitlab/: $(igl)%C(dim)GitLab   /:\" \
             -e \"s:^bitbucket/: $(ibb)%C(dim)Bitbucket/:\" \
-            -e \"s:^\\([[:alnum:]]*\\)/:    %C(dim)\\1/:\" \
+            -e \"s:^\\([[:alnum:]]*\\)/: x  %C(dim)\\1/:\" \
             -e \"s:/: %C(no-dim)%C(white bold):\"; \
     }; \
     f() { \
@@ -981,7 +981,7 @@
                           | sort -nr \
                           | head -1 ) + 9 - ${#REPO_DIR_BASE})); \
     find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} $(pwd) \\; \
-      | sort --key=3 --key=4 \
+      | sort --key=4 --key=3 --ignore-leading-blanks \
       | sed 's/^x/ /'; \
   }; f"
 
