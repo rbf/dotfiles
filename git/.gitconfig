@@ -987,6 +987,19 @@
 
   imp-repo-open = !"f() { \
     export CURRENT_ALIAS_NAME='repo open'; \
+    IS_SUBLP_TO_BE_CALLED=false; \
+    OPTION=\"${1}\"; \
+    case ${OPTION} in \
+      --open-sublime-text|-s) \
+        IS_SUBLP_TO_BE_CALLED=true; \
+        shift; \
+        ;; \
+      -*) \
+        git imp-error-alias - invalid option ${OPTION}; \
+        git imp-warn-alias - only accepted: '-s|--open-sublime-text'; \
+        return 1; \
+        ;; \
+    esac; \
     REPO_PATTERN=\"${*#${REPO_DIR_BASE}/}\"; \
     if [ -z \"${REPO_PATTERN}\" ]; then \
       git imp-error-alias - missing pattern; \
@@ -1004,7 +1017,7 @@
         if $IS_RUNNING_INSIDE_TMUX; then \
           tmux new-window -c \"${MATCHED_REPOS[0]}\" \
                           -n $(basename \"${MATCHED_REPOS[0]}\") \
-                          -e IS_SUBLP_TO_BE_CALLED=true \
+                          -e IS_SUBLP_TO_BE_CALLED=${IS_SUBLP_TO_BE_CALLED} \
                           -e IS_ALLOWED_TO_PRINT_LOGIN_GREETING=false \
                           -e IS_CONTEXT_TO_BE_PRINTED=true || \
             git imp-error-alias - error while opening new window in tmux; \
