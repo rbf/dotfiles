@@ -1041,7 +1041,7 @@
     case ${#MATCHED_REPOS[@]} in \
       0) \
         CURRENT_ALIAS_ARGUMENTS+=\" -- ${REPO_PATTERN}\"; \
-        git imp-error-alias \"# no repo found\"; \
+        git imp-error-alias no repo found; \
         git imp-repo-list; \
         return 1; \
         ;; \
@@ -1066,7 +1066,7 @@
         ;; \
       *) \
         CURRENT_ALIAS_ARGUMENTS+=\" -- ${REPO_PATTERN}\"; \
-        git imp-error-alias \"# ambiguous pattern: ${#MATCHED_REPOS[@]} repos found matching '${REPO_PATTERN}'\"; \
+        git imp-error-alias \"ambiguous pattern: ${#MATCHED_REPOS[@]} repos found matching '${REPO_PATTERN}'\"; \
         git imp-repo-list \"${REPO_PATTERN}\"; \
         return 1; \
         ;; \
@@ -1135,9 +1135,9 @@
   imp-underline = !"c() { echo \"$(tput smul)$@$(tput rmul)\"; }; c"
   imp-current-alias-name = !"c() { git imp-underline git ${CURRENT_ALIAS_NAME:?not set, empty or not exported}; }; c"
 
-  imp-error-alias = !"c() { git imp-error $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS} ${@}; }; c"
-  imp-warn-alias = !"c() { git imp-warn $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS} ${@}; }; c"
-  imp-success-alias = !"c() { git imp-success $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS} ${@}; }; c"
+  imp-error-alias = !"c() { git imp-error $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS}${CURRENT_ALIAS_ARGUMENTS+; #} ${@}; }; c"
+  imp-warn-alias = !"c() { git imp-warn $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS}${CURRENT_ALIAS_ARGUMENTS+; #} ${@}; }; c"
+  imp-success-alias = !"c() { git imp-success $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS}${CURRENT_ALIAS_ARGUMENTS+; #} ${@}; }; c"
 
   imp-are-there-staged-modifications = !"if git status --porcelain | grep '^M[ MD]\\|^A[ MD]\\|^D \\|^R[ MD]\\|^C[ MD]' 1>/dev/null 2>&1; then exit; else git imp-error there are no changes staged to commit; if git imp-is-tree-clean; then git imp-warn there are no changes or untracked files to stage; else git imp-warn \"try 'git add .' or its alias 'git aa' to stage all changes, including untracked files\"; git status --short --branch; fi; exit 1; fi;"
   imp-are-there-unstaged-modifications = !"if git status --porcelain | grep '^.[MD]' 1>/dev/null 2>&1; then exit 0; else exit 1; fi;"
