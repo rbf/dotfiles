@@ -988,19 +988,45 @@
   imp-repo-open = !"f() { \
     export CURRENT_ALIAS_NAME='repo open'; \
     IS_SUBLP_TO_BE_CALLED=false; \
-    OPTION=\"${1}\"; \
-    case ${OPTION} in \
-      --open-sublime-text|-s) \
-        IS_SUBLP_TO_BE_CALLED=true; \
-        shift; \
-        ;; \
-      -*) \
-        git imp-error-alias - invalid option ${OPTION}; \
-        git imp-warn-alias - only accepted: '-s|--open-sublime-text'; \
-        return 1; \
-        ;; \
-    esac; \
+    IS_TO_BE_OPENED_IN_TMUX=${IS_RUNNING_INSIDE_TMUX:-false}; \
+    for OPTION in "$@"; do \
+      case ${OPTION} in \
+        --open-sublime-text|-s) \
+          IS_SUBLP_TO_BE_CALLED=true; \
+          shift; \
+          ;; \
+        --open-in-tmux|-t) \
+          IS_TO_BE_OPENED_IN_TMUX=true; \
+          shift; \
+          ;; \
+        --open-in-subshell|-z) \
+          IS_TO_BE_OPENED_IN_TMUX=false; \
+          shift; \
+          ;; \
+        --) \
+          shift; \
+          break; \
+          ;; \
+        -*) \
+          git imp-error-alias - invalid option ${OPTION}; \
+          git imp-warn-alias - only accepted: '-s|--open-sublime-text, --open-in-tmux|-t, --open-in-subshell|-z'; \
+          return 1; \
+          ;; \
+        *) \
+          break; \
+          ;; \
+      esac; \
+    done; \
     REPO_PATTERN=\"${*#${REPO_DIR_BASE}/}\"; \
+    export CURRENT_ALIAS_ARGUMENTS=''; \
+    if $IS_TO_BE_OPENED_IN_TMUX; then \
+      CURRENT_ALIAS_ARGUMENTS+=' --open-in-tmux'; \
+    else \
+      CURRENT_ALIAS_ARGUMENTS+=' --open-in-subshell'; \
+    fi; \
+    if $IS_SUBLP_TO_BE_CALLED; then \
+      CURRENT_ALIAS_ARGUMENTS+=' --open-sublime-text'; \
+    fi; \
     if [ -z \"${REPO_PATTERN}\" ]; then \
       git imp-error-alias - missing pattern; \
       return 1; \
@@ -1008,27 +1034,33 @@
     MATCHED_REPOS=($(git imp-repo-list --porcelain \"${REPO_PATTERN}\")); \
     case ${#MATCHED_REPOS[@]} in \
       0) \
-        git imp-error-alias \"- no repo found matching '${REPO_PATTERN}'\"; \
+        CURRENT_ALIAS_ARGUMENTS+=\" -- ${REPO_PATTERN}\"; \
+        git imp-error-alias \"# no repo found\"; \
         git imp-repo-list; \
         return 1; \
         ;; \
       1) \
-        git imp-success-alias ${MATCHED_REPOS[0]}; \
-        if $IS_RUNNING_INSIDE_TMUX; then \
-          tmux new-window -c \"${MATCHED_REPOS[0]}\" \
+        CURRENT_ALIAS_ARGUMENTS+=\" -- ${MATCHED_REPOS[0]}\"; \
+        if $IS_TO_BE_OPENED_IN_TMUX; then \
+          if tmux new-window -c \"${MATCHED_REPOS[0]}\" \
                           -n $(basename \"${MATCHED_REPOS[0]}\") \
                           -e IS_SUBLP_TO_BE_CALLED=${IS_SUBLP_TO_BE_CALLED} \
                           -e IS_ALLOWED_TO_PRINT_LOGIN_GREETING=false \
-                          -e IS_CONTEXT_TO_BE_PRINTED=true || \
-            git imp-error-alias - error while opening new window in tmux; \
+                          -e IS_CONTEXT_TO_BE_PRINTED=true; then \
+            git imp-success-alias; \
+          else \
+            git imp-error-alias; \
+          fi; \
         else \
+          git imp-success-alias; \
           echo; \
           cd \"${MATCHED_REPOS[0]}\"; \
-          IS_CONTEXT_TO_BE_PRINTED=true RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
+          IS_SUBLP_TO_BE_CALLED=${IS_SUBLP_TO_BE_CALLED} IS_CONTEXT_TO_BE_PRINTED=true RUNNING_INSIDE_SUB_SHELL=true $SHELL; \
         fi; \
         ;; \
       *) \
-        git imp-error-alias \"- ambiguous pattern: ${#MATCHED_REPOS[@]} repos found matching '${REPO_PATTERN}'\"; \
+        CURRENT_ALIAS_ARGUMENTS+=\" -- ${REPO_PATTERN}\"; \
+        git imp-error-alias \"# ambiguous pattern: ${#MATCHED_REPOS[@]} repos found matching '${REPO_PATTERN}'\"; \
         git imp-repo-list \"${REPO_PATTERN}\"; \
         return 1; \
         ;; \
@@ -1097,9 +1129,9 @@
   imp-underline = !"c() { echo \"$(tput smul)$@$(tput rmul)\"; }; c"
   imp-current-alias-name = !"c() { git imp-underline git ${CURRENT_ALIAS_NAME:?not set, empty or not exported}; }; c"
 
-  imp-error-alias = !"c() { git imp-error $(git imp-current-alias-name) ${@}; }; c"
-  imp-warn-alias = !"c() { git imp-warn $(git imp-current-alias-name) ${@}; }; c"
-  imp-success-alias = !"c() { git imp-success $(git imp-current-alias-name) ${@}; }; c"
+  imp-error-alias = !"c() { git imp-error $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS} ${@}; }; c"
+  imp-warn-alias = !"c() { git imp-warn $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS} ${@}; }; c"
+  imp-success-alias = !"c() { git imp-success $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS} ${@}; }; c"
 
   imp-are-there-staged-modifications = !"if git status --porcelain | grep '^M[ MD]\\|^A[ MD]\\|^D \\|^R[ MD]\\|^C[ MD]' 1>/dev/null 2>&1; then exit; else git imp-error there are no changes staged to commit; if git imp-is-tree-clean; then git imp-warn there are no changes or untracked files to stage; else git imp-warn \"try 'git add .' or its alias 'git aa' to stage all changes, including untracked files\"; git status --short --branch; fi; exit 1; fi;"
   imp-are-there-unstaged-modifications = !"if git status --porcelain | grep '^.[MD]' 1>/dev/null 2>&1; then exit 0; else exit 1; fi;"
