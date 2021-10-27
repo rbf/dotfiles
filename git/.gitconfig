@@ -889,14 +889,23 @@
     REPO_URL=\"${1}\"; \
     shift; \
     case \"${REPO_URL}\" in \
-      git@*.com:*.git) \
-        REPO_DIR=\"${REPO_URL#git@}\"; \
+      git@github.com:*.git) \
+        REPO_DIR=\"${REPO_URL#git@github.com:}\"; \
         REPO_DIR=\"${REPO_DIR%.git}\"; \
-        REPO_DIR=\"${REPO_DIR/.com://}\"; \
-        REPO_DIR=\"${REPO_DIR_BASE}/${REPO_DIR}\"; \
+        REPO_DIR=\"${REPO_DIR_BASE}/github/${REPO_DIR}\"; \
+        ;; \
+      git@gitlab.com:*.git) \
+        REPO_DIR=\"${REPO_URL#git@gitlab.com:}\"; \
+        REPO_DIR=\"${REPO_DIR%.git}\"; \
+        REPO_DIR=\"${REPO_DIR_BASE}/gitlab/${REPO_DIR}\"; \
+        ;; \
+      git@bitbucket.org:*.git) \
+        REPO_DIR=\"${REPO_URL#git@bitbucket.org:}\"; \
+        REPO_DIR=\"${REPO_DIR%.git}\"; \
+        REPO_DIR=\"${REPO_DIR_BASE}/bitbucket/${REPO_DIR}\"; \
         ;; \
       *) \
-        git imp-error-alias \"accepts only repo SSH URLs in the following form: 'git@*.com:*.git'\"; \
+        git imp-error-alias \"accepts only repo SSH URLs in the following form: 'git@{github.com,gitlab.com,bitbucket.org}:*.git'\"; \
         return 1; \
         ;; \
     esac; \
@@ -937,12 +946,14 @@
   imp-repo-list-print = !"\
     igh() { echo \"  \"; };\
     igl() { echo \"$(tput setaf 202)  $(tput setaf 15)\"; };\
+    ibb() { echo \"$(tput setaf 27)  $(tput setaf 15)\"; };\
     currentrepo() { [ \"$(pwd)\" = \"${1}\" ] && echo '*' || echo 'x' ; }; \
     prettifypwd() { \
       pwd | \
         sed -e \"s:${REPO_DIR_BASE}/::\" \
-            -e \"s:^github/: $(igh)%C(dim)GitHub/:\" \
-            -e \"s:^gitlab/: $(igl)%C(dim)GitLab/:\" \
+            -e \"s:^github/: $(igh)%C(dim)GitHub   /:\" \
+            -e \"s:^gitlab/: $(igl)%C(dim)GitLab   /:\" \
+            -e \"s:^bitbucket/: $(ibb)%C(dim)Bitbucket/:\" \
             -e \"s:^\\([[:alnum:]]*\\)/:    %C(dim)\\1/:\" \
             -e \"s:/: %C(no-dim)%C(white bold):\"; \
     }; \
@@ -968,7 +979,7 @@
     MAX_REPO_LENGTH=$(($(f --porcelain \"${*}\" \
                           | awk '{print length}' \
                           | sort -nr \
-                          | head -1 ) + 6 - ${#REPO_DIR_BASE})); \
+                          | head -1 ) + 9 - ${#REPO_DIR_BASE})); \
     find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} $(pwd) \\; \
       | sort --key=3 --key=4 \
       | sed 's/^x/ /'; \
