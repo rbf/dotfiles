@@ -951,17 +951,17 @@
     prettifypwd() { \
       pwd | \
         sed -e \"s:${REPO_DIR_BASE}/::\" \
-            -e \"s:^github/: $(igh)%C(dim)GitHub   /:\" \
-            -e \"s:^gitlab/: $(igl)%C(dim)GitLab   /:\" \
-            -e \"s:^bitbucket/: $(ibb)%C(dim)Bitbucket/:\" \
-            -e \"s:^\\([[:alnum:]]*\\)/: x  %C(dim)\\1/:\" \
+            -e \"s:^github/: $(igh)%C(dim)%<|(${1:-30})GitHub/:\" \
+            -e \"s:^gitlab/: $(igl)%C(dim)%<|(${1:-30})GitLab/:\" \
+            -e \"s:^bitbucket/: $(ibb)%C(dim)%<|(${1:-30})Bitbucket/:\" \
+            -e \"s:^\\([[:alnum:]]*\\)/: x  %C(dim)%<|(${1:-30})\\1/:\" \
             -e \"s:/: %C(no-dim)%C(white bold):\"; \
     }; \
     f() { \
       git -c color.ui=always log \
         --max-count=1 \
         --date=human \
-        --pretty=tformat:\"$(currentrepo \"${2}\")$(prettifypwd) %>|(${1:-30})%C(no-bold)%C(dim)* %C(yellow)%h%C(green) %>(16)%ad %C(white)| %<(70)%s %C(blue)[%an] %G?%C(normal)%C(red bold)%<|($(tput cols),trunc)%d%C(reset)\"; \
+        --pretty=tformat:\"$(currentrepo \"${3}\")$(prettifypwd \"${2}\") %>|(${1:-30})%C(no-bold)%C(dim)* %C(yellow)%h%C(green) %>(16)%ad %C(white)| %<(70)%s %C(blue)[%an] %G?%C(normal)%C(red bold)%<|($(tput cols),trunc)%d%C(reset)\"; \
     }; f"
 
   imp-repo-list = !"f() { \
@@ -976,11 +976,17 @@
         git imp-error-alias \"- unrecognized option ${1}\"; \
         ;; \
     esac; \
+    MAX_DOMAIN_LENGTH=$(($(f --porcelain \"${*}\" \
+                          | sed -e \"s:${REPO_DIR_BASE}/::\" \
+                          | sed -e 's:/.*::' \
+                          | awk '{print length}' \
+                          | sort -nr \
+                          | head -1 ) + 6)); \
     MAX_REPO_LENGTH=$(($(f --porcelain \"${*}\" \
                           | awk '{print length}' \
                           | sort -nr \
-                          | head -1 ) + 9 - ${#REPO_DIR_BASE})); \
-    find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} $(pwd) \\; \
+                          | head -1 ) - 6 + MAX_DOMAIN_LENGTH - ${#REPO_DIR_BASE})); \
+    find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} ${MAX_DOMAIN_LENGTH} $(pwd) \\; \
       | sort --key=4 --key=3 --ignore-leading-blanks \
       | sed 's/^x/ /'; \
   }; f"
