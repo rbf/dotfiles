@@ -967,12 +967,12 @@
   imp-repo-list = !"f() { \
     export CURRENT_ALIAS_NAME='repo list'; \
     case \"${1}\" in \
-      --porcelain) \
+      --porcelain|-p) \
         shift; \
         find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir pwd \\; ; \
         return 0; \
         ;; \
-      --*) \
+      -*) \
         git imp-error-alias \"- unrecognized option ${1}\"; \
         ;; \
     esac; \
