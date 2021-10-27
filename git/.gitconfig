@@ -1090,8 +1090,8 @@
 
   # Like imp-printf but with a newline at the end.
   imp-echo = !"c() { git imp-printf \"$@\n\"; }; c"
-  imp-error = !"c() { git imp-printf 1 \"error: $@\n\" >&2; exit 1; }; c"
-  imp-warn = !"c() { git imp-printf 3 \"hint: $@\n\" >&2; }; c"
+  imp-error = !"c() { git imp-printf 1   \"error:   $@\n\" >&2; exit 1; }; c"
+  imp-warn = !"c() { git imp-printf 3    \"hint:    $@\n\" >&2; }; c"
   imp-success = !"c() { git imp-printf 2 \"success: $@\n\"; }; c"
 
   imp-underline = !"c() { echo \"$(tput smul)$@$(tput rmul)\"; }; c"
