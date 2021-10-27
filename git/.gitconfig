@@ -969,7 +969,13 @@
     case \"${1}\" in \
       --porcelain|-p) \
         shift; \
-        find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir pwd \\; ; \
+        find \"${REPO_DIR_BASE}\" -maxdepth 6 \
+                                  -path \"${REPO_DIR_BASE}*${*}*\" \
+                                  -not -path '*/.git/*' \
+                                  -type d \
+                                  -name .git \
+                                  -execdir pwd \\; \
+                                  ; \
         return 0; \
         ;; \
       -*) \
@@ -986,7 +992,12 @@
                           | awk '{print length}' \
                           | sort -nr \
                           | head -1 ) - 6 + MAX_DOMAIN_LENGTH - ${#REPO_DIR_BASE})); \
-    find \"${REPO_DIR_BASE}\" -type d -name .git -path \"${REPO_DIR_BASE}*${*}*\" -maxdepth 4 -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} ${MAX_DOMAIN_LENGTH} $(pwd) \\; \
+    find \"${REPO_DIR_BASE}\" -maxdepth 6 \
+                              -path \"${REPO_DIR_BASE}*${*}*\" \
+                              -not -path '*/.git/*' \
+                              -type d \
+                              -name .git \
+                              -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} ${MAX_DOMAIN_LENGTH} $(pwd) \\; \
       | sort --key=4 --key=3 --ignore-leading-blanks \
       | sed 's/^x/ /'; \
   }; f"
