@@ -251,7 +251,7 @@
 [pretty]
   original = %C(yellow)%h%C(green) %ad %C(reset)| %s%C(red)%d %C(blue)[%an]%C(reset)
   graph    = %C(yellow)%h %C(reset)%s %C(blue)[%an]%C(red bold)%d%C(reset)
-  hist     = %C(yellow)%H%C(magenta)% (describe)%C(red bold)%d%n%s%n%C(green) %>(13)%ar | %>(31)%aD | %ad %C(white)| %C(blue)authored  by %an <%ae>%n%C(white dim) %>(13)%cr | %>(31)%cD | %cd % | committed by %cn <%ce> | signed %G?% GS%n%n%-b%n%n%-N%n%C(reset)
+  hist     = %C(yellow)%H%C(magenta)% (describe)%C(red bold)%d%n%s%n%C(green) %>(14)%ar | %>(31)%aD | %ad %C(white)| %C(blue)authored  by %an <%ae>%n%C(white dim) %>(14)%cr | %>(31)%cD | %cd % | committed by %cn <%ce> | signed %G?% GS%n%n%-b%n%n%-N%n%C(reset)
 
 [push]
   default = upstream
