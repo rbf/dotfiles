@@ -850,6 +850,7 @@
   }; f"
 
   todo = !" \
+    set -o pipefail; \
     init() { \
       [ -f ${TODO_FILE} ] && return; \
       echo \"# This is a todo file inteded to be used manually or with 'git todo'.\" >> ${TODO_FILE}; \
@@ -995,6 +996,39 @@
       cp ${TODO_FILE}{,.sort.bak} && \
         sort -s --field-separator=']' --key=1,1 --reverse ${TODO_FILE}.sort.bak > ${TODO_FILE}; \
     }; \
+    find_number_of_first_todo_on_status() { \
+      grep --color=never --max-count=1 --line-number -- \"^- \\[${1:?missing one-letter status}\\]\" ${TODO_FILE} | cut -f 1 -d :; \
+    }; \
+    count_todos_on_status() { \
+      grep --color=never -- \"^- \\[${1:?missing one-letter status}\\]\" ${TODO_FILE} 2>/dev/null | wc -l; \
+    }; \
+    display_and_start_next_todo() { \
+      local started_todos_count=\"$(count_todos_on_status 's')\"; \
+      if ((started_todos_count == 1)); then \
+        git imp-warn-alias - there is still one ongoing todo; \
+        list_all_started; \
+        return 0; \
+      elif ((started_todos_count > 1)); then \
+        git imp-warn-alias - there are still ${started_todos_count} ongoing todos; \
+        list_all_started; \
+        return 0; \
+      fi; \
+      local next_pending_todo_number=$(find_number_of_first_todo_on_status ' '); \
+      if [ -z \"${next_pending_todo_number}\" ]; then \
+        git imp-success-alias - you are all done!; \
+        return 0; \
+      elif ((next_pending_todo_number > 1)); then \
+        local previous_line_number=\"$((next_pending_todo_number - 1))\"; \
+        local previous_line=\"$(sed \"${previous_line_number}q;d\" ${TODO_FILE})\"; \
+        if [ -z \"${previous_line}\" ]; then \
+          git imp-success-alias - you are done for now!; \
+          git imp-warn-alias - move todos above the blank line ${previous_line_number} to continue using \"'git todo next'\"; \
+          return 0; \
+        fi; \
+      fi; \
+      echo \"Starting next todo:\"; \
+      handle_command_for_line_number ${next_pending_todo_number} start; \
+    }; \
     handle_command_for_line_number() { \
       TARGET_LINE_NUMBER=${1}; \
       shift; \
@@ -1063,6 +1097,9 @@
         '') \
           list_all_started; \
           list_all_pending; \
+          ;; \
+        next) \
+          display_and_start_next_todo; \
           ;; \
         new) \
           shift; \
