@@ -983,7 +983,7 @@
     list_all_started()   { formatted_todo_file_lines_starting_with '- \\[s\\] '; }; \
     list_all_done()      { formatted_todo_file_lines_starting_with '- \\[x\\] '; }; \
     list_all_cancelled() { formatted_todo_file_lines_starting_with '- \\[c\\] '; }; \
-    list_all()           { formatted_todo_file_lines_starting_with '- \\[\\( \\|x\\|c\\)\\] '; }; \
+    list_all()           { formatted_todo_file_lines_starting_with '- \\[\\( \\|s\\|x\\|c\\)\\] '; }; \
     add() { echo \"- [ ] $(date +\"${DATETIME_FORMAT_RAW}\") | ${*} |\" >> ${TODO_FILE}; }; \
     mark_todo_with() { \
       sed -i.bak \
