@@ -979,6 +979,10 @@
           ${TODO_FILE}; \
       formatted_todo_file_line_with_number ${TARGET_LINE_NUMBER}; \
     }; \
+    reorder_todos() { \
+      cp ${TODO_FILE}{,.sort.bak} && \
+        sort -s --field-separator=']' --key=1,1 --reverse ${TODO_FILE}.sort.bak > ${TODO_FILE}; \
+    }; \
     handle_command_for_line_number() { \
       TARGET_LINE_NUMBER=${1}; \
       shift; \
@@ -987,6 +991,7 @@
       case \"${1}\" in \
         '') \
           echo \"${TARGET_LINE}\"; \
+          return 0; \
           ;; \
         start|s) \
           mark_todo_with 's'; \
@@ -1003,6 +1008,7 @@
         delete) \
           echo \"${TARGET_LINE}\"; \
           git imp-warn-alias \"- to permanently delete this TODO type 'git todo ${TARGET_LINE_NUMBER} DELETE'\"; \
+          return 0; \
           ;; \
         DELETE) \
           echo \"${TARGET_LINE}\"; \
@@ -1013,6 +1019,7 @@
           git imp-error-alias \"- you can only say 'start|s' 'done|x', 'cancel|c', 'reset|r', and 'delete'\"; \
           ;; \
       esac; \
+      reorder_todos; \
     }; \
     todo() { \
       export CURRENT_ALIAS_NAME=todo; \
