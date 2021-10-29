@@ -1019,7 +1019,7 @@
       git imp-check-repo || return 1; \
       TODO_FILE=todo.txt; \
       DATETIME_FORMAT_RAW='%Y-%m-%dT%H:%M:%S%z'; \
-      DATETIME_FORMAT_DISPLAY='%a %F %R'; \
+      DATETIME_FORMAT_DISPLAY='%a, %d %b %Y, %R'; \
       LINE_NUMBER_SEPARATOR='::'; \
       init; \
       case \"${1}\" in \
