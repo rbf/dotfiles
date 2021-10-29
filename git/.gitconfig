@@ -898,7 +898,7 @@
     }; \
     format_numbered_todo_file_line() { \
       LINE_NUMBER_ZERO_PADDED=${1%%${LINE_NUMBER_SEPARATOR}*}; \
-      LINE_NUMBER=$(echo \"${LINE_NUMBER_ZERO_PADDED}\" | sed 's:^00*: :'); \
+      LINE_NUMBER=$(echo \"${LINE_NUMBER_ZERO_PADDED}\" | sed 's:^000:  :;s:^00: :;s:^0::'); \
       LINE=${1#*${LINE_NUMBER_SEPARATOR}}; \
       is_line_formated_as_expected || return 1; \
       case \"${LINE}\" in \
