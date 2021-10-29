@@ -365,7 +365,7 @@ function show_git_repo_info() {
   echo
   git h
   echo
-  git spaced-after todo
+  git spaced-after todo started
   git imp-is-main-branch-checked-out || git spaced-after st-upstream-remote-main
   git st
   return 0
