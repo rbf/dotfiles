@@ -882,7 +882,7 @@
       nl -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
     }; \
     format_and_sort_numbered_todo_file_lines() { \
-      format_numbered_todo_file_lines | column; \
+      format_numbered_todo_file_lines | column -ts ${COLUMN_SEPARATOR_CHAR}; \
     }; \
     format_numbered_todo_file_lines() { \
       while read NUMBERED_LINE; do \
@@ -924,17 +924,17 @@
           ;; \
         '- [s] '*) \
           LINE=${LINE#'- [s] '}; \
-          SUFFIX_COLOR=\"$(tput bold)$(tput setaf 3)\"; \
+          SUFFIX_COLOR=\"$(tput setaf 3)\"; \
           SUFFIX='started'; \
           ;; \
         '- [x] '*) \
           LINE=${LINE#'- [x] '}; \
-          SUFFIX_COLOR=\"$(tput bold)$(tput setaf 2)\"; \
+          SUFFIX_COLOR=\"$(tput setaf 2)\"; \
           SUFFIX='done'; \
           ;; \
         '- [c] '*) \
           LINE=${LINE#'- [c] '}; \
-          SUFFIX_COLOR=\"$(tput bold)$(tput setaf 1)\"; \
+          SUFFIX_COLOR=\"$(tput setaf 1)\"; \
           SUFFIX='cancelled'; \
           ;; \
       esac; \
@@ -951,7 +951,7 @@
       extract_and_wrap_todo_text_from_LINE_into_TODO_FIRST_LINE_and_TODO_REST; \
       printf \"$(tput setaf 3)${LINE_NUMBER} $(tput setaf 2)${FORMATTED_CREATED_AT}$(tput setaf 15) | ${TODO_FIRST_LINE}\"; \
       if [ -n \"${SUFFIX}\" ]; then \
-        echo \"${SUFFIX_COLOR} (${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT})$(tput sgr0)\"; \
+        echo \"${SUFFIX_COLOR}${COLUMN_SEPARATOR_CHAR}(${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT})$(tput sgr0)\"; \
       else \
         echo \"$(tput sgr0)\"; \
       fi; \
@@ -1078,6 +1078,7 @@
       DATETIME_FORMAT_RAW='%Y-%m-%dT%H:%M:%S%z'; \
       DATETIME_FORMAT_DISPLAY='%a, %d %b %Y, %R'; \
       LINE_NUMBER_SEPARATOR='::'; \
+      COLUMN_SEPARATOR_CHAR='˚'; \
       init; \
       case \"${1}\" in \
         all) \
