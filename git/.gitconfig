@@ -993,8 +993,12 @@
       formatted_todo_file_line_with_number ${TARGET_LINE_NUMBER}; \
     }; \
     reorder_todos() { \
-      cp ${TODO_FILE}{,.sort.bak} && \
-        sort -s --field-separator=']' --key=1,1 --reverse ${TODO_FILE}.sort.bak > ${TODO_FILE}; \
+      cp ${TODO_FILE}{,.sort.bak} || return 1; \
+      cat ${TODO_FILE}.sort.bak \
+        | sed 's/^$/- [ ]/'  \
+        | sort -s --field-separator=']' --key=1,1 --reverse \
+        | sed 's/^- \\[ \\]$//' \
+        > ${TODO_FILE}; \
     }; \
     find_number_of_first_todo_on_status() { \
       grep --color=never --max-count=1 --line-number -- \"^- \\[${1:?missing one-letter status}\\]\" ${TODO_FILE} | cut -f 1 -d :; \
