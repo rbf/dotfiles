@@ -881,7 +881,7 @@
       nl -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
     }; \
     format_and_sort_numbered_todo_file_lines() { \
-      format_numbered_todo_file_lines | sort --ignore-nonprinting -s; \
+      format_numbered_todo_file_lines | column; \
     }; \
     format_numbered_todo_file_lines() { \
       while read NUMBERED_LINE; do \
@@ -895,6 +895,16 @@
         git imp-error-alias \"unable to parse line ${LINE_NUMBER_ZERO_PADDED}: ${LINE}\"; \
         return 1; \
        fi; \
+    }; \
+    extract_and_wrap_todo_text_from_LINE_into_TODO_FIRST_LINE_and_TODO_REST() { \
+      local todo=${LINE#*| }; \
+      todo=${todo% |*}; \
+      TODO_FIRST_LINE=\"$(echo \"${todo}\" | fmt -w70 | head -1 )\"; \
+      TODO_REST=\"${todo#${TODO_FIRST_LINE}}\"; \
+      if [ -n \"${TODO_REST}\" ]; then \
+        TODO_REST=\"$(echo \"${TODO_REST}\" | fmt -w70 \
+                      | awk '{print \"                            |\" $0}' )\"; \
+      fi; \
     }; \
     format_numbered_todo_file_line() { \
       LINE_NUMBER_ZERO_PADDED=${1%%${LINE_NUMBER_SEPARATOR}*}; \
@@ -937,13 +947,15 @@
           SUFFIX='reset'; \
         fi; \
       fi; \
-      TODO=${LINE#*| }; \
-      TODO=${TODO% |*}; \
-      printf \"$(tput setaf 3)${LINE_NUMBER} $(tput setaf 2)${FORMATTED_CREATED_AT}$(tput setaf 15) | ${TODO}\"; \
+      extract_and_wrap_todo_text_from_LINE_into_TODO_FIRST_LINE_and_TODO_REST; \
+      printf \"$(tput setaf 3)${LINE_NUMBER} $(tput setaf 2)${FORMATTED_CREATED_AT}$(tput setaf 15) | ${TODO_FIRST_LINE}\"; \
       if [ -n \"${SUFFIX}\" ]; then \
         echo \"${SUFFIX_COLOR} (${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT})$(tput sgr0)\"; \
       else \
         echo \"$(tput sgr0)\"; \
+      fi; \
+      if [ -n \"${TODO_REST}\" ]; then \
+        echo \"$(tput setaf 8)${TODO_REST}$(tput sgr0)\"; \
       fi; \
     }; \
     todo_file_lines_matching() { \
