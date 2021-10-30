@@ -881,7 +881,7 @@
     numbered_todo_file() { \
       nl -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
     }; \
-    format_and_sort_numbered_todo_file_lines() { \
+    format_and_align_numbered_todo_file_lines() { \
       format_numbered_todo_file_lines | column -ts ${COLUMN_SEPARATOR_CHAR}; \
     }; \
     format_numbered_todo_file_lines() { \
@@ -956,7 +956,7 @@
         echo \"$(tput sgr0)\"; \
       fi; \
       if [ -n \"${TODO_REST}\" ]; then \
-        echo \"$(tput setaf 8)${TODO_REST}$(tput sgr0)\"; \
+        echo \"$(${IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR:-false} && tput setaf 15 || tput setaf 8)${TODO_REST}$(tput sgr0)\"; \
       fi; \
     }; \
     todo_file_lines_matching() { \
@@ -965,7 +965,7 @@
               | grep --color=never -v \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}#\"; \
     }; \
     formatted_todo_file_lines_matching() { \
-      todo_file_lines_matching \"${1}\" | format_and_sort_numbered_todo_file_lines; \
+      todo_file_lines_matching \"${1}\" | format_and_align_numbered_todo_file_lines; \
     }; \
     formatted_todo_file_lines_starting_with() { \
       formatted_todo_file_lines_matching \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}${1:?missing pattern}\"; \
@@ -976,7 +976,7 @@
     formatted_todo_file_last_line() { \
       numbered_todo_file \
         | tail -1 \
-        | format_and_sort_numbered_todo_file_lines; \
+        | format_and_align_numbered_todo_file_lines; \
     }; \
     padded_line_number() { printf '%04d' ${1:?missing line number}; }; \
     list_all_pending()   { formatted_todo_file_lines_starting_with '- \\[ \\] '; }; \
@@ -1036,6 +1036,7 @@
     handle_command_for_line_number() { \
       TARGET_LINE_NUMBER=${1}; \
       shift; \
+      IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR=true; \
       TARGET_LINE=$(formatted_todo_file_line_with_number ${TARGET_LINE_NUMBER}); \
       [ -n \"${TARGET_LINE}\" ] || return 1; \
       case \"${1}\" in \
