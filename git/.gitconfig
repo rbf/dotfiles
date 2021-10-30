@@ -877,6 +877,7 @@
       git imp-warn-alias \"<number> done - mark todo <number> as done\"; \
       git imp-warn-alias \"<number> cancel - mark todo <number> as cancelled\"; \
       git imp-warn-alias \"<number> delete - delete todo <number>\"; \
+      git imp-warn-alias \"undo - undo last 'git todo <number> <command>'\"; \
     }; \
     numbered_todo_file() { \
       nl -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
@@ -986,15 +987,15 @@
     list_all()           { formatted_todo_file_lines_starting_with '- \\[\\( \\|s\\|x\\|c\\)\\] '; }; \
     add() { echo \"- [ ] $(date +\"${DATETIME_FORMAT_RAW}\") | ${*} |\" >> ${TODO_FILE}; }; \
     mark_todo_with() { \
-      sed -i.bak \
+      sed -i${TODO_FILE_BACKUP_EXT} \
           -e \"${TARGET_LINE_NUMBER}s/^- \\[.\\]/- [${1}]/\" \
           -e \"${TARGET_LINE_NUMBER}s/\\(.*|.*\\) |.*$/\\1 | $(date +\"${DATETIME_FORMAT_RAW}\")/\" \
           ${TODO_FILE}; \
       formatted_todo_file_line_with_number ${TARGET_LINE_NUMBER}; \
     }; \
     reorder_todos() { \
-      cp ${TODO_FILE}{,.sort.bak} || return 1; \
-      cat ${TODO_FILE}.sort.bak \
+      cp ${TODO_FILE}{,.sort${TODO_FILE_BACKUP_EXT}} || return 1; \
+      cat ${TODO_FILE}.sort${TODO_FILE_BACKUP_EXT} \
         | sed 's/^$/- [ ]/'  \
         | sort -s --field-separator=']' --key=1,1 --reverse \
         | sed 's/^- \\[ \\]$//' \
@@ -1063,7 +1064,7 @@
           ;; \
         DELETE) \
           echo \"${TARGET_LINE}\"; \
-          sed -i.bak -e \"${TARGET_LINE_NUMBER}d\" ${TODO_FILE}; \
+          sed -i${TODO_FILE_BACKUP_EXT} -e \"${TARGET_LINE_NUMBER}d\" ${TODO_FILE}; \
           git imp-warn-alias \"- permanently deleted todo ${TARGET_LINE_NUMBER}\"; \
           ;; \
         *) \
@@ -1072,10 +1073,22 @@
       esac; \
       reorder_todos; \
     }; \
+    undo_last_modification() { \
+      cp ${TODO_FILE}{,.tmp} \
+        && cp ${TODO_FILE}{${TODO_FILE_BACKUP_EXT},} \
+        && cp ${TODO_FILE}{.tmp,${TODO_FILE_BACKUP_EXT}} \
+        && diff \
+            --changed-group-format='Line %dF restored\n  before:   %<  now:      %>' \
+            --unchanged-group-format=''\
+            ${TODO_FILE}${TODO_FILE_BACKUP_EXT} \
+            ${TODO_FILE}; \
+      return 0; \
+    }; \
     todo() { \
       export CURRENT_ALIAS_NAME=todo; \
       git imp-check-repo || return 1; \
       TODO_FILE=todo.txt; \
+      TODO_FILE_BACKUP_EXT=.bak; \
       DATETIME_FORMAT_RAW='%Y-%m-%dT%H:%M:%S%z'; \
       DATETIME_FORMAT_DISPLAY='%a, %d %b %Y, %R'; \
       LINE_NUMBER_SEPARATOR='::'; \
@@ -1115,6 +1128,9 @@
         find) \
           shift; \
           formatted_todo_file_lines_matching \"${*}\"; \
+          ;; \
+        undo) \
+          undo_last_modification; \
           ;; \
         help) \
           help; \
