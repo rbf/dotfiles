@@ -887,7 +887,7 @@
       echo \"  git todo [help|h]              display this help message\"; \
     }; \
     numbered_todo_file() { \
-      nl -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
+      nl -b a -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
     }; \
     format_and_align_numbered_todo_file_lines() { \
       format_numbered_todo_file_lines | column -ts ${COLUMN_SEPARATOR_CHAR}; \
