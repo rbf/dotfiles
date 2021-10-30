@@ -33,7 +33,7 @@ find ${REPO_DIRS[@]} \
     -execdir pwd \; \
     -execdir echo '$ git throttled-fetch --all --verbose --progress --prune' \;\
     -execdir git throttled-fetch --all --verbose --progress --prune \; \
-    1>"${CACHE_GIT_FETCH_LOGFILE}" 2>&1
+    1>>"${CACHE_GIT_FETCH_LOGFILE}" 2>&1
 
 cat << EOF >> "${CACHE_GIT_FETCH_LOGFILE}"
 
