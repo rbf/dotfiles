@@ -1014,6 +1014,7 @@
       grep --color=never -- \"^- \\[${1:?missing one-letter status}\\]\" ${TODO_FILE} 2>/dev/null | wc -l; \
     }; \
     display_and_start_next_todo() { \
+      IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR=true; \
       local started_todos_count=\"$(count_todos_on_status 's')\"; \
       if ((started_todos_count == 1)); then \
         git imp-warn-alias - there is still one ongoing todo; \
