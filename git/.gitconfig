@@ -868,6 +868,7 @@
     help() { \
       echo \"Available 'git todo' commands:\"; \
       echo \"  git todo                       list all started and pending todos\"; \
+      echo \"  git todo [pending|p]           list all pending todos\"; \
       echo \"  git todo [started|s]           list all started todos\"; \
       echo \"  git todo [done|d|x]            list all done todos\"; \
       echo \"  git todo [cancelled|c]         list all cancelled todos\"; \
@@ -1002,6 +1003,36 @@
         | format_and_align_numbered_todo_file_lines; \
     }; \
     padded_line_number() { printf '%04d' ${1:?missing line number}; }; \
+    list_relevant_todos(){ \
+      local started_todos_count=\"$(count_todos_on_status 's')\"; \
+      local started_todos_label=\"${started_todos_count} started todos\"; \
+      if ((started_todos_count == 1)); then \
+        started_todos_label='One started todo'; \
+      fi; \
+      local pending_todos_count=\"$(count_todos_on_status ' ')\"; \
+      local pending_todos_label=\"${pending_todos_count} pending todos\"; \
+      if ((pending_todos_count == 1)); then \
+        pending_todos_label='One pending todo'; \
+      fi; \
+      if ((started_todos_count > 0)); then \
+        if ((pending_todos_count == 0)); then \
+          git imp-success-alias - ${started_todos_label} and you are all done afterwards!; \
+        else \
+          echo ${started_todos_label}. ${pending_todos_label} afterwards.; \
+        fi; \
+        list_all_started; \
+      else \
+        if ((pending_todos_count == 0)); then \
+          git imp-success-alias - no more pending todos, you are all done!; \
+        elif ((pending_todos_count < 6)); then \
+          echo ${pending_todos_label}.; \
+          list_all_pending; \
+        else \
+          echo ${pending_todos_label}. The next 5:; \
+          list_all_pending | head -5; \
+        fi; \
+      fi; \
+    }; \
     list_all_pending()   { formatted_todo_file_lines_starting_with '- \\[ \\] '; }; \
     list_all_started()   { formatted_todo_file_lines_starting_with '- \\[s\\] '; }; \
     list_all_done()      { formatted_todo_file_lines_starting_with '- \\[x\\] '; }; \
@@ -1063,7 +1094,7 @@
       fi; \
       local next_pending_todo_number=$(find_number_of_first_todo_on_status ' '); \
       if [ -z \"${next_pending_todo_number}\" ]; then \
-        git imp-success-alias - you are all done!; \
+        git imp-success-alias - no more pending todos, you are all done!; \
         return 0; \
       elif ((next_pending_todo_number > 1)); then \
         local previous_line_number=\"$((next_pending_todo_number - 1))\"; \
@@ -1148,7 +1179,9 @@
       init; \
       case \"${1}\" in \
         '') \
-          list_all_started; \
+          list_relevant_todos; \
+          ;; \
+        pending|p) \
           list_all_pending; \
           ;; \
         started|s) \
