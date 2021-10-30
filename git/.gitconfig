@@ -879,7 +879,8 @@
       echo \"  git todo <number>              show todo <number>\"; \
       echo \"  git todo <number> [start|s]    mark todo <number> as started\"; \
       echo \"  git todo <number> [done|d|x]   mark todo <number> as done\"; \
-      echo \"  git todo <number> [cancel|c]   mark todo <number> as cancelled\"; \
+      echo \"  git todo <number> [commit|c]   mark todo <number> as done and use it for the commit message\"; \
+      echo \"  git todo <number> cancel       mark todo <number> as cancelled\"; \
       echo \"  git todo <number> [reset|r]    mark todo <number> as pending\"; \
       echo \"  git todo <number> delete       delete todo <number>\"; \
       echo \"  git todo undo                  undo last 'git todo <number> <command>'\"; \
@@ -909,9 +910,13 @@
       todo=${todo% |*}; \
       TODO_FIRST_LINE=\"$(echo \"${todo}\" | fmt -w70 | head -1 )\"; \
       TODO_REST=\"${todo#${TODO_FIRST_LINE}}\"; \
-      if [ -n \"${TODO_REST}\" ]; then \
-        TODO_REST=\"$(echo \"${TODO_REST}\" | fmt -w70 \
-                      | awk '{print \"                            |\" $0}' )\"; \
+      if [ -z \"${TODO_REST}\" ]; then \
+        return; \
+      elif ${IS_INDENTATION_FOR_TODO_REST_NEEDED:-true}; then \
+        TODO_REST=\"$(echo \"${TODO_REST## }\" | fmt -w70 \
+                      | awk '{print \"                            | \" $0}' )\"; \
+      else \
+        TODO_REST=\"$(echo \"${TODO_REST## }\" | fmt -w70 )\"; \
       fi; \
     }; \
     format_numbered_todo_file_line() { \
@@ -977,8 +982,11 @@
     formatted_todo_file_lines_starting_with() { \
       formatted_todo_file_lines_matching \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}${1:?missing pattern}\"; \
     }; \
+    todo_file_line_with_number() { \
+      todo_file_lines_matching \"^$(padded_line_number ${1})${LINE_NUMBER_SEPARATOR}\"; \
+    }; \
     formatted_todo_file_line_with_number() { \
-      formatted_todo_file_lines_matching \"^$(padded_line_number ${1})${LINE_NUMBER_SEPARATOR}\"; \
+      todo_file_line_with_number \"${1}\" | format_and_align_numbered_todo_file_lines; \
     }; \
     formatted_todo_file_last_line() { \
       numbered_todo_file \
@@ -992,6 +1000,16 @@
     list_all_cancelled() { formatted_todo_file_lines_starting_with '- \\[c\\] '; }; \
     list_all()           { formatted_todo_file_lines_starting_with '- \\[\\( \\|s\\|x\\|c\\)\\] '; }; \
     add() { echo \"- [ ] $(date +\"${DATETIME_FORMAT_RAW}\") | ${*} |\" >> ${TODO_FILE}; }; \
+    use_todo_for_commit() { \
+      git imp-is-a-commit-possible || return 1; \
+      IS_INDENTATION_FOR_TODO_REST_NEEDED=false; \
+      format_numbered_todo_file_line \"$(todo_file_line_with_number ${TARGET_LINE_NUMBER})\" 1>/dev/null; \
+      unset IS_INDENTATION_FOR_TODO_REST_NEEDED; \
+      TMP_LOG_FILE=$(mktemp /tmp/git_commit_message.XXXXXX) || exit 1; \
+      trap \"rm ${TMP_LOG_FILE}\" 0 2 3 15; \
+      echo \"${TODO_FIRST_LINE}\n\n${TODO_REST}\" > \"${TMP_LOG_FILE}\"; \
+      git commit --file=\"${TMP_LOG_FILE}\" --edit; \
+    }; \
     mark_todo_with() { \
       sed -i${TODO_FILE_BACKUP_EXT} \
           -e \"${TARGET_LINE_NUMBER}s/^- \\[.\\]/- [${1}]/\" \
@@ -1058,7 +1076,10 @@
         done|x|d) \
           mark_todo_with 'x'; \
           ;; \
-        cancel|c) \
+        commit|c) \
+          use_todo_for_commit && echo && mark_todo_with 'x'; \
+          ;; \
+        cancel) \
           mark_todo_with 'c'; \
           ;; \
         reset|r) \
