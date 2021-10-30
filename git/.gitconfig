@@ -866,18 +866,24 @@
       echo \"# Type 'git todo help' for details on the available commands.\" >> ${TODO_FILE}; \
     }; \
     help() { \
-      git imp-warn-alias \"- list all pending todos\"; \
-      git imp-warn-alias \"new <todo> - add a new todo\"; \
-      git imp-warn-alias \"done - list all done todos\"; \
-      git imp-warn-alias \"cancelled - list all cancelled todos\"; \
-      git imp-warn-alias \"all - list all todos\"; \
-      git imp-warn-alias \"find <pattern> - find todos matching the pattern\"; \
-      git imp-warn-alias \"<number> - show todo with number <number>\"; \
-      git imp-warn-alias \"<number> start - mark todo <number> as started\"; \
-      git imp-warn-alias \"<number> done - mark todo <number> as done\"; \
-      git imp-warn-alias \"<number> cancel - mark todo <number> as cancelled\"; \
-      git imp-warn-alias \"<number> delete - delete todo <number>\"; \
-      git imp-warn-alias \"undo - undo last 'git todo <number> <command>'\"; \
+      echo \"Available 'git todo' commands:\"; \
+      echo \"  git todo                       list all started and pending todos\"; \
+      echo \"  git todo [started|s]           list all started todos\"; \
+      echo \"  git todo [done|d|x]            list all done todos\"; \
+      echo \"  git todo [cancelled|c]         list all cancelled todos\"; \
+      echo \"  git todo all                   list all todos\"; \
+      echo \"  git todo dump                  parse and print all lines in todo file (for debugging)\"; \
+      echo \"  git todo new <todo>            add a new todo\"; \
+      echo \"  git todo next                  show and mark next pending todo as started\"; \
+      echo \"  git todo find <pattern>        find todos matching <pattern>\"; \
+      echo \"  git todo <number>              show todo <number>\"; \
+      echo \"  git todo <number> [start|s]    mark todo <number> as started\"; \
+      echo \"  git todo <number> [done|d|x]   mark todo <number> as done\"; \
+      echo \"  git todo <number> [cancel|c]   mark todo <number> as cancelled\"; \
+      echo \"  git todo <number> [reset|r]    mark todo <number> as pending\"; \
+      echo \"  git todo <number> delete       delete todo <number>\"; \
+      echo \"  git todo undo                  undo last 'git todo <number> <command>'\"; \
+      echo \"  git todo [help|h]              display this help message\"; \
     }; \
     numbered_todo_file() { \
       nl -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
@@ -1048,7 +1054,7 @@
         start|s) \
           mark_todo_with 's'; \
           ;; \
-        done|x) \
+        done|x|d) \
           mark_todo_with 'x'; \
           ;; \
         cancel|c) \
@@ -1068,7 +1074,9 @@
           git imp-warn-alias \"- permanently deleted todo ${TARGET_LINE_NUMBER}\"; \
           ;; \
         *) \
-          git imp-error-alias \"- you can only say 'start|s' 'done|x', 'cancel|c', 'reset|r', and 'delete'\"; \
+          git imp-error-alias \"${TARGET_LINE_NUMBER} ${1} - invalid command\"; \
+          help; \
+          return 1; \
           ;; \
       esac; \
       reorder_todos; \
@@ -1095,49 +1103,50 @@
       COLUMN_SEPARATOR_CHAR='˚'; \
       init; \
       case \"${1}\" in \
+        '') \
+          list_all_started; \
+          list_all_pending; \
+          ;; \
+        started|s) \
+          list_all_started; \
+          ;; \
+        done|x|d) \
+          list_all_done; \
+          ;; \
+        cancelled|c) \
+          list_all_cancelled; \
+          ;; \
         all) \
           list_all; \
           ;; \
         dump) \
           numbered_todo_file | format_numbered_todo_file_lines; \
           ;; \
-        started|s) \
-          list_all_started; \
-          ;; \
-        done|x) \
-          list_all_done; \
-          ;; \
-        cancelled|c) \
-          list_all_cancelled; \
-          ;; \
-        [[:digit:]]|[[:digit:]][[:digit:]]|[[:digit:]][[:digit:]][[:digit:]]) \
-          handle_command_for_line_number \"${@}\"; \
-          ;; \
-        '') \
-          list_all_started; \
-          list_all_pending; \
-          ;; \
-        next) \
-          display_and_start_next_todo; \
-          ;; \
         new) \
           shift; \
           add \"${*}\"; \
           formatted_todo_file_last_line; \
           ;; \
+        next) \
+          display_and_start_next_todo; \
+          ;; \
         find) \
           shift; \
           formatted_todo_file_lines_matching \"${*}\"; \
           ;; \
+        [[:digit:]]|[[:digit:]][[:digit:]]|[[:digit:]][[:digit:]][[:digit:]]) \
+          handle_command_for_line_number \"${@}\"; \
+          ;; \
         undo) \
           undo_last_modification; \
           ;; \
-        help) \
+        help|h) \
           help; \
           ;; \
         *) \
-          git imp-error-alias invalid command; \
+          git imp-error-alias \"${1} - invalid command\"; \
           help; \
+          return 1; \
           ;; \
       esac; \
     }; \
