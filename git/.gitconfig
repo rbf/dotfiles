@@ -1012,12 +1012,22 @@
       TMP_LOG_FILE=$(mktemp /tmp/git_commit_message.XXXXXX) || exit 1; \
       trap \"rm ${TMP_LOG_FILE}\" 0 2 3 15; \
       echo \"${TODO_FIRST_LINE}\n\n${TODO_REST}\" > \"${TMP_LOG_FILE}\"; \
-      git commit --file=\"${TMP_LOG_FILE}\" --edit; \
+      git commit --file=\"${TMP_LOG_FILE}\" --edit \
+        && COMMIT_HASH=\"$(git log --pretty='%h' -1)\"; \
     }; \
     mark_todo_with() { \
+      if [ -z \"${COMMIT_HASH}\" ]; then \
+        COMMIT_HASH=\"$(sed -e \"${TARGET_LINE_NUMBER}q;d\" ${TODO_FILE} \
+                        | sed  -e '/.* \\* \\([0-9a-f]\\{4,40\\}\\)/!d' \
+                        | sed  -e 's/.* \\* \\([0-9a-f]\\{4,40\\}\\)/\\1/')\"; \
+      fi; \
+      DATE_AND_COMMIT_HASH=\"$(date +\"${DATETIME_FORMAT_RAW}\")${COMMIT_HASH:+ * }${COMMIT_HASH}\";\
       sed -i${TODO_FILE_BACKUP_EXT} \
           -e \"${TARGET_LINE_NUMBER}s/^- \\[.\\]/- [${1}]/\" \
-          -e \"${TARGET_LINE_NUMBER}s/\\(.*|.*\\) |.*$/\\1 | $(date +\"${DATETIME_FORMAT_RAW}\")/\" \
+          -e \"${TARGET_LINE_NUMBER}s/\\(.*|.* | \\)[0-9T:+-]\\{24\\} \\* [0-9a-f]\\{4,40\\}$/\\1${DATE_AND_COMMIT_HASH}/\" \
+          -e \"${TARGET_LINE_NUMBER}s/\\(.*|.* | \\)\\* [0-9a-f]\\{4,40\\}$/\\1${DATE_AND_COMMIT_HASH}/\" \
+          -e \"${TARGET_LINE_NUMBER}s/\\(.*|.* | \\)[0-9T:+-]\\{24\\}$/\\1${DATE_AND_COMMIT_HASH}/\" \
+          -e \"${TARGET_LINE_NUMBER}s/\\(.*|.* |\\)$/\\1 ${DATE_AND_COMMIT_HASH}/\" \
           ${TODO_FILE}; \
       formatted_todo_file_line_with_number ${TARGET_LINE_NUMBER}; \
     }; \
@@ -1081,7 +1091,9 @@
           mark_todo_with 'x'; \
           ;; \
         commit|c) \
-          use_todo_for_commit && echo && mark_todo_with 'x'; \
+          use_todo_for_commit \
+            && echo \
+            && mark_todo_with 'x'; \
           ;; \
         cancel) \
           mark_todo_with 'c'; \
