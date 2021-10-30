@@ -1112,8 +1112,10 @@
         && cp ${TODO_FILE}{${TODO_FILE_BACKUP_EXT},} \
         && cp ${TODO_FILE}{.tmp,${TODO_FILE_BACKUP_EXT}} \
         && diff \
-            --changed-group-format='Line %dF restored\n  before:   %<  now:      %>' \
-            --unchanged-group-format=''\
+            --changed-group-format='Line %dF\n%<%>' \
+            --old-line-format='  before:   %L' \
+            --new-line-format='  now:      %L' \
+            --unchanged-group-format='' \
             ${TODO_FILE}${TODO_FILE_BACKUP_EXT} \
             ${TODO_FILE}; \
       return 0; \
