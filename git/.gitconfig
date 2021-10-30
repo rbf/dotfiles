@@ -876,6 +876,7 @@
       echo \"  git todo dump                  parse and print all lines in todo file (for debugging)\"; \
       echo \"  git todo new <todo>            add a new todo\"; \
       echo \"  git todo next                  show and mark next pending todo as started\"; \
+      echo \"  git todo commit                shortcut for git todo <number> commit if there is only one started commit\"; \
       echo \"  git todo find <pattern>        find todos matching <pattern>\"; \
       echo \"  git todo <number>              show todo <number>\"; \
       echo \"  git todo <number> [start|s]    mark todo <number> as started\"; \
@@ -1078,7 +1079,7 @@
       grep --color=never --max-count=1 --line-number -- \"^- \\[${1:?missing one-letter status}\\]\" ${TODO_FILE} | cut -f 1 -d :; \
     }; \
     count_todos_on_status() { \
-      grep --color=never -- \"^- \\[${1:?missing one-letter status}\\]\" ${TODO_FILE} 2>/dev/null | wc -l; \
+      grep --color=never -- \"^- \\[${1:?missing one-letter status}\\]\" ${TODO_FILE} 2>/dev/null | wc -l | xargs echo; \
     }; \
     display_and_start_next_todo() { \
       IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR=true; \
@@ -1107,6 +1108,24 @@
       fi; \
       echo \"Starting next todo:\"; \
       handle_command_for_line_number ${next_pending_todo_number} start; \
+    }; \
+    commit_todo_if_only_one_started() { \
+      local started_todos_count=\"$(count_todos_on_status 's')\"; \
+      case ${started_todos_count} in \
+        0) \
+          git imp-error-alias commit - this command can only be used when there is only one started commit and there are curently none; \
+          list_relevant_todos; \
+          return 1; \
+          ;; \
+        1) \
+          handle_command_for_line_number \"$(find_number_of_first_todo_on_status 's')\" commit; \
+          ;; \
+        *) \
+          git imp-error-alias commit - this command can only be used when there is only one started commit and there are curently ${started_todos_count}; \
+          list_all_started; \
+          return 1; \
+          ;; \
+      esac; \
     }; \
     handle_command_for_line_number() { \
       TARGET_LINE_NUMBER=${1}; \
@@ -1206,6 +1225,9 @@
           ;; \
         next) \
           display_and_start_next_todo; \
+          ;; \
+        commit) \
+          commit_todo_if_only_one_started; \
           ;; \
         find) \
           shift; \
