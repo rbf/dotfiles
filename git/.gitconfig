@@ -1016,6 +1016,7 @@
         pending_todos_label='One pending todo'; \
       fi; \
       if ((started_todos_count > 0)); then \
+        IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR=true; \
         if ((pending_todos_count == 0)); then \
           git imp-success-alias - ${started_todos_label} and you are all done afterwards!; \
         else \
