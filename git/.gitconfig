@@ -983,7 +983,7 @@
     }; \
     todo_file_lines_matching() { \
       numbered_todo_file \
-              | grep --color=never \"${1:?missing pattern}\" \
+              | grep --color=never --max-count=\"${MAX_COUNT:-100}\" \"${1:?missing pattern}\" \
               | grep --color=never -v \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}#\"; \
     }; \
     formatted_todo_file_lines_matching() { \
@@ -1021,24 +1021,24 @@
         else \
           echo ${started_todos_label}. ${pending_todos_label} afterwards.; \
         fi; \
-        list_all_started; \
+        list_started; \
       else \
         if ((pending_todos_count == 0)); then \
           git imp-success-alias - no more pending todos, you are all done!; \
         elif ((pending_todos_count < 6)); then \
           echo ${pending_todos_label}.; \
-          list_all_pending; \
         else \
-          echo ${pending_todos_label}. The next 5:; \
-          list_all_pending | head -5; \
+          MAX_COUNT=5; \
+          echo ${pending_todos_label}. The next ${MAX_COUNT}:; \
         fi; \
+        list_pending; \
       fi; \
     }; \
-    list_all_pending()   { formatted_todo_file_lines_starting_with '- \\[ \\] '; }; \
-    list_all_started()   { formatted_todo_file_lines_starting_with '- \\[s\\] '; }; \
-    list_all_done()      { formatted_todo_file_lines_starting_with '- \\[x\\] '; }; \
-    list_all_cancelled() { formatted_todo_file_lines_starting_with '- \\[c\\] '; }; \
-    list_all()           { formatted_todo_file_lines_starting_with '- \\[\\( \\|s\\|x\\|c\\)\\] '; }; \
+    list_pending()   { formatted_todo_file_lines_starting_with '- \\[ \\] '; }; \
+    list_started()   { formatted_todo_file_lines_starting_with '- \\[s\\] '; }; \
+    list_done()      { formatted_todo_file_lines_starting_with '- \\[x\\] '; }; \
+    list_cancelled() { formatted_todo_file_lines_starting_with '- \\[c\\] '; }; \
+    list_all()       { formatted_todo_file_lines_starting_with '- \\[\\( \\|s\\|x\\|c\\)\\] '; }; \
     add() { echo \"- [ ] $(date +\"${DATETIME_FORMAT_RAW}\") | ${*} |\" >> ${TODO_FILE}; }; \
     use_todo_for_commit() { \
       git imp-is-a-commit-possible || return 1; \
@@ -1086,11 +1086,11 @@
       local started_todos_count=\"$(count_todos_on_status 's')\"; \
       if ((started_todos_count == 1)); then \
         git imp-warn-alias - there is still one ongoing todo; \
-        list_all_started; \
+        list_started; \
         return 0; \
       elif ((started_todos_count > 1)); then \
         git imp-warn-alias - there are still ${started_todos_count} ongoing todos; \
-        list_all_started; \
+        list_started; \
         return 0; \
       fi; \
       local next_pending_todo_number=$(find_number_of_first_todo_on_status ' '); \
@@ -1122,7 +1122,7 @@
           ;; \
         *) \
           git imp-error-alias commit - this command can only be used when there is only one started commit and there are curently ${started_todos_count}; \
-          list_all_started; \
+          list_started; \
           return 1; \
           ;; \
       esac; \
@@ -1201,16 +1201,16 @@
           list_relevant_todos; \
           ;; \
         pending|p) \
-          list_all_pending; \
+          list_pending; \
           ;; \
         started|s) \
-          list_all_started; \
+          list_started; \
           ;; \
         done|x|d) \
-          list_all_done; \
+          list_done; \
           ;; \
         cancelled|c) \
-          list_all_cancelled; \
+          list_cancelled; \
           ;; \
         all) \
           list_all; \
