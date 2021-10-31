@@ -1220,8 +1220,9 @@
           ;; \
         new) \
           shift; \
-          add \"${*}\"; \
-          formatted_todo_file_last_line; \
+          add \"${*}\" \
+            && IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR=true \
+            && formatted_todo_file_last_line; \
           ;; \
         next) \
           display_and_start_next_todo; \
