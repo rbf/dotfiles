@@ -974,12 +974,27 @@
       fi; \
       COMMIT_HASH=${COMMIT_HASH##*\\* }; \
       extract_and_wrap_todo_text_from_LINE_into_TODO_FIRST_LINE_and_TODO_REST; \
-      printf \"$(tput setaf 3)${LINE_NUMBER} $(tput setaf 2)${FORMATTED_CREATED_AT}$(tput setaf 15) | ${TODO_FIRST_LINE}\"; \
+      local todo_text_color; \
+      case \"${TODO_FIRST_LINE%%: *}\" in \
+        fix) \
+          todo_text_color=1; \
+          ;; \
+        new) \
+          todo_text_color=25; \
+          ;; \
+        change) \
+          todo_text_color=6; \
+          ;; \
+        *) \
+          todo_text_color=15; \
+          ;; \
+      esac; \
+      printf \"$(tput setaf 3)${LINE_NUMBER} $(tput setaf 2)${FORMATTED_CREATED_AT}$(tput setaf 15) | $(tput setaf ${todo_text_color})${TODO_FIRST_LINE}\"; \
       printf \"${COLUMN_SEPARATOR_CHAR}${SUFFIX_COLOR}${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT}\"; \
       printf \"${COLUMN_SEPARATOR_CHAR}$(tput setaf 3)${COMMIT_HASH}\"; \
       echo \"$(tput sgr0)\"; \
       if [ -n \"${TODO_REST}\" ]; then \
-        echo \"$(${IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR:-false} && tput setaf 15 || tput setaf 8)${TODO_REST}$(tput sgr0)\"; \
+        echo \"$(${IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR:-false} && tput setaf ${todo_text_color} || tput setaf 8)${TODO_REST}$(tput sgr0)\"; \
       fi; \
     }; \
     todo_file_lines_matching() { \
