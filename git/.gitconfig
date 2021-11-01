@@ -867,7 +867,7 @@
       echo '# Lines starting with - [ ] are pending todos.' >> ${TODO_FILE}; \
       echo '# Lines starting with - [s] are started todos.' >> ${TODO_FILE}; \
       echo '# Lines starting with - [x] are done todos.' >> ${TODO_FILE}; \
-      echo '# Lines starting with - [c] are cancelled todos.' >> ${TODO_FILE}; \
+      echo '# Lines starting with - [~] are cancelled todos.' >> ${TODO_FILE}; \
       echo '# Lines have the following format:' >> ${TODO_FILE}; \
       echo '# -<space>[<status>]<space><creation date><space>|<space><todo><space>|<space><modification date>' >> ${TODO_FILE}; \
       echo \"# <creation date> and <modification date> are stored in ISO-8601 compliant strftime format: '${DATETIME_FORMAT_RAW}'\" >> ${TODO_FILE}; \
@@ -910,7 +910,7 @@
       done; \
     }; \
     is_line_formated_as_expected() { \
-      if [ -z \"${LINE}\" ] || echo \"${LINE}\" | grep -q -- '^[[:space:]]*#.*\\|^- \\[[ sxc]\\] [[:digit:]]\\{4\\}-[[:digit:]]\\{2\\}-[[:digit:]]\\{2\\}T[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}[-+][[:digit:]]\\{4\\} | .* |\\( [[:digit:]]\\{4\\}-[[:digit:]]\\{2\\}-[[:digit:]]\\{2\\}T[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}[-+][[:digit:]]\\{4\\}\\)\\?\\( \\* [0-9a-f]\\{4,40\\}\\)\\?$'; then \
+      if [ -z \"${LINE}\" ] || echo \"${LINE}\" | grep -q -- '^[[:space:]]*#.*\\|^- \\[[ sx~]\\] [[:digit:]]\\{4\\}-[[:digit:]]\\{2\\}-[[:digit:]]\\{2\\}T[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}[-+][[:digit:]]\\{4\\} | .* |\\( [[:digit:]]\\{4\\}-[[:digit:]]\\{2\\}-[[:digit:]]\\{2\\}T[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}[-+][[:digit:]]\\{4\\}\\)\\?\\( \\* [0-9a-f]\\{4,40\\}\\)\\?$'; then \
         return 0; \
        else \
         git imp-error-alias \"unable to parse line ${LINE_NUMBER_ZERO_PADDED}: ${LINE}\"; \
@@ -970,10 +970,10 @@
           SUFFIX_COLOR=\"$(tput setaf 2)\"; \
           SUFFIX='done'; \
           ;; \
-        '- [c] '*) \
+        '- [~] '*) \
           CHECK_ICON=''; \
           CHECK_COLOR=\"$(tput setaf 1)\"; \
-          LINE=${LINE#'- [c] '}; \
+          LINE=${LINE#'- [~] '}; \
           SUFFIX_COLOR=\"$(tput setaf 1)\"; \
           SUFFIX='cancelled'; \
           ;; \
@@ -1073,8 +1073,8 @@
     list_pending()   { formatted_todo_file_lines_starting_with '- \\[ \\] '; }; \
     list_started()   { formatted_todo_file_lines_starting_with '- \\[s\\] '; }; \
     list_done()      { formatted_todo_file_lines_starting_with '- \\[x\\] '; }; \
-    list_cancelled() { formatted_todo_file_lines_starting_with '- \\[c\\] '; }; \
-    list_all()       { formatted_todo_file_lines_starting_with '- \\[\\( \\|s\\|x\\|c\\)\\] '; }; \
+    list_cancelled() { formatted_todo_file_lines_starting_with '- \\[~\\] '; }; \
+    list_all()       { formatted_todo_file_lines_starting_with '- \\[\\( \\|s\\|x\\|~\\)\\] '; }; \
     add_new_todo_to_pending_list() { \
       local position; \
       position=\"${1:?missing first or last}\"; \
@@ -1233,7 +1233,7 @@
             && mark_todo_with 'x'; \
           ;; \
         cancel) \
-          mark_todo_with 'c'; \
+          mark_todo_with '~'; \
           ;; \
         reset|r) \
           mark_todo_with ' '; \
