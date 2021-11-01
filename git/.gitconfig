@@ -1263,9 +1263,11 @@
       reorder_todos; \
     }; \
     undo_last_modification() { \
-      cp ${TODO_FILE}{,.tmp} \
+      TMP_UNDO_FILE=$(mktemp /tmp/git_todo_undo.XXXXXX) || exit 1; \
+      trap \"rm ${TMP_UNDO_FILE}\" 0 2 3 15; \
+      cp ${TODO_FILE} ${TMP_UNDO_FILE} \
         && cp ${TODO_FILE}{${TODO_FILE_BACKUP_EXT},} \
-        && cp ${TODO_FILE}{.tmp,${TODO_FILE_BACKUP_EXT}} \
+        && cp ${TMP_UNDO_FILE} ${TODO_FILE}${TODO_FILE_BACKUP_EXT} \
         && diff \
             --changed-group-format='Line %dF\n%<%>' \
             --old-line-format='  before:   %L' \
