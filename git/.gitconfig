@@ -858,6 +858,10 @@
     fi; \
   }; f"
 
+  next = todo next
+  ct   = todo commit
+  cat  = ! git imp-is-cam-reasonable && git add --update && git ct
+
   todo = !" \
     set -o pipefail; \
     init() { \
