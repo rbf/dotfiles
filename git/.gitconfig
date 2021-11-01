@@ -874,8 +874,9 @@
       echo \"  git todo [cancelled|c]         list all cancelled todos\"; \
       echo \"  git todo all                   list all todos\"; \
       echo \"  git todo dump                  parse and print all lines in todo file (for debugging)\"; \
-      echo \"  git todo new <todo>            add a new todo\"; \
+      echo \"  git todo new <todo>            add a new todo at the bottom of the pending list\"; \
       echo \"  git todo next                  show and mark next pending todo as started\"; \
+      echo \"  git todo next <todo>           add a new todo at the top of the pending list and start it if none started\"; \
       echo \"  git todo commit                shortcut for git todo <number> commit if there is only one started commit\"; \
       echo \"  git todo find <pattern>        find todos matching <pattern>\"; \
       echo \"  git todo <number>              show todo <number>\"; \
@@ -885,7 +886,7 @@
       echo \"  git todo <number> cancel       mark todo <number> as cancelled\"; \
       echo \"  git todo <number> [reset|r]    mark todo <number> as pending\"; \
       echo \"  git todo <number> delete       delete todo <number>\"; \
-      echo \"  git todo undo                  undo last 'git todo <number> <command>'\"; \
+      echo \"  git todo undo                  undo last 'new|next[<todo>]|<number> <command>|undo' command (i.e. only one undo level)\"; \
       echo \"  git todo [help|h]              display this help message\"; \
     }; \
     numbered_todo_file() { \
@@ -1040,7 +1041,37 @@
     list_done()      { formatted_todo_file_lines_starting_with '- \\[x\\] '; }; \
     list_cancelled() { formatted_todo_file_lines_starting_with '- \\[c\\] '; }; \
     list_all()       { formatted_todo_file_lines_starting_with '- \\[\\( \\|s\\|x\\|c\\)\\] '; }; \
-    add() { echo \"- [ ] $(date +\"${DATETIME_FORMAT_RAW}\") | ${*} |\" >> ${TODO_FILE}; }; \
+    add_new_todo_to_pending_list() { \
+      local position; \
+      position=\"${1:?missing first or last}\"; \
+      shift; \
+      local opening_part_sed_expr; \
+      local closing_part_sed_expr; \
+      local message; \
+      case \"${position}\" in \
+        first) \
+          opening_part_sed_expr='1s/^/'; \
+          closing_part_sed_expr='\\n/'; \
+          message='New todo added at the top of the peding list:'; \
+          ;; \
+        last) \
+          opening_part_sed_expr='$s/$/\\n'; \
+          closing_part_sed_expr='/'; \
+          message='New todo added at the bottom of the peding list:'; \
+          ;; \
+        *) \
+          git imp-error-alias \"- first argument must be 'first' or 'last'\"; \
+          exit 1; \
+          ;; \
+      esac; \
+      sed -i${TODO_FILE_BACKUP_EXT} \
+          -e \"${opening_part_sed_expr}$(echo \"- [ ] $(date +\"${DATETIME_FORMAT_RAW}\") | ${*//\\//\\\\/} |\")${closing_part_sed_expr}\" \
+          ${TODO_FILE} \
+        && reorder_todos \
+        && IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR=true \
+        && echo \"${message}\" \
+        && todo_formatted \"${position}\" ' '; \
+    }; \
     use_todo_for_commit() { \
       git imp-is-a-commit-possible || return 1; \
       IS_INDENTATION_FOR_TODO_REST_NEEDED=false; \
@@ -1076,8 +1107,25 @@
         | sed 's/^- \\[ \\]$//' \
         > ${TODO_FILE}; \
     }; \
-    find_number_of_first_todo_on_status() { \
-      grep --color=never --max-count=1 --line-number -- \"^- \\[${1:?missing one-letter status}\\]\" ${TODO_FILE} | cut -f 1 -d :; \
+    todo_number() { \
+      case \"${1:?missing first or last}\" in \
+        first) \
+          numbered_todo_file; \
+          ;; \
+        last) \
+          numbered_todo_file | tail -r; \
+          ;; \
+        *) \
+          git imp-error-alias \"- first argument must be 'first' or 'last'\"; \
+          exit 1; \
+          ;; \
+      esac \
+        | grep --color=never --max-count=1 -- \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}- \\[${2:?missing one-letter status}\\]\" \
+        | cut -f 1 -d ${LINE_NUMBER_SEPARATOR:0:1} \
+        | sed 's/^0*//'; \
+    }; \
+    todo_formatted() { \
+      formatted_todo_file_line_with_number $(todo_number \"${1}\" \"${2}\" || echo '-1'); \
     }; \
     count_todos_on_status() { \
       grep --color=never -- \"^- \\[${1:?missing one-letter status}\\]\" ${TODO_FILE} 2>/dev/null | wc -l | xargs echo; \
@@ -1094,7 +1142,7 @@
         list_started; \
         return 0; \
       fi; \
-      local next_pending_todo_number=$(find_number_of_first_todo_on_status ' '); \
+      local next_pending_todo_number=$(todo_number first ' '); \
       if [ -z \"${next_pending_todo_number}\" ]; then \
         git imp-success-alias - no more pending todos, you are all done!; \
         return 0; \
@@ -1119,7 +1167,7 @@
           return 1; \
           ;; \
         1) \
-          handle_command_for_line_number \"$(find_number_of_first_todo_on_status 's')\" commit; \
+          handle_command_for_line_number \"$(todo_number first 's')\" commit; \
           ;; \
         *) \
           git imp-error-alias commit - this command can only be used when there is only one started commit and there are curently ${started_todos_count}; \
@@ -1221,11 +1269,11 @@
           ;; \
         new) \
           shift; \
-          add \"${*}\" \
-            && IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR=true \
-            && formatted_todo_file_last_line; \
+          add_new_todo_to_pending_list last \"${*}\"; \
           ;; \
         next) \
+          shift; \
+          [ -n  \"${*}\" ] && add_new_todo_to_pending_list first \"${*}\"; \
           display_and_start_next_todo; \
           ;; \
         commit) \
