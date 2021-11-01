@@ -893,7 +893,7 @@
       nl -b a -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
     }; \
     format_and_align_numbered_todo_file_lines() { \
-      format_numbered_todo_file_lines | column -ts ${COLUMN_SEPARATOR_CHAR}; \
+      format_numbered_todo_file_lines | column; \
     }; \
     format_numbered_todo_file_lines() { \
       while read NUMBERED_LINE; do \
@@ -989,9 +989,9 @@
           todo_text_color=15; \
           ;; \
       esac; \
-      printf \"$(tput setaf 3)${LINE_NUMBER} $(tput setaf 2)${FORMATTED_CREATED_AT}$(tput setaf 15) | $(tput setaf ${todo_text_color})${TODO_FIRST_LINE}\"; \
-      printf \"${COLUMN_SEPARATOR_CHAR}${SUFFIX_COLOR}${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT}\"; \
-      printf \"${COLUMN_SEPARATOR_CHAR}$(tput setaf 3)${COMMIT_HASH}\"; \
+      printf \"$(tput setaf 3)${LINE_NUMBER} $(tput setaf 2)${FORMATTED_CREATED_AT}$(tput setaf 15) | $(tput setaf ${todo_text_color})%-70s\" \"${TODO_FIRST_LINE}\"; \
+      printf \"%-16s\" \"  $(tput setaf 3)${COMMIT_HASH:+* }${COMMIT_HASH}\"; \
+      printf \"%-43s\" \"  ${SUFFIX_COLOR}${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT}\"; \
       echo \"$(tput sgr0)\"; \
       if [ -n \"${TODO_REST}\" ]; then \
         echo \"$(${IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR:-false} && tput setaf ${todo_text_color} || tput setaf 8)${TODO_REST}$(tput sgr0)\"; \
@@ -1258,7 +1258,6 @@
       DATETIME_FORMAT_RAW='%Y-%m-%dT%H:%M:%S%z'; \
       DATETIME_FORMAT_DISPLAY='%a, %d %b %Y, %R'; \
       LINE_NUMBER_SEPARATOR='::'; \
-      COLUMN_SEPARATOR_CHAR='˚'; \
       init; \
       case \"${1}\" in \
         '') \
