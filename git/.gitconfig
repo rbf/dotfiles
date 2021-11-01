@@ -701,7 +701,16 @@
 
   # Compact version of the history with less information than 'git hist{,a,g}'
   # in one line, vertically aligned and truncated to terminal width.
-  his      = !git log --date=human --pretty=tformat:'%C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%<|('$(tput cols)',trunc)%d%C(reset)'
+  his      = !"f() {\
+    git -c color.ui=always log --date=human \
+      --pretty=tformat:'%C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s<END_OF_SUBJECT> %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%<|('$(tput cols)',trunc)%d%C(reset)' \"${@}\" \
+      | sed \
+          -e 's/\\(fix: .*\\)<END_OF_SUBJECT>/'$(tput setaf 1)'\\1/' \
+          -e 's/\\(new: .*\\)<END_OF_SUBJECT>/'$(tput setaf 25)'\\1/' \
+          -e 's/\\(change: .*\\)<END_OF_SUBJECT>/'$(tput setaf 6)'\\1/' \
+          -e 's/<END_OF_SUBJECT>//' \
+      ; \
+  }; f"
   # Like 'git his' but shows the commit graph.
   hisg     = his --graph
   # Like 'git his' but shows the commit graph and commits for all branches.
