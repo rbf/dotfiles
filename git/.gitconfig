@@ -709,6 +709,7 @@
           -e 's/\\(new: .*\\)<END_OF_SUBJECT>/'$(tput setaf 25)'\\1/' \
           -e 's/\\(change: .*\\)<END_OF_SUBJECT>/'$(tput setaf 6)'\\1/' \
           -e 's/<END_OF_SUBJECT>//' \
+      | $(git config --get core.pager) \
       ; \
   }; f"
   # Like 'git his' but shows the commit graph.
