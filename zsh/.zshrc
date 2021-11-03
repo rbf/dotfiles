@@ -217,11 +217,131 @@ function sublp() {
 }
 
 # SOURCE: 28jun2021 https://askubuntu.com/a/1309434
-function lscolors() {
+# SOURCE: 28jun2021 https://github.com/romkatv/powerlevel10k/blob/4f3d2ff/config/p10k-classic.zsh#L6
+function lscolors() (
   for i in {0..255}; do
     print -Pn "%K{$i}  %k%F{$i}${(l:3::0:)i}%f " ${${(M)$((i%6)):#3}:+$'\n'}
   done
-}
+)
+
+# SOURCE: 02nov2021 https://www.linuxcommand.org/lc3_adv_tput.php
+function color-matrix-tput() (
+  text="${1:- Az }"
+  cell_witdh=${#text}
+  max_number_of_color_rows=$(($(tput lines) - 5))
+  max_number_of_color_cols=$(((($(tput cols) - 15) / cell_witdh) - 2))
+  for fg_color in {-1..${max_number_of_color_rows}}; do
+      if ((fg_color == -1)); then
+        printf 'tput setab      '
+      elif ((fg_color > 255)); then
+        continue
+      else
+        printf "tput setaf %3d |$(tput setaf $fg_color)" $fg_color
+      fi
+      for bg_color in {0..${max_number_of_color_cols}}; do
+        if ((bg_color > 255)); then
+          continue
+        elif ((fg_color == -1)); then
+          printf "%${cell_witdh}d" ${bg_color}
+        elif ((fg_color == bg_color)); then
+          printf "$(tput setab 0)%${cell_witdh}s" ' '
+        else
+          printf "$(tput setab $bg_color)${text}"
+        fi
+      done
+      echo $(tput sgr0)
+  done
+)
+
+# MUCH faster (i.e. instantaneous) that the version with 'tput', but 'print'
+# (i.e. not 'printf') is avaible on zsh, and not in bash. Inspired by the
+# 'lscolors' function above.
+# SOURCE: 02nov2021 https://zsh.sourceforge.io/Doc/Release/Shell-Builtin-Commands.html
+# SOURCE: 02nov2021 https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html#Prompt-Expansion
+# SOURCE: 02nov2021 https://ndench.github.io/bash/parsing-bash-flags
+function color-matrix-print() (
+  set -o pipefail
+  function f() (
+    number_of_available_colors=255
+    while (( # > 0 )); do
+      case "${1}" in
+        --number-of-colors|-n )
+          print -P "%F{1}Missing number, e.g. --number-of-colors=10 or -n=10%f"
+          exit 1
+          ;;
+        --number-of-colors=[1-9]|-n=[1-9] )
+          ;&
+        --number-of-colors=[1-9][0-9]|-n=[1-9][0-9] )
+          ;&
+        --number-of-colors=[1-9][0-9][0-9]|-n=[1-9][0-9][0-9] )
+          n=$((${1##*=} - 1))
+          shift
+          max_number_of_color_rows=${n}
+          max_number_of_color_cols=${n}
+          ;;
+        --all-colors|-a )
+          shift
+          max_number_of_color_rows=$number_of_available_colors
+          max_number_of_color_cols=$number_of_available_colors
+          ;;
+        -- )
+          shift
+          break
+          ;;
+        -* )
+          print -P "%F{1}Unsupported option ${1}%f"
+          exit 1
+          ;;
+        * )
+          break
+          ;;
+      esac
+    done
+    text="${*:- %F{fgc\}%K{bgc\} Az %k%f }"
+    cell_witdh=${#text}
+    text="${text//\%/%%}"
+    raw_text_length=${#text}
+    rows_for_padding=4
+    max_number_of_color_rows=${max_number_of_color_rows:-$(($(tput lines) - rows_for_padding))}
+    first_col_width=23
+    max_number_of_color_cols=${max_number_of_color_cols:-$(((($(tput cols) - first_col_width) / cell_witdh) - 1))}
+    long_header_length=11
+    for fg_color in {-1..${max_number_of_color_rows}}; do
+        if ((fg_color == -1)); then
+          if ((cell_witdh > long_header_length)); then
+            print -n 'print -Pn              '
+          else
+            print -n 'print -Pn "%K{n}%k"; n='
+          fi
+        elif ((fg_color > number_of_available_colors)); then
+          continue
+        else
+          print -Pnf "          %-11s %s" "\"%%F{${fg_color}}%%f\"" "|%F{$fg_color}"
+        fi
+        for bg_color in {0..${max_number_of_color_cols}}; do
+          if ((bg_color > number_of_available_colors)); then
+            continue
+          elif ((fg_color == -1)); then
+            if ((cell_witdh > long_header_length)); then
+              header="\"%K{${bg_color}}%k\""
+            else
+              header="${bg_color}"
+            fi
+            print -n "${(l:${cell_witdh}:)header}"
+            continue
+          elif ((fg_color == bg_color)); then
+            print -Pn "%K{0}${(l:${cell_witdh}:)}%k"
+            continue
+          fi
+          cell_text="${text//fgc/${fg_color}}"
+          cell_text="${cell_text//bgc/${bg_color}}"
+          print -Pn "%K{$bg_color}${(l:${raw_text_length}:)cell_text}%k"
+        done
+        print -P "%f"
+    done
+  )
+  f "${@}" | less -SFRXK
+)
 
 # SOURCE: 28jun2021 https://github.com/chubin/wttr.in
 # VIA: https://towardsdatascience.com/the-ultimate-guide-to-your-terminal-makeover-e11f9b87ac99
