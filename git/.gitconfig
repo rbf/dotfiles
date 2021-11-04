@@ -1027,7 +1027,9 @@
       printf \"${COLOR_FG[3]}${LINE_NUMBER} ${COLOR_FG[2]}${FORMATTED_CREATED_AT}${COLOR_FG[15]} | ${CHECK_COLOR}${CHECK_ICON} ${todo_text_color}%-70s\" \"${TODO_FIRST_LINE}\"; \
       printf \"%-16s\" \"  ${COLOR_FG[3]}${COMMIT_HASH:+* }${COMMIT_HASH}\"; \
       printf \"%-43s\n\" \"  ${SUFFIX_COLOR}${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT}\"; \
-      printf \"${todo_text_color}${TODO_REST}${COLOR_RESET}${TODO_REST:+\n}\"; \
+      if [ -n \"${TODO_REST}\" ]; then \
+        printf \"${todo_text_color}${TODO_REST}${COLOR_RESET}\n\"; \
+      fi; \
     }; \
     todo_file_lines_matching() { \
       numbered_todo_file \
@@ -1226,7 +1228,7 @@
       [ -n \"${TARGET_LINE}\" ] || return 1; \
       case \"${1}\" in \
         '') \
-          printf \"${TARGET_LINE}\"; \
+          echo \"${TARGET_LINE}\"; \
           return 0; \
           ;; \
         start|s) \
@@ -1247,12 +1249,12 @@
           mark_todo_with ' '; \
           ;; \
         delete) \
-          printf \"${TARGET_LINE}\"; \
+          echo \"${TARGET_LINE}\"; \
           git imp-warn-alias \"- to permanently delete this TODO type 'git todo ${TARGET_LINE_NUMBER} DELETE'\"; \
           return 0; \
           ;; \
         DELETE) \
-          printf \"${TARGET_LINE}\"; \
+          echo \"${TARGET_LINE}\"; \
           sed -i${TODO_FILE_BACKUP_EXT} -e \"${TARGET_LINE_NUMBER}d\" ${TODO_FILE}; \
           git imp-warn-alias \"- permanently deleted todo ${TARGET_LINE_NUMBER}\"; \
           ;; \
