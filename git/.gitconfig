@@ -882,28 +882,28 @@
     }; \
     help() { \
       echo \"Available 'git todo' commands:\"; \
-      echo \"  git todo                       list all started and pending todos\"; \
-      echo \"  git todo [pending|p]           list all pending todos\"; \
-      echo \"  git todo [started|s]           list all started todos\"; \
-      echo \"  git todo [done|d|x]            list all done todos\"; \
-      echo \"  git todo [committed|c]         list all todos with a related commit\"; \
-      echo \"  git todo cancelled             list all cancelled todos\"; \
-      echo \"  git todo all                   list all todos\"; \
-      echo \"  git todo dump                  parse and print all lines in todo file (for debugging)\"; \
-      echo \"  git todo add <todo>            add a new todo at the bottom of the pending list\"; \
-      echo \"  git todo next                  show and mark next pending todo as started\"; \
-      echo \"  git todo next <todo>           add a new todo at the top of the pending list and start it if none started\"; \
-      echo \"  git todo commit                shortcut for git todo <number> commit if there is only one started commit\"; \
-      echo \"  git todo find <pattern>        find todos matching <pattern>\"; \
-      echo \"  git todo <number>              show todo <number>\"; \
-      echo \"  git todo <number> [start|s]    mark todo <number> as started\"; \
-      echo \"  git todo <number> [done|d|x]   mark todo <number> as done\"; \
-      echo \"  git todo <number> [commit|c]   mark todo <number> as done and use it for the commit message\"; \
-      echo \"  git todo <number> cancel       mark todo <number> as cancelled\"; \
-      echo \"  git todo <number> [reset|r]    mark todo <number> as pending\"; \
-      echo \"  git todo <number> delete       delete todo <number>\"; \
-      echo \"  git todo undo                  undo last 'add|next[<todo>]|<number> <command>|undo' command (i.e. only one undo level)\"; \
-      echo \"  git todo [help|h]              display this help message\"; \
+      echo \"  git todo                                    list all started and pending todos\"; \
+      echo \"  git todo [pending|p]                        list all pending todos\"; \
+      echo \"  git todo [started|s]                        list all started todos\"; \
+      echo \"  git todo [done|d|x]                         list all done todos\"; \
+      echo \"  git todo [committed|c]                      list all todos with a related commit\"; \
+      echo \"  git todo cancelled                          list all cancelled todos\"; \
+      echo \"  git todo all                                list all todos\"; \
+      echo \"  git todo dump                               parse and print all lines in todo file (for debugging)\"; \
+      echo \"  git todo add [--top|-t|--bottom|-b] <todo>  add a new todo at the bottom (default) or top of the pending list\"; \
+      echo \"  git todo next                               show and mark next pending todo as started\"; \
+      echo \"  git todo next <todo>                        add a new todo at the top of the pending list and start it if none started\"; \
+      echo \"  git todo commit                             shortcut for git todo <number> commit if there is only one started commit\"; \
+      echo \"  git todo find <pattern>                     find todos matching <pattern>\"; \
+      echo \"  git todo <number>                           show todo <number>\"; \
+      echo \"  git todo <number> [start|s]                 mark todo <number> as started\"; \
+      echo \"  git todo <number> [done|d|x]                mark todo <number> as done\"; \
+      echo \"  git todo <number> [commit|c]                mark todo <number> as done and use it for the commit message\"; \
+      echo \"  git todo <number> cancel                    mark todo <number> as cancelled\"; \
+      echo \"  git todo <number> [reset|r]                 mark todo <number> as pending\"; \
+      echo \"  git todo <number> delete                    delete todo <number>\"; \
+      echo \"  git todo undo                               undo last 'add|next[<todo>]|<number> <command>|undo' command (i.e. only one undo level)\"; \
+      echo \"  git todo [help|h]                           display this help message\"; \
     }; \
     numbered_todo_file() { \
       nl -b a -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
@@ -1298,6 +1298,35 @@
             ${TODO_FILE}; \
       return 0; \
     }; \
+    handle_add_command() { \
+      local position; \
+      case \"${1}\" in \
+        --top|-t ) \
+          position=first; \
+          shift; \
+          ;; \
+        --bottom|-b ) \
+          position=last; \
+          shift; \
+          ;; \
+        -- ) \
+          position=last; \
+          shift; \
+          ;; \
+        -* ) \
+          git imp-error-alias \"- unsupported option ${1}\"; \
+          exit 1; \
+          ;; \
+        '' ) \
+          git imp-error-alias \"- missing todo text\"; \
+          exit 1; \
+          ;; \
+        * ) \
+          position=last; \
+          ;; \
+      esac; \
+      add_todo_to_pending_list \"${position}\" \"${*}\"; \
+    }; \
     todo() { \
       for i in 1 2 3 6 8 15 25; do COLOR_FG[$i]=$(tput setaf $i); done; \
       for i in 0; do COLOR_BG[$i]=$(tput setab $i); done; \
@@ -1341,7 +1370,7 @@
           ;; \
         add) \
           shift; \
-          add_todo_to_pending_list last \"${*}\"; \
+          handle_add_command \"${@}\"; \
           ;; \
         next) \
           shift; \
