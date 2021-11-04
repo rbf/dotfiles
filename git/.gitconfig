@@ -974,7 +974,7 @@
           SUFFIX=''; \
           ;; \
         '- [s] '*) \
-          CHECK_ICON=''; \
+          CHECK_ICON=''; \
           CHECK_COLOR=${COLOR_FG[15]}; \
           LINE=${LINE#'- [s] '}; \
           SUFFIX_COLOR=${COLOR_FG[3]}; \
@@ -1025,7 +1025,7 @@
           todo_text_color=${COLOR_FG[15]}; \
           ;; \
       esac; \
-      printf \"${COLOR_FG[3]}${LINE_NUMBER} ${COLOR_FG[2]}${FORMATTED_CREATED_AT}${COLOR_FG[15]} | ${CHECK_COLOR}${CHECK_ICON} ${todo_text_color}%-70s\" \"${TODO_FIRST_LINE}\"; \
+      printf \"${COLOR_FG[3]}${LINE_NUMBER} ${COLOR_FG[2]}${FORMATTED_CREATED_AT}${COLOR_FG[15]} | ${CHECK_COLOR}${CHECK_ICON}${COLOR_RESET} ${todo_text_color}%-70s\" \"${TODO_FIRST_LINE}\"; \
       printf \"%-16s\" \"  ${COLOR_FG[3]}${COMMIT_HASH:+* }${COMMIT_HASH}\"; \
       printf \"%-43s\n\" \"  ${SUFFIX_COLOR}${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT}\"; \
       if [ -n \"${TODO_REST}\" ]; then \
@@ -1283,7 +1283,8 @@
     }; \
     todo() { \
       for i in 1 2 3 6 8 15 25; do COLOR_FG[$i]=$(tput setaf $i); done; \
-      COLOR_RESET=${COLOR_FG[15]}; \
+      for i in 0; do COLOR_BG[$i]=$(tput setab $i); done; \
+      COLOR_RESET=${COLOR_BG[0]}${COLOR_FG[15]}; \
       export CURRENT_ALIAS_NAME=todo; \
       git imp-check-repo || return 1; \
       TODO_FILE=todo.txt; \
