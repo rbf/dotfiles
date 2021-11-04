@@ -890,7 +890,7 @@
       echo \"  git todo cancelled             list all cancelled todos\"; \
       echo \"  git todo all                   list all todos\"; \
       echo \"  git todo dump                  parse and print all lines in todo file (for debugging)\"; \
-      echo \"  git todo new <todo>            add a new todo at the bottom of the pending list\"; \
+      echo \"  git todo add <todo>            add a new todo at the bottom of the pending list\"; \
       echo \"  git todo next                  show and mark next pending todo as started\"; \
       echo \"  git todo next <todo>           add a new todo at the top of the pending list and start it if none started\"; \
       echo \"  git todo commit                shortcut for git todo <number> commit if there is only one started commit\"; \
@@ -902,7 +902,7 @@
       echo \"  git todo <number> cancel       mark todo <number> as cancelled\"; \
       echo \"  git todo <number> [reset|r]    mark todo <number> as pending\"; \
       echo \"  git todo <number> delete       delete todo <number>\"; \
-      echo \"  git todo undo                  undo last 'new|next[<todo>]|<number> <command>|undo' command (i.e. only one undo level)\"; \
+      echo \"  git todo undo                  undo last 'add|next[<todo>]|<number> <command>|undo' command (i.e. only one undo level)\"; \
       echo \"  git todo [help|h]              display this help message\"; \
     }; \
     numbered_todo_file() { \
@@ -1105,7 +1105,7 @@
     list_committed() { formatted_todo_file_lines_matching ' \\* [0-9a-f]\\{4,40\\}$'; }; \
     list_cancelled() { formatted_todo_file_lines_starting_with '- \\[~\\] '; }; \
     list_all()       { formatted_todo_file_lines_starting_with '- \\[\\( \\|s\\|x\\|~\\)\\] '; }; \
-    add_new_todo_to_pending_list() { \
+    add_todo_to_pending_list() { \
       local position; \
       position=\"${1:?missing first or last}\"; \
       shift; \
@@ -1116,12 +1116,12 @@
         first) \
           opening_part_sed_expr='1s/^/'; \
           closing_part_sed_expr='\\n/'; \
-          message='New todo added at the top of the pending list:'; \
+          message='Todo added at the top of the pending list:'; \
           ;; \
         last) \
           opening_part_sed_expr='$s/$/\\n'; \
           closing_part_sed_expr='/'; \
-          message='New todo added at the bottom of the pending list:'; \
+          message='Todo added at the bottom of the pending list:'; \
           ;; \
         *) \
           git imp-error-alias \"- first argument must be 'first' or 'last'\"; \
@@ -1339,14 +1339,14 @@
           DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_LONG}\"; \
           numbered_todo_file | format_and_paginate_numbered_todo_file_lines; \
           ;; \
-        new) \
+        add) \
           shift; \
-          add_new_todo_to_pending_list last \"${*}\"; \
+          add_todo_to_pending_list last \"${*}\"; \
           ;; \
         next) \
           shift; \
           if [ -n  \"${*}\" ]; then \
-            add_new_todo_to_pending_list first \"${*}\" \
+            add_todo_to_pending_list first \"${*}\" \
               && display_and_start_next_todo; \
           else \
             display_and_start_next_todo; \
