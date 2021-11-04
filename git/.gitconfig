@@ -924,27 +924,28 @@
         return 1; \
        fi; \
     }; \
+    format_TODO_REST_into_TODO_REST_FORMATTED() { \
+      case \"${DATETIME_FORMAT_DISPLAY}\" in \
+        \"${DATETIME_FORMAT_DISPLAY_SHORT}\" ) \
+          TODO_REST_FORMATTED=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"'${COLOR_RESET}'                | '${todo_text_color}'  \" $0}' )\"; \
+          ;; \
+        \"${DATETIME_FORMAT_DISPLAY_LONG}\" ) \
+          TODO_REST_FORMATTED=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"'${COLOR_RESET}'                            | '${todo_text_color}'  \" $0}' )\"; \
+          ;; \
+        * ) \
+          git imp-error-alias \"- unexpected date display format: '${DATETIME_FORMAT_DISPLAY}'\"  \
+          ;; \
+      esac; \
+    }; \
     extract_and_wrap_todo_text_from_LINE_into_TODO_FIRST_LINE_and_TODO_REST() { \
       local todo=${LINE#*| }; \
       todo=${todo% |*}; \
       TODO_FIRST_LINE=\"$(echo \"${todo}\" | fmt -w70 | head -1 )\"; \
       TODO_REST=\"${todo#${TODO_FIRST_LINE}}\"; \
       if [ -z \"${TODO_REST}\" ]; then \
-        return; \
-      elif ${IS_INDENTATION_FOR_TODO_REST_NEEDED:-true}; then \
-        case \"${DATETIME_FORMAT_DISPLAY}\" in \
-          \"${DATETIME_FORMAT_DISPLAY_SHORT}\" ) \
-            TODO_REST=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"                |   \" $0}' )\"; \
-            ;; \
-          \"${DATETIME_FORMAT_DISPLAY_LONG}\" ) \
-            TODO_REST=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"                            |   \" $0}' )\"; \
-            ;; \
-          * ) \
-            git imp-error-alias \"- unexpected date display format: '${DATETIME_FORMAT_DISPLAY}'\"  \
-            ;; \
-        esac; \
+        unset TODO_REST; \
       else \
-        TODO_REST=\"$(echo \"${TODO_REST## }\" | fmt -w70 )\"; \
+        TODO_REST_WRAPPED=\"$(echo \"${TODO_REST## }\" | fmt -w70 )\"; \
       fi; \
     }; \
     format_numbered_todo_file_line() { \
@@ -1028,7 +1029,8 @@
       printf \"%-16s\" \"  ${COLOR_FG[3]}${COMMIT_HASH:+* }${COMMIT_HASH}\"; \
       printf \"%-43s\n\" \"  ${SUFFIX_COLOR}${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT}\"; \
       if [ -n \"${TODO_REST}\" ]; then \
-        printf \"${todo_text_color}${TODO_REST}${COLOR_RESET}\n\"; \
+        format_TODO_REST_into_TODO_REST_FORMATTED; \
+        printf \"${TODO_REST_FORMATTED}${COLOR_RESET}\n\"; \
       fi; \
     }; \
     todo_file_lines_matching() { \
@@ -1119,12 +1121,10 @@
     }; \
     use_todo_for_commit() { \
       git imp-is-a-commit-possible || return 1; \
-      IS_INDENTATION_FOR_TODO_REST_NEEDED=false; \
       format_numbered_todo_file_line \"$(todo_file_line_with_number ${TARGET_LINE_NUMBER})\" 1>/dev/null; \
-      unset IS_INDENTATION_FOR_TODO_REST_NEEDED; \
       TMP_LOG_FILE=$(mktemp /tmp/git_commit_message.XXXXXX) || exit 1; \
       trap \"rm ${TMP_LOG_FILE}\" 0 2 3 15; \
-      echo \"${TODO_FIRST_LINE}\n\n${TODO_REST}\" > \"${TMP_LOG_FILE}\"; \
+      echo \"${TODO_FIRST_LINE}\n\n${TODO_REST_WRAPPED}\" > \"${TMP_LOG_FILE}\"; \
       git commit --file=\"${TMP_LOG_FILE}\" --edit \
         && COMMIT_HASH=\"$(git log --pretty='%h' -1)\"; \
     }; \
