@@ -1100,12 +1100,12 @@
         first) \
           opening_part_sed_expr='1s/^/'; \
           closing_part_sed_expr='\\n/'; \
-          message='New todo added at the top of the peding list:'; \
+          message='New todo added at the top of the pending list:'; \
           ;; \
         last) \
           opening_part_sed_expr='$s/$/\\n'; \
           closing_part_sed_expr='/'; \
-          message='New todo added at the bottom of the peding list:'; \
+          message='New todo added at the bottom of the pending list:'; \
           ;; \
         *) \
           git imp-error-alias \"- first argument must be 'first' or 'last'\"; \
