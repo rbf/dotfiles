@@ -709,7 +709,7 @@
           -e 's/\\(new: .*\\)<END_OF_SUBJECT>/'$(tput setaf 25)'\\1/' \
           -e 's/\\(change: .*\\)<END_OF_SUBJECT>/'$(tput setaf 6)'\\1/' \
           -e 's/<END_OF_SUBJECT>//' \
-      | $(git config --get core.pager) \
+      | $(git config --get core.pager || echo 'less -FRXK') \
       ; \
   }; f"
   # Like 'git his' but shows the commit graph.
@@ -908,7 +908,7 @@
       nl -b a -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
     }; \
     format_and_align_numbered_todo_file_lines() { \
-      format_numbered_todo_file_lines | column; \
+      format_numbered_todo_file_lines | $(git config --get core.pager || echo 'less -FRXK'); \
     }; \
     format_numbered_todo_file_lines() { \
       while read NUMBERED_LINE; do \
