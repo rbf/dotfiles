@@ -932,8 +932,17 @@
       if [ -z \"${TODO_REST}\" ]; then \
         return; \
       elif ${IS_INDENTATION_FOR_TODO_REST_NEEDED:-true}; then \
-        TODO_REST=\"$(echo \"${TODO_REST## }\" | fmt -w70 \
-                      | awk '{print \"                            |   \" $0}' )\"; \
+        case \"${DATETIME_FORMAT_DISPLAY}\" in \
+          \"${DATETIME_FORMAT_DISPLAY_SHORT}\" ) \
+            TODO_REST=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"                |   \" $0}' )\"; \
+            ;; \
+          \"${DATETIME_FORMAT_DISPLAY_LONG}\" ) \
+            TODO_REST=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"                            |   \" $0}' )\"; \
+            ;; \
+          * ) \
+            git imp-error-alias \"- unexpected date display format: '${DATETIME_FORMAT_DISPLAY}'\"  \
+            ;; \
+        esac; \
       else \
         TODO_REST=\"$(echo \"${TODO_REST## }\" | fmt -w70 )\"; \
       fi; \
@@ -1060,6 +1069,7 @@
         else \
           echo ${started_todos_label}. ${pending_todos_label} afterwards.; \
         fi; \
+        DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_LONG}\"; \
         list_started; \
       else \
         if ((pending_todos_count == 0)); then \
@@ -1102,6 +1112,7 @@
           exit 1; \
           ;; \
       esac; \
+      DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_LONG}\"; \
       sed -i${TODO_FILE_BACKUP_EXT} \
           -e \"${opening_part_sed_expr}$(echo \"- [ ] $(date +\"${DATETIME_FORMAT_RAW}\") | ${*//\\//\\\\/} |\")${closing_part_sed_expr}\" \
           ${TODO_FILE} \
@@ -1215,6 +1226,7 @@
     handle_command_for_line_number() { \
       TARGET_LINE_NUMBER=${1}; \
       shift; \
+      DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_LONG}\"; \
       TARGET_LINE=$(formatted_todo_file_line_with_number ${TARGET_LINE_NUMBER}); \
       [ -n \"${TARGET_LINE}\" ] || return 1; \
       case \"${1}\" in \
@@ -1280,7 +1292,9 @@
       TODO_FILE=todo.txt; \
       TODO_FILE_BACKUP_EXT=.bak; \
       DATETIME_FORMAT_RAW='%Y-%m-%dT%H:%M:%S%z'; \
-      DATETIME_FORMAT_DISPLAY='%a, %d %b %Y, %R'; \
+      DATETIME_FORMAT_DISPLAY_SHORT='%d %b %Y'; \
+      DATETIME_FORMAT_DISPLAY_LONG='%a, %d %b %Y, %R'; \
+      DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_SHORT}\"; \
       LINE_NUMBER_SEPARATOR='::'; \
       init; \
       case \"${1}\" in \
@@ -1306,6 +1320,7 @@
           list_all; \
           ;; \
         dump) \
+          DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_LONG}\"; \
           numbered_todo_file | format_and_align_numbered_todo_file_lines; \
           ;; \
         new) \
