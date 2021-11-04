@@ -927,10 +927,10 @@
     format_TODO_REST_into_TODO_REST_FORMATTED() { \
       case \"${DATETIME_FORMAT_DISPLAY}\" in \
         \"${DATETIME_FORMAT_DISPLAY_SHORT}\" ) \
-          TODO_REST_FORMATTED=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"'${COLOR_RESET}'                | '${todo_text_color}'  \" $0}' )\"; \
+          TODO_REST_FORMATTED=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"'${COLOR_RESET}'                │ '${todo_text_color}'  \" $0}' )\"; \
           ;; \
         \"${DATETIME_FORMAT_DISPLAY_LONG}\" ) \
-          TODO_REST_FORMATTED=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"'${COLOR_RESET}'                            | '${todo_text_color}'  \" $0}' )\"; \
+          TODO_REST_FORMATTED=\"$(echo \"${TODO_REST## }\" | fmt -w70 | awk '{print \"'${COLOR_RESET}'                            │ '${todo_text_color}'  \" $0}' )\"; \
           ;; \
         * ) \
           git imp-error-alias \"- unexpected date display format: '${DATETIME_FORMAT_DISPLAY}'\"  \
@@ -962,8 +962,24 @@
       LINE=${1#*${LINE_NUMBER_SEPARATOR}}; \
       is_line_formated_as_expected || return 1; \
       case \"${LINE}\" in \
-        '#'*|'') \
+        '#'*) \
           echo \"${COLOR_FG[8]}${LINE}${COLOR_RESET}\"; \
+          return; \
+          ;; \
+        '') \
+          case \"${DATETIME_FORMAT_DISPLAY}\" in \
+            \"${DATETIME_FORMAT_DISPLAY_SHORT}\" ) \
+              echo \"${COLOR_FG[15]}                └ break ${COLOR_RESET}\"; \
+              ;; \
+            \"${DATETIME_FORMAT_DISPLAY_LONG}\" ) \
+              echo \"${COLOR_FG[15]}                            └ break ${COLOR_RESET}\"; \
+              ;; \
+            * ) \
+              git imp-error-alias \"- unexpected date display format: '${DATETIME_FORMAT_DISPLAY}'\"  \
+              ;; \
+          esac; \
+          echo; \
+          NEXT_DRAWING_CHAR=\"┬\"; \
           return; \
           ;; \
         '- [ ] '*) \
@@ -1025,13 +1041,14 @@
           todo_text_color=${COLOR_FG[15]}; \
           ;; \
       esac; \
-      printf \"${COLOR_FG[3]}${LINE_NUMBER} ${COLOR_FG[2]}${FORMATTED_CREATED_AT}${COLOR_FG[15]} | ${CHECK_COLOR}${CHECK_ICON}${COLOR_RESET} ${todo_text_color}%-70s\" \"${TODO_FIRST_LINE}\"; \
+      printf \"${COLOR_FG[3]}${LINE_NUMBER} ${COLOR_FG[2]}${FORMATTED_CREATED_AT}${COLOR_FG[15]} ${NEXT_DRAWING_CHAR:-┼} ${CHECK_COLOR}${CHECK_ICON}${COLOR_RESET} ${todo_text_color}%-70s\" \"${TODO_FIRST_LINE}\"; \
       printf \"%-16s\" \"  ${COLOR_FG[3]}${COMMIT_HASH:+* }${COMMIT_HASH}\"; \
       printf \"%-43s\n\" \"  ${SUFFIX_COLOR}${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT}\"; \
       if [ -n \"${TODO_REST}\" ]; then \
         format_TODO_REST_into_TODO_REST_FORMATTED; \
         printf \"${TODO_REST_FORMATTED}${COLOR_RESET}\n\"; \
       fi; \
+      unset NEXT_DRAWING_CHAR; \
     }; \
     todo_file_lines_matching() { \
       numbered_todo_file \
@@ -1042,7 +1059,7 @@
       todo_file_lines_matching \"${1}\" | format_and_paginate_numbered_todo_file_lines; \
     }; \
     formatted_todo_file_lines_starting_with() { \
-      formatted_todo_file_lines_matching \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}${1:?missing pattern}\"; \
+      formatted_todo_file_lines_matching \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}\\(${1:?missing pattern}\\)\"; \
     }; \
     todo_file_line_with_number() { \
       todo_file_lines_matching \"^$(padded_line_number ${1})${LINE_NUMBER_SEPARATOR}\"; \
@@ -1082,7 +1099,7 @@
         list_pending; \
       fi; \
     }; \
-    list_pending()   { formatted_todo_file_lines_starting_with '- \\[ \\] '; }; \
+    list_pending()   { formatted_todo_file_lines_starting_with '- \\[ \\] \\|$'; }; \
     list_started()   { formatted_todo_file_lines_starting_with '- \\[s\\] '; }; \
     list_done()      { formatted_todo_file_lines_starting_with '- \\[x\\] '; }; \
     list_committed() { formatted_todo_file_lines_matching ' \\* [0-9a-f]\\{4,40\\}$'; }; \
@@ -1294,6 +1311,7 @@
       DATETIME_FORMAT_DISPLAY_LONG='%a, %d %b %Y, %R'; \
       DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_SHORT}\"; \
       LINE_NUMBER_SEPARATOR='::'; \
+      NEXT_DRAWING_CHAR=\"┬\"; \
       init; \
       case \"${1}\" in \
         '') \
