@@ -702,12 +702,13 @@
   # Compact version of the history with less information than 'git hist{,a,g}'
   # in one line, vertically aligned and truncated to terminal width.
   his      = !"f() {\
+    for i in 1 6 25; do COLOR_FG[$i]=$(tput setaf $i); done; \
     git -c color.ui=always log --date=human \
       --pretty=tformat:'%C(yellow)%h%C(green) %>(16)%ad %C(reset)| %<(70)%s<END_OF_SUBJECT> %C(blue)[%an] %C(dim)%G?%C(reset)%C(red bold)%<|('$(tput cols)',trunc)%d%C(reset)' \"${@}\" \
       | sed \
-          -e 's/\\(fix: .*\\)<END_OF_SUBJECT>/'$(tput setaf 1)'\\1/' \
-          -e 's/\\(new: .*\\)<END_OF_SUBJECT>/'$(tput setaf 25)'\\1/' \
-          -e 's/\\(change: .*\\)<END_OF_SUBJECT>/'$(tput setaf 6)'\\1/' \
+          -e 's/\\(fix: .*\\)<END_OF_SUBJECT>/'${COLOR_FG[1]}'\\1/' \
+          -e 's/\\(new: .*\\)<END_OF_SUBJECT>/'${COLOR_FG[25]}'\\1/' \
+          -e 's/\\(change: .*\\)<END_OF_SUBJECT>/'${COLOR_FG[6]}'\\1/' \
           -e 's/<END_OF_SUBJECT>//' \
       | $(git config --get core.pager || echo 'less -FRXK') \
       ; \
