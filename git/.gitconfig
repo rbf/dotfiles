@@ -1314,8 +1314,12 @@
           ;; \
         next) \
           shift; \
-          [ -n  \"${*}\" ] && add_new_todo_to_pending_list first \"${*}\"; \
-          display_and_start_next_todo; \
+          if [ -n  \"${*}\" ]; then \
+            add_new_todo_to_pending_list first \"${*}\" \
+              && display_and_start_next_todo; \
+          else \
+            display_and_start_next_todo; \
+          fi; \
           ;; \
         commit) \
           commit_todo_if_only_one_started; \
