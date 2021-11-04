@@ -1280,7 +1280,7 @@
     }; \
     todo() { \
       for i in 1 2 3 6 8 15 25; do COLOR_FG[$i]=$(tput setaf $i); done; \
-      COLOR_RESET=$(tput sgr0); \
+      COLOR_RESET=${COLOR_FG[15]}; \
       export CURRENT_ALIAS_NAME=todo; \
       git imp-check-repo || return 1; \
       TODO_FILE=todo.txt; \
