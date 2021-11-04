@@ -952,35 +952,35 @@
       is_line_formated_as_expected || return 1; \
       case \"${LINE}\" in \
         '#'*|'') \
-          echo \"$(tput setaf 8)${LINE}$(tput sgr0)\"; \
+          echo \"${COLOR_FG[8]}${LINE}${COLOR_RESET}\"; \
           return; \
           ;; \
         '- [ ] '*) \
           CHECK_ICON=''; \
-          CHECK_COLOR=\"$(tput setaf 15)\"; \
+          CHECK_COLOR=${COLOR_FG[15]}; \
           LINE=${LINE#'- [ ] '}; \
-          SUFFIX_COLOR=\"$(tput setaf 8)\"; \
+          SUFFIX_COLOR=${COLOR_FG[8]}; \
           SUFFIX=''; \
           ;; \
         '- [s] '*) \
           CHECK_ICON=''; \
-          CHECK_COLOR=\"$(tput setaf 15)\"; \
+          CHECK_COLOR=${COLOR_FG[15]}; \
           LINE=${LINE#'- [s] '}; \
-          SUFFIX_COLOR=\"$(tput setaf 3)\"; \
+          SUFFIX_COLOR=${COLOR_FG[3]}; \
           SUFFIX='started'; \
           ;; \
         '- [x] '*) \
           CHECK_ICON=''; \
-          CHECK_COLOR=\"$(tput setaf 15)\"; \
+          CHECK_COLOR=${COLOR_FG[15]}; \
           LINE=${LINE#'- [x] '}; \
-          SUFFIX_COLOR=\"$(tput setaf 2)\"; \
+          SUFFIX_COLOR=${COLOR_FG[2]}; \
           SUFFIX='done'; \
           ;; \
         '- [~] '*) \
           CHECK_ICON=''; \
-          CHECK_COLOR=\"$(tput setaf 1)\"; \
+          CHECK_COLOR=${COLOR_FG[1]}; \
           LINE=${LINE#'- [~] '}; \
-          SUFFIX_COLOR=\"$(tput setaf 1)\"; \
+          SUFFIX_COLOR=${COLOR_FG[1]}; \
           SUFFIX='cancelled'; \
           ;; \
       esac; \
@@ -993,7 +993,7 @@
         COMMIT_HASH=${LINE##*${MODIFIED_AT}}; \
         FORMATTED_MODIFIED_AT=$(date -jf \"${DATETIME_FORMAT_RAW}\" \"${MODIFIED_AT## }\" +\"${DATETIME_FORMAT_DISPLAY}\"); \
         if [ -z \"${SUFFIX}\" ]; then \
-          SUFFIX_COLOR=\"$(tput setaf 8)\"; \
+          SUFFIX_COLOR=${COLOR_FG[8]}; \
           SUFFIX='reset'; \
         fi; \
       fi; \
@@ -1002,24 +1002,24 @@
       local todo_text_color; \
       case \"${TODO_FIRST_LINE%%: *}\" in \
         fix) \
-          todo_text_color=\"$(tput setaf 1)\"; \
+          todo_text_color=${COLOR_FG[1]}; \
           ;; \
         new) \
-          todo_text_color=\"$(tput setaf 25)\"; \
+          todo_text_color=${COLOR_FG[25]}; \
           ;; \
         change) \
-          todo_text_color=\"$(tput setaf 6)\"; \
+          todo_text_color=${COLOR_FG[6]}; \
           ;; \
         *) \
-          todo_text_color=\"$(tput setaf 15)\"; \
+          todo_text_color=${COLOR_FG[15]}; \
           ;; \
       esac; \
-      printf \"$(tput setaf 3)${LINE_NUMBER} $(tput setaf 2)${FORMATTED_CREATED_AT}$(tput setaf 15) | ${CHECK_COLOR}${CHECK_ICON} ${todo_text_color}%-70s\" \"${TODO_FIRST_LINE}\"; \
-      printf \"%-16s\" \"  $(tput setaf 3)${COMMIT_HASH:+* }${COMMIT_HASH}\"; \
+      printf \"${COLOR_FG[3]}${LINE_NUMBER} ${COLOR_FG[2]}${FORMATTED_CREATED_AT}${COLOR_FG[15]} | ${CHECK_COLOR}${CHECK_ICON} ${todo_text_color}%-70s\" \"${TODO_FIRST_LINE}\"; \
+      printf \"%-16s\" \"  ${COLOR_FG[3]}${COMMIT_HASH:+* }${COMMIT_HASH}\"; \
       printf \"%-43s\" \"  ${SUFFIX_COLOR}${SUFFIX}${FORMATTED_MODIFIED_AT:+ on }${FORMATTED_MODIFIED_AT}\"; \
-      echo \"$(tput sgr0)\"; \
+      echo \"${COLOR_RESET}\"; \
       if [ -n \"${TODO_REST}\" ]; then \
-        echo \"$(${IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR:-false} && echo ${todo_text_color} || tput setaf 8)${TODO_REST}$(tput sgr0)\"; \
+        echo \"$(${IS_TODO_REST_TO_BE_PRINTED_IN_NORMAL_COLOR:-false} && echo ${todo_text_color} || echo ${COLOR_FG[8]})${TODO_REST}${COLOR_RESET}\"; \
       fi; \
     }; \
     todo_file_lines_matching() { \
@@ -1279,6 +1279,8 @@
       return 0; \
     }; \
     todo() { \
+      for i in 1 2 3 6 8 15 25; do COLOR_FG[$i]=$(tput setaf $i); done; \
+      COLOR_RESET=$(tput sgr0); \
       export CURRENT_ALIAS_NAME=todo; \
       git imp-check-repo || return 1; \
       TODO_FILE=todo.txt; \
