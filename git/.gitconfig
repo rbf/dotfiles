@@ -908,7 +908,7 @@
     numbered_todo_file() { \
       nl -b a -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
     }; \
-    format_and_align_numbered_todo_file_lines() { \
+    format_and_paginate_numbered_todo_file_lines() { \
       format_numbered_todo_file_lines | $(git config --get core.pager || echo 'less -FRXK'); \
     }; \
     format_numbered_todo_file_lines() { \
@@ -1035,7 +1035,7 @@
               | grep --color=never -v \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}#\"; \
     }; \
     formatted_todo_file_lines_matching() { \
-      todo_file_lines_matching \"${1}\" | format_and_align_numbered_todo_file_lines; \
+      todo_file_lines_matching \"${1}\" | format_and_paginate_numbered_todo_file_lines; \
     }; \
     formatted_todo_file_lines_starting_with() { \
       formatted_todo_file_lines_matching \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}${1:?missing pattern}\"; \
@@ -1044,12 +1044,7 @@
       todo_file_lines_matching \"^$(padded_line_number ${1})${LINE_NUMBER_SEPARATOR}\"; \
     }; \
     formatted_todo_file_line_with_number() { \
-      todo_file_line_with_number \"${1}\" | format_and_align_numbered_todo_file_lines; \
-    }; \
-    formatted_todo_file_last_line() { \
-      numbered_todo_file \
-        | tail -1 \
-        | format_and_align_numbered_todo_file_lines; \
+      todo_file_line_with_number \"${1}\" | format_numbered_todo_file_lines; \
     }; \
     padded_line_number() { printf '%04d' ${1:?missing line number}; }; \
     list_relevant_todos(){ \
@@ -1321,7 +1316,7 @@
           ;; \
         dump) \
           DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_LONG}\"; \
-          numbered_todo_file | format_and_align_numbered_todo_file_lines; \
+          numbered_todo_file | format_and_paginate_numbered_todo_file_lines; \
           ;; \
         new) \
           shift; \
