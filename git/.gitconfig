@@ -971,16 +971,15 @@
           IS_NEXT_EMPTY_LINE_TO_BE_AVOIDED=true; \
           case \"${DATETIME_FORMAT_DISPLAY}\" in \
             \"${DATETIME_FORMAT_DISPLAY_SHORT}\" ) \
-              echo \"${COLOR_FG[15]}                └ break ${COLOR_RESET}\"; \
+              echo \"${COLOR_RESET}                └──\"; \
               ;; \
             \"${DATETIME_FORMAT_DISPLAY_LONG}\" ) \
-              echo \"${COLOR_FG[15]}                            └ break ${COLOR_RESET}\"; \
+              echo \"${COLOR_RESET}                            └──\"; \
               ;; \
             * ) \
               git imp-error-alias \"- unexpected date display format: '${DATETIME_FORMAT_DISPLAY}'\"  \
               ;; \
           esac; \
-          echo; \
           NEXT_DRAWING_CHAR=\"┬\"; \
           return; \
           ;; \
