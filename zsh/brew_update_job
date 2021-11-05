@@ -1,6 +1,9 @@
-#!/bin/bash
+#!/bin/zsh
 
-# Schedule the regular 'brew update' with the following line (i.e. everyday at 9:23h, 15:23h and 21:23h):
+# Install the launchd agent to run this job everyday at 9:23h, 15:23h and 21:23h
+# with 'brew_update_job --install-launchd-agent'
+
+# Alternatively schedule the regular 'brew update' with the following line (i.e. everyday at 9:23h, 15:23h and 21:23h):
 #   crontab -l | { cat; echo "23 9,15,21 * * * $(pwd)/zsh/brew_update_job"; } | crontab -
 # You might see a dialog to confirm that Terminal.app might update the settings of your computer.
 # Also you might have to allow cron to access your disk. See links below.
@@ -10,7 +13,62 @@
 
 set -euo pipefail
 
+JOB_FILE_FULL_PATH="${0:A}"
 CACHE_BREW_DIR=~/.cache/brew
+
+function install_launchd_agent() (
+  local job_filename="$(basename ${JOB_FILE_FULL_PATH})"
+  local agent_plist_file_full_path=~/Library/LaunchAgents/dotfiles_zsh_${job_filename}.plist
+  cat << EOF > ${agent_plist_file_full_path}  && launchctl load ${agent_plist_file_full_path}
+<!-- Installed with ${JOB_FILE_FULL_PATH} --install-launchd-agent -->
+<!-- DOC: https://www.launchd.info -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>local.dotfiles.zsh.${job_filename}</string>
+    <key>Program</key>
+    <string>${JOB_FILE_FULL_PATH}</string>
+    <key>StandardOutPath</key>
+    <string>$(echo ${CACHE_BREW_DIR}/update/stdout.log)</string>
+    <key>StandardErrorPath</key>
+    <string>$(echo ${CACHE_BREW_DIR}/update/stderr.log)</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StartCalendarInterval</key>
+    <array>
+      <dict>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>23</integer>
+      </dict>
+      <dict>
+        <key>Hour</key>
+        <integer>15</integer>
+        <key>Minute</key>
+        <integer>23</integer>
+      </dict>
+      <dict>
+        <key>Hour</key>
+        <integer>21</integer>
+        <key>Minute</key>
+        <integer>23</integer>
+      </dict>
+    </array>
+  </dict>
+</plist>
+EOF
+)
+
+if [[ "${*}" == "--install-launchd-agent" ]]; then
+  install_launchd_agent
+  exit $?
+elif ((# > 0)); then
+  print -P "%F{1}No arguments expected beyond --install-launchd-agent%f"
+  exit 1
+fi
 
 mkdir -p "${CACHE_BREW_DIR}"
 

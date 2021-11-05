@@ -1,6 +1,9 @@
-#!/bin/bash
+#!/bin/zsh
 
-# Schedule regular 'git fetch' every hour between 6h and 21h with the following line:
+# Install the launchd agent to run this job every 60 minutes
+# with 'git_fetch_job --install-launchd-agent'
+
+# Alternatively schedule regular 'git fetch' every hour between 6h and 21h with the following line:
 #   crontab -l | { cat; echo "5 6-21 * * * $(pwd)/zsh/git_fetch_job"; } | crontab -
 # You might see a dialog to confirm that Terminal.app might update the settings of your computer.
 # Also you might have to allow cron to access your disk. See links below.
@@ -10,7 +13,45 @@
 
 set -euo pipefail
 
+JOB_FILE_FULL_PATH="${0:A}"
 CACHE_GIT_DIR=~/.cache/git/fetch
+
+function install_launchd_agent() (
+  local job_filename="$(basename ${JOB_FILE_FULL_PATH})"
+  local agent_plist_file_full_path=~/Library/LaunchAgents/dotfiles_zsh_${job_filename}.plist
+  cat << EOF > ${agent_plist_file_full_path}  && launchctl load ${agent_plist_file_full_path}
+<!-- Installed with ${JOB_FILE_FULL_PATH} --install-launchd-agent -->
+<!-- DOC: https://www.launchd.info -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>local.dotfiles.zsh.${job_filename}</string>
+    <key>Program</key>
+    <string>${JOB_FILE_FULL_PATH}</string>
+    <key>StandardOutPath</key>
+    <string>$(echo ${CACHE_GIT_DIR}/stdout.log)</string>
+    <key>StandardErrorPath</key>
+    <string>$(echo ${CACHE_GIT_DIR}/stderr.log)</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StartInterval</key>
+    <integer>3600</integer>
+  </dict>
+</plist>
+EOF
+)
+
+if [[ "${*}" == "--install-launchd-agent" ]]; then
+  install_launchd_agent
+  exit $?
+elif ((# > 0)); then
+  print -P "%F{1}No arguments expected beyond --install-launchd-agent%f"
+  exit 1
+fi
+
+
 CACHE_GIT_FETCH_LOGFILE="${CACHE_GIT_DIR}/$(date +"%Y%m_%b").log"
 REPO_DIRS=()
 REPO_DIRS+=(~/dev/repos)
