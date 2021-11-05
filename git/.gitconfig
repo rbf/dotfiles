@@ -906,7 +906,13 @@
       echo \"  git todo [help|h]                           display this help message\"; \
     }; \
     numbered_todo_file() { \
-      nl -b a -w 4 -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
+      nl -b a -w ${LINE_NUMBER_LENGTH} -s ${LINE_NUMBER_SEPARATOR} -n rz ${TODO_FILE}; \
+    }; \
+    parse_empty_lines_as_end_of_group() { \
+      sed -E \"/^[[:digit:]]{${LINE_NUMBER_LENGTH}}${LINE_NUMBER_SEPARATOR}$/d; N; s/\\n[[:digit:]]{${LINE_NUMBER_LENGTH}}${LINE_NUMBER_SEPARATOR}$/${END_OF_GROUP_MARKER}/; P; D;\"; \
+    }; \
+    numbered_and_grouped_todo_file() { \
+      numbered_todo_file | parse_empty_lines_as_end_of_group; \
     }; \
     format_and_paginate_numbered_todo_file_lines() { \
       format_numbered_todo_file_lines | $(git config --get core.pager || echo 'less -FRXK'); \
@@ -917,7 +923,7 @@
       done; \
     }; \
     is_line_formated_as_expected() { \
-      if [ -z \"${LINE}\" ] || echo \"${LINE}\" | grep -q -- '^[[:space:]]*#.*\\|^- \\[[ sx~]\\] [[:digit:]]\\{4\\}-[[:digit:]]\\{2\\}-[[:digit:]]\\{2\\}T[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}[-+][[:digit:]]\\{4\\} | .* |\\( [[:digit:]]\\{4\\}-[[:digit:]]\\{2\\}-[[:digit:]]\\{2\\}T[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}[-+][[:digit:]]\\{4\\}\\)\\?\\( \\* [0-9a-f]\\{4,40\\}\\)\\?$'; then \
+      if [ -z \"${LINE}\" ] || echo \"${LINE}\" | grep -q -- \"^[[:space:]]*#.*\\|^- \\[[ sx~]\\] [[:digit:]]\\{${LINE_NUMBER_LENGTH}\\}-[[:digit:]]\\{2\\}-[[:digit:]]\\{2\\}T[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}[-+][[:digit:]]\\{${LINE_NUMBER_LENGTH}\\} | .* |\\( [[:digit:]]\\{${LINE_NUMBER_LENGTH}\\}-[[:digit:]]\\{2\\}-[[:digit:]]\\{2\\}T[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}[-+][[:digit:]]\\{${LINE_NUMBER_LENGTH}\\}\\)\\?\\( \\* [0-9a-f]\\{4,40\\}\\)\\?\\(${END_OF_GROUP_MARKER}\\)\\?$\"; then \
         return 0; \
        else \
         git imp-error-alias \"unable to parse line ${LINE_NUMBER_ZERO_PADDED}: ${LINE}\"; \
@@ -948,6 +954,20 @@
         TODO_REST_WRAPPED=\"$(echo \"${TODO_REST## }\" | fmt -w70 )\"; \
       fi; \
     }; \
+    print_end_of_group() { \
+      case \"${DATETIME_FORMAT_DISPLAY}\" in \
+        \"${DATETIME_FORMAT_DISPLAY_SHORT}\" ) \
+          echo \"${COLOR_RESET}                └──\"; \
+          ;; \
+        \"${DATETIME_FORMAT_DISPLAY_LONG}\" ) \
+          echo \"${COLOR_RESET}                            └──\"; \
+          ;; \
+        * ) \
+          git imp-error-alias \"- unexpected date display format: '${DATETIME_FORMAT_DISPLAY}'\"  \
+          ;; \
+      esac; \
+      NEXT_DRAWING_CHAR=\"┬\"; \
+    }; \
     format_numbered_todo_file_line() { \
       LINE=''; \
       CREATED_AT=''; \
@@ -961,26 +981,14 @@
       LINE_NUMBER=$(echo \"${LINE_NUMBER_ZERO_PADDED}\" | sed 's:^000:  :;s:^00: :;s:^0::'); \
       LINE=${1#*${LINE_NUMBER_SEPARATOR}}; \
       is_line_formated_as_expected || return 1; \
+      IS_END_OF_GROUP_TO_BE_PRINTED=false; \
+      if [[ \"${LINE}\" =~ \"${END_OF_GROUP_MARKER}\" ]]; then \
+        IS_END_OF_GROUP_TO_BE_PRINTED=true; \
+        LINE=\"${LINE%${END_OF_GROUP_MARKER}}\"; \
+      fi; \
       case \"${LINE}\" in \
-        '#'*) \
+        '#'*|'') \
           echo \"${COLOR_FG[8]}${LINE}${COLOR_RESET}\"; \
-          return; \
-          ;; \
-        '') \
-          ${IS_NEXT_EMPTY_LINE_TO_BE_AVOIDED:-false} && return; \
-          IS_NEXT_EMPTY_LINE_TO_BE_AVOIDED=true; \
-          case \"${DATETIME_FORMAT_DISPLAY}\" in \
-            \"${DATETIME_FORMAT_DISPLAY_SHORT}\" ) \
-              echo \"${COLOR_RESET}                └──\"; \
-              ;; \
-            \"${DATETIME_FORMAT_DISPLAY_LONG}\" ) \
-              echo \"${COLOR_RESET}                            └──\"; \
-              ;; \
-            * ) \
-              git imp-error-alias \"- unexpected date display format: '${DATETIME_FORMAT_DISPLAY}'\"  \
-              ;; \
-          esac; \
-          NEXT_DRAWING_CHAR=\"┬\"; \
           return; \
           ;; \
         '- [ ] '*) \
@@ -1012,7 +1020,6 @@
           SUFFIX='cancelled'; \
           ;; \
       esac; \
-      IS_NEXT_EMPTY_LINE_TO_BE_AVOIDED=false; \
       CREATED_AT=${LINE%% | *}; \
       FORMATTED_CREATED_AT=$(date -jf \"${DATETIME_FORMAT_RAW}\" \"${CREATED_AT}\" +\"${DATETIME_FORMAT_DISPLAY}\"); \
       MODIFIED_AT=${LINE##* |}; \
@@ -1051,17 +1058,18 @@
         printf \"${TODO_REST_FORMATTED}${COLOR_RESET}\n\"; \
       fi; \
       unset NEXT_DRAWING_CHAR; \
+      $IS_END_OF_GROUP_TO_BE_PRINTED && print_end_of_group ;\
     }; \
     todo_file_lines_matching() { \
-      numbered_todo_file \
+      numbered_and_grouped_todo_file \
               | grep --color=never --max-count=\"${MAX_COUNT:-100}\" \"${1:?missing pattern}\" \
-              | grep --color=never -v \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}#\"; \
+              | grep --color=never -v \"^[[:digit:]]\\{${LINE_NUMBER_LENGTH}\\}${LINE_NUMBER_SEPARATOR}#\"; \
     }; \
     formatted_todo_file_lines_matching() { \
       todo_file_lines_matching \"${1}\" | format_and_paginate_numbered_todo_file_lines; \
     }; \
     formatted_todo_file_lines_starting_with() { \
-      formatted_todo_file_lines_matching \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}\\(${1:?missing pattern}\\)\"; \
+      formatted_todo_file_lines_matching \"^[[:digit:]]\\{${LINE_NUMBER_LENGTH}\\}${LINE_NUMBER_SEPARATOR}\\(${1:?missing pattern}\\)\"; \
     }; \
     todo_file_line_with_number() { \
       todo_file_lines_matching \"^$(padded_line_number ${1})${LINE_NUMBER_SEPARATOR}\"; \
@@ -1174,17 +1182,17 @@
     todo_number() { \
       case \"${1:?missing first or last}\" in \
         first) \
-          numbered_todo_file; \
+          numbered_and_grouped_todo_file; \
           ;; \
         last) \
-          numbered_todo_file | tail -r; \
+          numbered_and_grouped_todo_file | tail -r; \
           ;; \
         *) \
           git imp-error-alias \"- first argument must be 'first' or 'last'\"; \
           exit 1; \
           ;; \
       esac \
-        | grep --color=never --max-count=1 -- \"^[[:digit:]]\\{4\\}${LINE_NUMBER_SEPARATOR}- \\[${2:?missing one-letter status}\\]\" \
+        | grep --color=never --max-count=1 -- \"^[[:digit:]]\\{${LINE_NUMBER_LENGTH}\\}${LINE_NUMBER_SEPARATOR}- \\[${2:?missing one-letter status}\\]\" \
         | cut -f 1 -d ${LINE_NUMBER_SEPARATOR:0:1} \
         | sed 's/^0*//'; \
     }; \
@@ -1342,8 +1350,9 @@
       DATETIME_FORMAT_DISPLAY_LONG='%a, %d %b %Y, %R'; \
       DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_SHORT}\"; \
       LINE_NUMBER_SEPARATOR='::'; \
+      LINE_NUMBER_LENGTH='4'; \
+      END_OF_GROUP_MARKER='<<ENDOFGROUP>>'; \
       NEXT_DRAWING_CHAR=\"┬\"; \
-      IS_NEXT_EMPTY_LINE_TO_BE_AVOIDED=true; \
       init; \
       case \"${1}\" in \
         '') \
