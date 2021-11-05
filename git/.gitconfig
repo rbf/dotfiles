@@ -1204,6 +1204,7 @@
     }; \
     display_and_start_next_todo() { \
       local started_todos_count=\"$(count_todos_on_status 's')\"; \
+      DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_LONG}\"; \
       if ((started_todos_count == 1)); then \
         git imp-warn-alias - there is still one ongoing todo; \
         list_started; \
