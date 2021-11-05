@@ -967,6 +967,8 @@
           return; \
           ;; \
         '') \
+          ${IS_NEXT_EMPTY_LINE_TO_BE_AVOIDED:-false} && return; \
+          IS_NEXT_EMPTY_LINE_TO_BE_AVOIDED=true; \
           case \"${DATETIME_FORMAT_DISPLAY}\" in \
             \"${DATETIME_FORMAT_DISPLAY_SHORT}\" ) \
               echo \"${COLOR_FG[15]}                └ break ${COLOR_RESET}\"; \
@@ -1011,6 +1013,7 @@
           SUFFIX='cancelled'; \
           ;; \
       esac; \
+      IS_NEXT_EMPTY_LINE_TO_BE_AVOIDED=false; \
       CREATED_AT=${LINE%% | *}; \
       FORMATTED_CREATED_AT=$(date -jf \"${DATETIME_FORMAT_RAW}\" \"${CREATED_AT}\" +\"${DATETIME_FORMAT_DISPLAY}\"); \
       MODIFIED_AT=${LINE##* |}; \
@@ -1341,6 +1344,7 @@
       DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_SHORT}\"; \
       LINE_NUMBER_SEPARATOR='::'; \
       NEXT_DRAWING_CHAR=\"┬\"; \
+      IS_NEXT_EMPTY_LINE_TO_BE_AVOIDED=true; \
       init; \
       case \"${1}\" in \
         '') \
