@@ -327,6 +327,7 @@
 
   throttled-fetch = !"f() { \
     : git fetch ; \
+    export CURRENT_ALIAS_NAME=throttled-fetch; \
     IS_THROTTLE_IGNORED=false; \
     if [ \"${1}\" = '--bypass-throttling' ]; then \
       IS_THROTTLE_IGNORED=true; \
@@ -340,7 +341,7 @@
     if $IS_THROTTLE_IGNORED || [ -z \"$(find \"${TOUCH_FILE}\" -mtime -${THRESHOLD_IN_MINUTES}m -print 2>/dev/null)\" ]; then \
       git fetch ${@} && touch \"${TOUCH_FILE}\"; \
     elif [[ \"${*}\" =~ --verbose ]]; then \
-      git imp-warn a fetch for this repo was done less than ${THRESHOLD_IN_MINUTES} minutes ago - skipping fetch; \
+      git imp-warn-alias - a fetch for this repo was done less than ${THRESHOLD_IN_MINUTES} minutes ago: skipping fetch; \
       git imp-warn \"try 'git unthrottled-fetch' if you want to bypass throttling\"; \
     fi; \
   }; f"
@@ -1339,9 +1340,11 @@
       add_todo_to_pending_list \"${position}\" \"${*}\"; \
     }; \
     todo() { \
-      for i in 1 2 3 6 8 15 25; do COLOR_FG[$i]=$(tput setaf $i); done; \
-      for i in 0; do COLOR_BG[$i]=$(tput setab $i); done; \
-      COLOR_RESET=${COLOR_BG[0]}${COLOR_FG[15]}; \
+      if [ -t 0 ]; then \
+        for i in 1 2 3 6 8 15 25; do COLOR_FG[$i]=$(tput setaf $i); done; \
+        for i in 0; do COLOR_BG[$i]=$(tput setab $i); done; \
+        COLOR_RESET=${COLOR_BG[0]}${COLOR_FG[15]}; \
+      fi; \
       export CURRENT_ALIAS_NAME=todo; \
       git imp-check-repo || return 1; \
       TODO_FILE=todo.txt; \
@@ -1699,11 +1702,17 @@
     else \
       DO_COLOR=false; \
     fi; \
-    TEXT=\"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\"; \
-    if (( ${#TEXT} < ($(tput cols) - 20) )); then \
-      printf \"${TEXT}\"; \
+    if [ -t 0 ]; then \
+      INTERACTIVE_TERMINAL=true; \
     else \
+      DO_COLOR=false; \
+      INTERACTIVE_TERMINAL=false; \
+    fi; \
+    TEXT=\"$($DO_COLOR && tput setaf $C)$($DO_COLOR && $DO_BACKGROUND && tput setab $B && tput bold && echo ' ')${@//\\%/%%}$($DO_COLOR && $DO_BACKGROUND &&  echo ' ')$($DO_COLOR && tput sgr0)\"; \
+    if $INTERACTIVE_TERMINAL && (( ${#TEXT} > ($(tput cols) - 20) )); then \
       printf \"${TEXT}\" | fold -w 76 -s; \
+    else \
+      printf \"${TEXT}\"; \
     fi; \
   }; c"
 
@@ -1713,7 +1722,7 @@
   imp-warn = !"c() { git imp-printf 3    \"hint:    $@\n\" >&2; }; c"
   imp-success = !"c() { git imp-printf 2 \"success: $@\n\"; }; c"
 
-  imp-underline = !"c() { echo \"$(tput smul)$@$(tput rmul)\"; }; c"
+  imp-underline = !"c() { echo \"$([ -t 0 ] && tput smul)$@$([ -t 0 ] && tput rmul)\"; }; c"
   imp-current-alias-name = !"c() { git imp-underline git ${CURRENT_ALIAS_NAME:?not set, empty or not exported}; }; c"
 
   imp-error-alias = !"c() { git imp-error $(git imp-current-alias-name)${CURRENT_ALIAS_ARGUMENTS}${CURRENT_ALIAS_ARGUMENTS+; #} \"${@}\"; }; c"
