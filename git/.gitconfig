@@ -1079,6 +1079,21 @@
       todo_file_line_with_number \"${1}\" | format_numbered_todo_file_lines; \
     }; \
     padded_line_number() { printf '%04d' ${1:?missing line number}; }; \
+    set_NEXT_PENDING_TODO_NUMBER() { \
+      NEXT_PENDING_TODO_NUMBER=$(todo_number first ' '); \
+      if [ -z \"${NEXT_PENDING_TODO_NUMBER}\" ]; then \
+        git imp-success-alias - no more pending todos, you are all done!; \
+        return 1; \
+      elif ((NEXT_PENDING_TODO_NUMBER > 1)); then \
+        local previous_line_number=\"$((NEXT_PENDING_TODO_NUMBER - 1))\"; \
+        local previous_line=\"$(sed \"${previous_line_number}q;d\" ${TODO_FILE})\"; \
+        if [ -z \"${previous_line}\" ]; then \
+          git imp-success-alias - you are done for now!; \
+          git imp-warn-alias - move todos above the blank line ${previous_line_number} to continue using \"'git todo next'\"; \
+          return 1; \
+        fi; \
+      fi; \
+    }; \
     list_relevant_todos(){ \
       local started_todos_count=\"$(count_todos_on_status 's')\"; \
       local started_todos_label=\"${started_todos_count} started todos\"; \
@@ -1091,24 +1106,34 @@
         pending_todos_label='One pending todo'; \
       fi; \
       if ((started_todos_count > 0)); then \
+        DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_LONG}\"; \
         if ((pending_todos_count == 0)); then \
           git imp-success-alias - ${started_todos_label} and you are all done afterwards!; \
+          list_started; \
+          return 0; \
         else \
-          echo ${started_todos_label}. ${pending_todos_label} afterwards.; \
+          if set_NEXT_PENDING_TODO_NUMBER 1>/dev/null 2>&1; then \
+            echo ${started_todos_label}:; \
+            list_started; \
+          else \
+            echo ${started_todos_label}, and then you are done for now.; \
+            list_started; \
+          fi; \
         fi; \
-        DATETIME_FORMAT_DISPLAY=\"${DATETIME_FORMAT_DISPLAY_LONG}\"; \
-        list_started; \
       else \
-        if ((pending_todos_count == 0)); then \
-          git imp-success-alias - no more pending todos, you are all done!; \
-        elif ((pending_todos_count < 6)); then \
-          echo ${pending_todos_label}.; \
-        else \
-          MAX_COUNT=5; \
-          echo ${pending_todos_label}. The next ${MAX_COUNT}:; \
-        fi; \
-        list_pending; \
+        set_NEXT_PENDING_TODO_NUMBER; \
+        printf 'No ongoing todo. '; \
       fi; \
+      if ((pending_todos_count == 0)); then \
+        echo; \
+        git imp-success-alias - no more pending todos, you are all done!; \
+      elif ((pending_todos_count < 6)); then \
+        echo ${pending_todos_label}.; \
+      else \
+        MAX_COUNT=5; \
+        echo ${pending_todos_label}. The next ${MAX_COUNT} are:; \
+      fi; \
+      list_pending; \
     }; \
     list_pending()   { formatted_todo_file_lines_starting_with '- \\[ \\] \\|$'; }; \
     list_started()   { formatted_todo_file_lines_starting_with '- \\[s\\] '; }; \
@@ -1215,21 +1240,9 @@
         list_started; \
         return 0; \
       fi; \
-      local next_pending_todo_number=$(todo_number first ' '); \
-      if [ -z \"${next_pending_todo_number}\" ]; then \
-        git imp-success-alias - no more pending todos, you are all done!; \
-        return 0; \
-      elif ((next_pending_todo_number > 1)); then \
-        local previous_line_number=\"$((next_pending_todo_number - 1))\"; \
-        local previous_line=\"$(sed \"${previous_line_number}q;d\" ${TODO_FILE})\"; \
-        if [ -z \"${previous_line}\" ]; then \
-          git imp-success-alias - you are done for now!; \
-          git imp-warn-alias - move todos above the blank line ${previous_line_number} to continue using \"'git todo next'\"; \
-          return 0; \
-        fi; \
-      fi; \
+      set_NEXT_PENDING_TODO_NUMBER || return 0; \
       echo \"Starting next todo:\"; \
-      handle_command_for_line_number ${next_pending_todo_number} start; \
+      handle_command_for_line_number ${NEXT_PENDING_TODO_NUMBER} start; \
     }; \
     commit_todo_if_only_one_started() { \
       local started_todos_count=\"$(count_todos_on_status 's')\"; \
