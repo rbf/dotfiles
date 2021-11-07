@@ -1464,7 +1464,11 @@
   imp-check-if-branch-exists-in-origin = !"f() { git rev-parse --abbrev-ref origin/\"${@?Missing branch name}\" 1>/dev/null 2>&1; }; f"
 
   # SOURCE: 16oct2021 https://stackoverflow.com/a/9753364
-  imp-upstream-branch-name = !"git for-each-ref --format='%(upstream:short)' \"$(git symbolic-ref -q \"${1:-HEAD}\")\""
+  imp-upstream-branch-name = !"f() { \
+    if [[ \"$(git for-each-ref --format='%(upstream:track)' \"$(git symbolic-ref -q \"${1:-HEAD}\")\")\" != \"[gone]\" ]]; then \
+      git for-each-ref --format='%(upstream:short)' \"$(git symbolic-ref -q \"${1:-HEAD}\")\"; \
+    fi;\
+  }; f"
 
   imp-upstream-main-branch-name = !"git imp-upstream-branch-name \"refs/heads/$(git imp-main-branch-name)\""
 
