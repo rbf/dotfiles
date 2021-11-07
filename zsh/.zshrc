@@ -639,12 +639,14 @@ fi
 
 if ${IS_CONTEXT_TO_BE_PRINTED:-false}; then
   context
+  unset IS_CONTEXT_TO_BE_PRINTED
 fi
 
 if ${IS_SUBLP_TO_BE_CALLED:-false}; then
   echo
   sublp
   echo
+  unset IS_SUBLP_TO_BE_CALLED
 fi
 
 unset -f list_outdated_brew_packages
