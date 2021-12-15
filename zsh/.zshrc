@@ -650,3 +650,24 @@ if ${IS_SUBLP_TO_BE_CALLED:-false}; then
 fi
 
 unset -f list_outdated_brew_packages
+
+$(pvm --setup-zsh-env)
+
+pvm-dev () {
+        if [ ${1} = "reset" ]
+        then
+                if [ -n "${__PVM_TARGET}" ]
+                then
+                        __pvm_reset_env
+                else
+                        echo "Nothing to reset"
+                fi
+                return
+        fi
+        ~/dev/repos/github/rbf/pvm/pvm "${@}"
+        if [ -f ".pvm/env" ]
+        then
+                source ".pvm/env"
+                rm ".pvm/env"
+        fi
+}
