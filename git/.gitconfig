@@ -1465,8 +1465,13 @@
 
   # SOURCE: 16oct2021 https://stackoverflow.com/a/9753364
   imp-upstream-branch-name = !"f() { \
-    if [[ \"$(git for-each-ref --format='%(upstream:track)' \"$(git symbolic-ref -q \"${1:-HEAD}\")\")\" != \"[gone]\" ]]; then \
-      git for-each-ref --format='%(upstream:short)' \"$(git symbolic-ref -q \"${1:-HEAD}\")\"; \
+    if [ -n \"${1}\" ]; then \
+      REF=\"${1}\"; \
+    else \
+      REF=\"$(git symbolic-ref -q HEAD)\"; \
+    fi;\
+    if [[ \"$(git for-each-ref --format='%(upstream:track)' \"${REF}\")\" != \"[gone]\" ]]; then \
+      git for-each-ref --format='%(upstream:short)' \"${REF}\"; \
     fi;\
   }; f"
 
