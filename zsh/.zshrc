@@ -169,7 +169,7 @@ function __create_new_sublime_project_file() {
   [
     {
       "path": ".",
-      "folder_exclude_patterns": ["tmp", "bin", "log", "_build", "deps"],
+      "folder_exclude_patterns": ["tmp", "node_modules", "log", "_build", "deps"],
     }
   ]
 }
