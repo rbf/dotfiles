@@ -536,6 +536,15 @@ alias cleardnscache='sudo killall -HUP mDNSResponder'
 
 alias reload='source ~/.zshrc'
 
+# Usage: jwtd XXXXXX.YYYYYYY.ZZZZZZZ
+# SOURCE: 17jan2022 https://prefetch.net/blog/2020/07/14/decoding-json-web-tokens-jwts-from-the-linux-command-line/
+jwtd() {
+  if [[ -x $(command -v jq) ]]; then
+    jq -R 'split(".") | .[0],.[1] | @base64d | fromjson' <<< "${1}"
+    echo "Signature: $(echo "${1}" | awk -F'.' '{print $3}')"
+  fi
+}
+
 # Set Ctrl-U to do the same as in Bash
 # SOURCE: 15may2021 https://stackoverflow.com/a/3483679
 bindkey \^U backward-kill-line
