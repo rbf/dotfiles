@@ -360,7 +360,7 @@
   cam = ! git imp-is-cam-reasonable && git add --update && git cm
 
   # SOURCE: 27sep2021  https://stackoverflow.com/a/3828861
-  fixup = !"f() { COMMIT_TO_FIXUP=${1:-HEAD}; if [[ \"$(git rev-parse --short ${COMMIT_TO_FIXUP})\" == \"$(git rev-parse --short HEAD)\" ]]; then git atlc; else git imp-is-a-commit-possible && git commit --fixup=${COMMIT_TO_FIXUP} && git rebase --interactive --autosquash ${COMMIT_TO_FIXUP}~1; fi; }; f"
+  fixup = !"f() { COMMIT_TO_FIXUP=${1:-HEAD}; if [[ \"$(git rev-parse --short ${COMMIT_TO_FIXUP})\" == \"$(git rev-parse --short HEAD)\" ]]; then git atlc; else git imp-is-a-commit-possible && git commit --fixup=${COMMIT_TO_FIXUP} && git rebase --interactive --autosquash --autostash ${COMMIT_TO_FIXUP}~1; fi; }; f"
 
   # Like 'git cam commit message' but automatically pushing to origin after commit.
   camp = !"f() { git cam \"${*}\" && git push; }; f"
