@@ -368,7 +368,7 @@ function mcal() {
     --with-week-number \
     --starting-day=Monday \
     --cc-holidays="${__LOCAL_MCAL_CC_HOLIDAYS_LOCATION}" \
-    --descending-holiday-list=short \
+    --holiday-list=short \
     --exclude-holiday-list-title \
     --suppress-holiday-list-separator \
     --highlighting='\033[7;1m:\033[0m:\033[91;1m:\033[0m' \
