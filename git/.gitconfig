@@ -1454,7 +1454,9 @@
   # Following imp-* aliases are meant to be internally used
 
   # SOURCE: 16sep2021 https://stackoverflow.com/a/67625120
-  imp-main-branch-name = !git -c color.ui=never branch | cut -c 3- | grep --color=never -E '^master$|^main$'
+  imp-main-branch-name = !git config --local repo.mainbranchname || git imp-default-main-branch-name || git imp-error "Main branch name not found. Set it with 'git config --local repo.mainbranchname <name>'."
+
+  imp-default-main-branch-name = !git -c color.ui=never branch | cut -c 3- | grep --color=never -E '^master$|^main$'
 
   imp-current-branch-name = rev-parse --abbrev-ref HEAD
 
