@@ -1,4 +1,4 @@
-// After installing SublimeText, Install this file with the following command:
+// After installing SublimeText, install this file with the following command:
 //   ln -swiv ~/dev/repos/github/rbf/dotfiles/sublimetext/Preferences.sublime-settings ~/Library/Application\ Support/Sublime\ Text/Packages/User
 
 // Settings in here override those in "Default/Preferences.sublime-settings",

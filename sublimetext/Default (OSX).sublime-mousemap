@@ -1,0 +1,18 @@
+// After installing SublimeText, install this file with the following command:
+//   ln -swiv ~/dev/repos/github/rbf/dotfiles/sublimetext/'Default (OSX).sublime-mousemap' ~/Library/Application\ Support/Sublime\ Text/Packages/User
+
+// SOURCE: 11oct2021 https://gist.github.com/kendellfab/6135193#gistcomment-3888919
+[
+    {
+        "button": "button1",
+        "modifiers": ["super"],
+        "press_command": "drag_select",
+        "command": "goto_definition",
+        "args": {"side_by_side": false, "clear_to_right": true}
+    },
+    {
+        "button": "button2",
+        "modifiers": ["super"],
+        "command": "jump_back"
+    }
+]
