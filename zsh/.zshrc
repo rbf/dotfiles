@@ -576,7 +576,7 @@ function is_macos_in_dark_mode() {
 #   formulae that put executables in /usr/local/sbin.
 #   Consider setting your PATH for example like so:
 #   echo 'export PATH="/usr/local/sbin:$PATH"' >> ~/.zshrc
-export PATH="/usr/local/sbin:$PATH"
+export PATH="/usr/local/sbin:$HOME/.docker/bin:$PATH"
 
 # Allow gpg to find the current terminal to sign git commits.
 # SOURCE: 20oct2021 https://stackoverflow.com/a/42265848
