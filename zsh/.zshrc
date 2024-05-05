@@ -139,6 +139,14 @@ alias la='ls -lA'
 alias las='la -Sr'
 alias lat='la -tr --date relative'
 
+function cdf() {
+  if ! [ -d "${*}" ]; then
+    echo "Creating directory '${*}'..."
+    mkdir -p "${*}"
+  fi
+  cd "${*}"
+}
+
 # Print the arguments and wait for any key to be pressed to continue.
 # SOURCE: 08oct2021 https://stackoverflow.com/a/47232956
 function pause() read -s -k "?$*"$'\n'
