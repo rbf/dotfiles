@@ -1551,13 +1551,13 @@
             -e \"s:^gitlab/: $(igl)%C(dim)%<|(${1:-30})GitLab/:\" \
             -e \"s:^bitbucket/: $(ibb)%C(dim)%<|(${1:-30})Bitbucket/:\" \
             -e \"s:^\\([[:alnum:]]*\\)/: x  %C(dim)%<|(${1:-30})\\1/:\" \
-            -e \"s:/: %C(no-dim)%C(white bold):\"; \
+            -e \"s:/: %C(no-dim):\"; \
     }; \
     f() { \
       git -c color.ui=always log \
         --max-count=1 \
         --date=human \
-        --pretty=tformat:\"$(currentrepo \"${3}\")$(prettifypwd \"${2}\") %>|(${1:-30})%C(no-bold)%C(dim)* %C(yellow)%h%C(green) %>(16)%ad %C(white)| %<(70)%s %C(blue)[%an] %G?%C(normal)%C(red bold)%<|($(tput cols),trunc)%d%C(reset)\"; \
+        --pretty=tformat:\"$(currentrepo \"${3}\")$(prettifypwd \"${2}\") %>|(${1:-30})%C(no-bold)%C(dim)* %C(yellow)%h%C(green) %>(16)%ad %C(default)| %<(70)%s %C(blue)[%an] %G?%C(normal)%C(red bold)%<|($(tput cols),trunc)%d%C(reset)\"; \
     }; f"
 
   imp-repo-list = !"f() { \
