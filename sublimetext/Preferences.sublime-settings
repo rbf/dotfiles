@@ -1,0 +1,86 @@
+// After installing SublimeText, Install this file with the following command:
+//   ln -swiv ~/dev/repos/github/rbf/dotfiles/sublimetext/Preferences.sublime-settings ~/Library/Application\ Support/Sublime\ Text/Packages/User
+
+// Settings in here override those in "Default/Preferences.sublime-settings",
+// and are overridden in turn by syntax-specific settings.
+
+// For reference, these are the default platform-specific settings for macOS.
+// File: Default/Preferences (OSX).sublime-settings
+// {
+// 	"font_face": "Menlo",
+// 	"font_size": 12,
+// 	"scroll_past_end": false,
+// 	"find_selected_text": false,
+// 	"move_to_limit_on_up_down": true,
+// 	"close_windows_when_empty": true,
+// 	"show_full_path": false,
+// 	"hardware_acceleration": "opengl",
+// 	"open_files_in_new_window": "finder_only",
+// }
+
+{
+	"font_face": "MesloLGS Nerd Font",
+	/*"font_size": 40,*/
+
+	// The color scheme controls the colors used within the text area.
+	// The value "auto" will switch between the "light_color_scheme" and
+	// "dark_color_scheme" based on the operating system appearance.
+	"color_scheme": "auto",
+	"light_color_scheme": "Breakers.sublime-color-scheme",
+	"dark_color_scheme": "Mariana.sublime-color-scheme",
+	// "dark_color_scheme": "Monokai.sublime-color-scheme",
+
+	// The theme controls Sublime Text's UI (buttons, tabs, scroll bars, etc)
+	// The value "auto" will switch between the "light_theme" and "dark_theme"
+	// based on the operating system appearance.
+	"theme": "auto",
+	"light_theme": "Default.sublime-theme",
+	"dark_theme": "Default Dark.sublime-theme",
+	// "theme": "Adaptive.sublime-theme",
+
+	// Set to false to disable scrolling past the end of the buffer.
+	// This setting may also be set to a number between 0.0 and 1.0 to specify
+	// how much scrolling past the end of the buffer should be allowed. 0.5
+	// scrolls halfway and 0.0 is the same as false.
+	"scroll_past_end": 0.5,
+
+	"caret_extra_top": 1,
+	"caret_extra_bottom": 1,
+	"caret_extra_width": 1,
+
+	"always_show_minimap_viewport": true,
+
+	"find_selected_text": true,
+	"auto_find_in_selection": true,
+
+	"fade_fold_buttons": false,
+	"highlight_line": true,
+	"highlight_modified_tabs": true,
+	"rulers":
+	[
+		80,
+		100
+	],
+	"shift_tab_unindent": true,
+	"spell_check": true,
+	"tab_size": 2,
+	"translate_tabs_to_spaces": true,
+	"trim_trailing_white_space_on_save": "all",
+	"ignored_packages":
+	[
+		"Vintage",
+	],
+
+	// Using GitGutter instead.
+	"mini_diff": false,
+
+	// Display file encoding in the status bar
+	"show_encoding": true,
+	// Display line endings in the status bar
+	"show_line_endings": true,
+
+	"ensure_newline_at_eof_on_save": false,
+
+	"auto_complete_use_index": true,
+	"font_size": 14,
+}
