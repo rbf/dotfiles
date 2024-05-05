@@ -83,4 +83,5 @@
 
 	"auto_complete_use_index": true,
 	"font_size": 14,
+	"index_files": true,
 }
