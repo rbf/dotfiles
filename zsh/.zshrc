@@ -684,3 +684,24 @@ pvm-dev () {
                 rm ".pvm/env"
         fi
 }
+
+# LS_COLORS controls how ls (and lsd) colorize filnames, although not sure what the codes really mean.
+# SOURCE: https://www.bigsoft.co.uk/blog/2008/04/11/configuring-ls_colors
+# The default with oh_my_zsh (I think it comes from it) is:
+# export LS_COLORS='di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
+# Overwrite it with an empty one to use the normal defauls.
+# export LS_COLORS=''
+
+
+# vivid is a generator for the LS_COLORS environment variable that controls the colorized output of ls and lsd.
+# SOURCE: https://github.com/sharkdp/vivid/tree/master
+
+# To try all available themes with your current directory:
+#  for theme in $(vivid themes); do
+#      echo "Theme: $theme"
+#      LS_COLORS=$(vivid -m 8-bit generate $theme)
+#      tree
+#      echo
+#  done
+
+export LS_COLORS="$(vivid -m 8-bit generate catppuccin-latte)"
