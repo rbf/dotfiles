@@ -36,7 +36,7 @@ if (($RELATIVE_SHLVL > 0)); then
 fi
 
 IS_SUB_PANE_IN_TMUX_WINDOW="false"
-if $IS_RUNNING_INSIDE_TMUX && (($(/usr/local/bin/tmux list-panes | wc -l | xargs echo) > 1)) ; then
+if $IS_RUNNING_INSIDE_TMUX && (($($(brew --prefix)/bin/tmux list-panes | wc -l | xargs echo) > 1)) ; then
   IS_SUB_PANE_IN_TMUX_WINDOW="true"
 fi
 
