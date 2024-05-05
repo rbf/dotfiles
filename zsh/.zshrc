@@ -63,7 +63,11 @@ fi
 # Path to your oh-my-zsh installation.
 export ZSH=~/.oh-my-zsh
 
-ZSH_THEME="powerlevel10k/powerlevel10k"
+# If powerlevel10k is installed as a oh-my-zsh plugin, enable it by defining this var:
+# ZSH_THEME="powerlevel10k/powerlevel10k"
+
+# If powerlevel10k is installed with brew, enable it by sourcing this script:
+source "$(brew --prefix)/share/powerlevel10k/powerlevel10k.zsh-theme"
 
 # ohmyzsh Settings
 # DOC: https://github.com/ohmyzsh/ohmyzsh/wiki/Settings#completion_waiting_dots
