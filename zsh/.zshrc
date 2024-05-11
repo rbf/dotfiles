@@ -578,6 +578,10 @@ function is_macos_in_dark_mode() {
 #   echo 'export PATH="/usr/local/sbin:$PATH"' >> ~/.zshrc
 export PATH="/usr/local/sbin:$HOME/.docker/bin:$PATH"
 
+# Ensure that LANG is properly set up and avoid the error 'Unknown locale, assuming C' with man.
+# SOURCE: https://apple.stackexchange.com/a/452339
+export LANG=en_US.UTF-8
+
 # Allow gpg to find the current terminal to sign git commits.
 # SOURCE: 20oct2021 https://stackoverflow.com/a/42265848
 # DOC: https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key#telling-git-about-your-gpg-key
