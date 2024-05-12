@@ -15,6 +15,7 @@ set -euo pipefail
 
 JOB_FILE_FULL_PATH="${0:A}"
 CACHE_BREW_DIR=~/.cache/brew
+BREW_PREFIX="$(brew --prefix)"
 
 function install_launchd_agent() (
   local job_filename="$(basename ${JOB_FILE_FULL_PATH})"
@@ -77,11 +78,11 @@ cat << EOF >> "${CACHE_BREW_DIR}"/update/$(date +"%Y%m_%b").log
 $(date)
 
 # brew update
-$(/usr/local/bin/brew update 2>&1)
+$("${BREW_PREFIX}"/bin/brew update 2>&1)
 
 # brew outdated
-$(/usr/local/bin/brew outdated --verbose 2>&1)
+$("${BREW_PREFIX}"/bin/brew outdated --verbose 2>&1)
 
 EOF
 
-/usr/local/bin/brew outdated --verbose > "${CACHE_BREW_DIR}"/outdated
+"${BREW_PREFIX}"/bin/brew outdated --verbose > "${CACHE_BREW_DIR}"/outdated
