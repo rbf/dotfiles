@@ -165,6 +165,33 @@ function tree() {
 # SOURCE: 28jun2021 https://github.com/ogham/exa
 alias laexa='exa -laa --group --header --git --icons --colour-scale --binary'
 
+# This is the same image as https://hub.docker.com/r/texlive/texlive
+# SOURCE: https://gitlab.com/islandoftex/images/texlive
+function pdflatex() {
+    TEXLIVE_IMAGE_NAME="registry.gitlab.com/islandoftex/images/texlive:latest-full"
+    docker run --pull=never --rm -v "$(pwd):/workdir" -u $(id -u):$(id -g) --platform linux/amd64 "${TEXLIVE_IMAGE_NAME}" pdflatex ${@}
+    if [ "$?" -eq 125 ]; then
+        # The image cannot be found locally.
+        echo
+        echo "Automatically pulling ${TEXLIVE_IMAGE_NAME} image..."
+        echo
+        docker run --rm -v "$(pwd):/workdir" -u $(id -u):$(id -g) --platform linux/amd64 "${TEXLIVE_IMAGE_NAME}" pdflatex ${@}
+    fi
+}
+
+# SOURCE: https://hub.docker.com/r/pandoc/extra
+function pandock() {
+    PANDOC_IMAGE_NAME="pandoc/extra"
+    docker run --pull=never --rm -v "$(pwd):/data" -u $(id -u):$(id -g) --platform linux/amd64 "${PANDOC_IMAGE_NAME}"
+    if [ "$?" -eq 125 ]; then
+        # The image cannot be found locally.
+        echo
+        echo "Automatically pulling ${PANDOC_IMAGE_NAME} image..."
+        echo
+        docker run  --rm -v "$(pwd):/data" -u $(id -u):$(id -g) --platform linux/amd64 "${PANDOC_IMAGE_NAME}"
+    fi
+}
+
 # Instead of using ohmyzsh plugin 'sublime' I define the aliases I use.
 # Inspired by my previous bashrc file.
 # SOURCE: 08oct2021 https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/sublime
