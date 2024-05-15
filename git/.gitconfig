@@ -274,7 +274,7 @@
 
   # Initialise a git repo in the current folder adding all of its contents to an initial commit.
   # SOURCE: http://blog.blindgaenger.net/advanced_git_aliases.html
-  this = !git init && git add . && git commit -m \"initial commit\"
+  this = !git init && git add . && git commit -m \"initial commit\" && mkdir -p git-untracked && git todo init
 
   rl = repo list
   ro = repo open
@@ -1373,6 +1373,9 @@
       case \"${1}\" in \
         '') \
           list_relevant_todos; \
+          ;; \
+        init) \
+          init; \
           ;; \
         pending|p) \
           list_pending; \
