@@ -192,6 +192,21 @@ function pandock() {
     fi
 }
 
+# SOURCE: https://jupyter-docker-stacks.readthedocs.io/en/latest/
+# SOURCE: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
+# SOURCE: https://stackoverflow.com/a/60236944
+function jupyter-datascience-notebook() {
+    JUPYTER_IMAGE_NAME="quay.io/jupyter/datascience-notebook"
+    docker run -it --rm --name jupyter -v ./:/home/jovyan/work --platform linux/amd64 -p 8888:8888 ${JUPYTER_IMAGE_NAME} start-notebook.py --IdentityProvider.token=''
+    if [ "$?" -eq 125 ]; then
+        # The image cannot be found locally.
+        echo
+        echo "Automatically pulling ${JUPYTER_IMAGE_NAME} image..."
+        echo
+        docker run -it --rm --name jupyter -v ./:/home/jovyan/work --platform linux/amd64 -p 8888:8888 ${JUPYTER_IMAGE_NAME} start-notebook.py --IdentityProvider.token=''
+    fi
+}
+
 # Instead of using ohmyzsh plugin 'sublime' I define the aliases I use.
 # Inspired by my previous bashrc file.
 # SOURCE: 08oct2021 https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/sublime
