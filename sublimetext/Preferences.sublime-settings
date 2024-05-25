@@ -44,6 +44,10 @@
 	// scrolls halfway and 0.0 is the same as false.
 	"scroll_past_end": 0.5,
 
+	// Valid values are "smooth", "phase", "blink" and "solid". Previous
+	// versions of Sublime Text used "smooth" by default.
+	// "caret_style": "blink",
+
 	"caret_extra_top": 1,
 	"caret_extra_bottom": 1,
 	"caret_extra_width": 1,
@@ -84,4 +88,8 @@
 	"auto_complete_use_index": true,
 	"font_size": 14,
 	"index_files": true,
+
+	"dictionary": "Packages/Language - English/en_US.dic",
+
+	"keep_cursor_vertically_centered": false,
 }

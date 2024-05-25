@@ -1,0 +1,19 @@
+{
+  // Defaults
+  "line_numbers": false,
+  "gutter": false,
+  "draw_centered": true,
+  "wrap_width": 80,
+  "word_wrap": true,
+  "scroll_past_end": true,
+
+  // Custom
+  "font_size": 18,
+  "rulers": false,
+  "highlight_line": false,
+  "caret_extra_top": 2,
+  "caret_extra_bottom": 2,
+  "caret_extra_width": 2,
+  "show_line_annotation": false,
+  "keep_cursor_vertically_centered": true,
+}
