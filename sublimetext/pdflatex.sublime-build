@@ -1,0 +1,5 @@
+{
+  // Run pdflatex twice in order to get the table of contents right.
+  "shell_cmd": "~/.docker/bin/docker run --rm -v \"`pwd`:/workdir\" -u `id -u`:`id -g` --platform linux/amd64 registry.gitlab.com/islandoftex/images/texlive:latest-full sh -c \"pdflatex \\\"$file_name\\\" && pdflatex \\\"$file_name\\\"\" && open \"${file_base_name}.pdf\"",
+  "selector": "text.tex.latex",
+}
