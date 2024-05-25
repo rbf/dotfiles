@@ -1,0 +1,6 @@
+[
+	{
+		"caption": "Keep Cursor Vertically Centered: Toggle for Current View",
+		"command": "toggle_view_keep_cursor_vertically_centered"
+	}
+]
