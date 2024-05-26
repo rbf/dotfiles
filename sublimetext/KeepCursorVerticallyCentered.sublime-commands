@@ -1,6 +1,10 @@
 [
 	{
 		"caption": "Keep Cursor Vertically Centered: Toggle for Current View",
-		"command": "toggle_view_keep_cursor_vertically_centered"
+		"command": "keep_cursor_vertically_centered_toggle_for_view"
+	},
+	{
+		"caption": "Keep Cursor Vertically Centered: Default for Current View",
+		"command": "keep_cursor_vertically_centered_reset_to_view_default"
 	}
 ]

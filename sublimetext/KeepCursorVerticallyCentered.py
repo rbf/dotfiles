@@ -34,10 +34,20 @@ class KeepCursorVerticallyCenteredCommand(sublime_plugin.EventListener):
             center_cursor_vertically(view)
 
 
-class ToggleViewKeepCursorVerticallyCenteredCommand(sublime_plugin.TextCommand):
+class KeepCursorVerticallyCenteredToggleForViewCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         settings = self.view.settings()
         new_value = not settings.get("keep_cursor_vertically_centered", False)
         settings.set("keep_cursor_vertically_centered", new_value)
         if new_value:
+            center_cursor_vertically(self.view)
+
+
+class KeepCursorVerticallyCenteredResetToViewDefaultCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        settings = self.view.settings()
+        key_to_remove = "keep_cursor_vertically_centered"
+        if key_to_remove in settings:
+            del settings[key_to_remove]
+        if settings.get(key_to_remove, False):
             center_cursor_vertically(self.view)
