@@ -270,6 +270,30 @@ function sublp() {
   esac
 }
 
+function ips() {
+  DIM="\e[2m"
+  RESET="\e[0m"
+
+  ETHERNET_IP="$(ipconfig getifaddr en1)"
+  WIFI_IP="$(ipconfig getifaddr en0)"
+  IPINFO="$(curl -sSL --connect-timeout 0.35  -H "User-Agent:" -H "Referer:" -H "Accept:" -H "Accept-Language:" -H "Accept-Encoding:" -H "Connection:" --cookie "" --http1.1 https://ipinfo.io/ 2>/dev/null)"
+  if [ -n "${ETHERNET_IP}" ]; then
+    echo "Ethernet (en1): ${ETHERNET_IP}"
+  else
+    echo "${DIM}Ethernet (en1): off${RESET}"
+  fi
+  if [ -n "${WIFI_IP}" ]; then
+    echo "Wi-Fi    (en0): ${WIFI_IP}"
+  else
+    echo "${DIM}Wi-Fi    (en0): off${RESET}"
+  fi
+  if [ -n "${IPINFO}" ]; then
+    echo "External      : $(echo ${IPINFO} | jq -r '.ip') ($(echo ${IPINFO} | jq -r '.city') $(echo ${IPINFO} | jq -r '.country') - $(echo ${IPINFO} | jq -r '.org'))"
+  else
+    echo "${DIM}External      : offline${RESET}"
+  fi
+}
+
 # SOURCE: 28jun2021 https://askubuntu.com/a/1309434
 # SOURCE: 28jun2021 https://github.com/romkatv/powerlevel10k/blob/4f3d2ff/config/p10k-classic.zsh#L6
 function lscolors() (
@@ -700,6 +724,8 @@ function list_outdated_brew_packages() {
 
 if $IS_ALLOWED_TO_PRINT_LOGIN_GREETING; then
   mcal
+  echo
+  ips
   echo
   list_outdated_brew_packages
 fi
