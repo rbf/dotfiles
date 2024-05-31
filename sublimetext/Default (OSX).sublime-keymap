@@ -82,6 +82,22 @@
   { "keys": ["ctrl+i"], "command": "set_setting", "args": {"setting": "draw_white_space", "value": "all"} },
   { "keys": ["shift+ctrl+i"], "command": "set_setting", "args": {"setting": "draw_white_space", "value": "selection"} },
 
+
+  {
+    "keys": ["super+b"],
+    "command": "build",
+    "context": [
+        { "key": "selector", "operator": "equal", "operand": "text.tex.latex" }
+    ]
+  },
+  {
+    "keys": ["super+alt+b"],
+    "command": "build",
+    "args": {"variant": "Full Compile With Biber"},
+    "context": [
+        { "key": "selector", "operator": "equal", "operand": "text.tex.latex" }
+    ]
+  },
 ]
 
 // [

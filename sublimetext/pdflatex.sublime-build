@@ -1,5 +1,17 @@
 {
-  // Run pdflatex twice in order to get the table of contents right.
-  "shell_cmd": "~/.docker/bin/docker run --rm -v \"`pwd`:/workdir\" -u `id -u`:`id -g` --platform linux/amd64 registry.gitlab.com/islandoftex/images/texlive:latest-full sh -c \"pdflatex \\\"$file_name\\\" && pdflatex \\\"$file_name\\\"\" && open \"${file_base_name}.pdf\"",
+  "shell_cmd": "~/.docker/bin/docker run --rm -v \"`pwd`:/workdir\" -u `id -u`:`id -g` --platform linux/amd64 registry.gitlab.com/islandoftex/images/texlive:latest-full pdflatex \"$file_name\" && open \"${file_base_name}.pdf\"",
   "selector": "text.tex.latex",
+
+  "variants": [
+    {
+      // Run pdflatex twice in order to get the table of contents right.
+      "name": "Compile Twice",
+      "shell_cmd": "~/.docker/bin/docker run --rm -v \"`pwd`:/workdir\" -u `id -u`:`id -g` --platform linux/amd64 registry.gitlab.com/islandoftex/images/texlive:latest-full sh -c \"pdflatex \\\"$file_name\\\" && pdflatex \\\"$file_name\\\"\" && open \"${file_base_name}.pdf\"",
+    },
+    {
+      // Run pdflatex, biber and then pdflatex twice in order to get the table of contents right.
+      "name": "Full Compile With Biber",
+      "shell_cmd": "~/.docker/bin/docker run --rm -v \"`pwd`:/workdir\" -u `id -u`:`id -g` --platform linux/amd64 registry.gitlab.com/islandoftex/images/texlive:latest-full sh -c \"pdflatex \\\"$file_name\\\" && biber \\\"${file_base_name}\\\" && pdflatex \\\"$file_name\\\" && pdflatex \\\"$file_name\\\"\" && open \"${file_base_name}.pdf\"",
+    },
+  ]
 }
