@@ -147,6 +147,8 @@ xcuserdata/
 *.mtc1
 *.out
 *.synctex.gz
+*.bcf
+*.run.xml
 
 # Sublime Text 2
 ####################################
