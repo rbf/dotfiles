@@ -266,6 +266,9 @@
 [init]
   defaultBranch = main
 
+# To change the threshold value, e.g.:
+# git config --file .gitconfig.local --add fetch.throttle-threshold-in-minutes 235
+# git config --file .gitconfig.local --get fetch.throttle-threshold-in-minutes
 [fetch]
   throttle-threshold-in-minutes = 60
 
@@ -790,6 +793,8 @@
   # DOC: https://git-scm.com/docs/git-log#git-log---cherry
   unmerged = ! ": git log ; MAIN_BRANCH=\"$(git imp-main-branch-name)\" && git history --cherry ${MAIN_BRANCH}..HEAD"
   tags = log --pretty=tformat:\"%C(yellow)%h%C(green) %ad %C(red)%d\" --date=relative --simplify-by-decoration --branches --all
+
+  archive-as = !"f() { FILENAME=\"$(basename \"$(git rev-parse --show-toplevel)\")_${1}.zip\"; git tag ${1} && git h -1 ${1} && echo && git archive --verbose -o \"${FILENAME}\" ${1} && echo && echo \"=> ${FILENAME}\"; }; f"
 
   type = cat-file -t
   dump = cat-file -p
