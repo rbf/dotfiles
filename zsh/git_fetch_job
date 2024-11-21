@@ -37,6 +37,7 @@ function install_launchd_agent() (
     <key>RunAtLoad</key>
     <true/>
     <key>StartInterval</key>
+    <!-- 1 hour in seconds -->
     <integer>3600</integer>
   </dict>
 </plist>
@@ -64,6 +65,16 @@ $(date)
 Starting updates in git repos in ${REPO_DIRS[@]}...
 
 EOF
+
+if ! curl -s --head https://1.1.1.1 > /dev/null; then
+  cat << EOF >> "${CACHE_GIT_FETCH_LOGFILE}"
+
+No internet connection seems available. Aborting.
+
+
+EOF
+  exit
+fi
 
 find ${REPO_DIRS[@]} \
     -name .git \
