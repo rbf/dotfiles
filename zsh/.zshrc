@@ -610,7 +610,10 @@ function backup() {
 }
 
 # SOURCE: 04sep2021 https://docs.gl-inet.com/en/3/tutorials/vpn_policies/#clear-dns-cache
-alias cleardnscache='sudo killall -HUP mDNSResponder'
+alias cleardnscache_legacy='sudo killall -HUP mDNSResponder'
+
+# SOURCE: 20apr2025 https://protonvpn.com/blog/how-to-flush-dns
+alias cleardnscache='sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder; echo "Consider flushing the DNS cache on Safari as well: Develop menu > Empty Caches."; echo "For ad blocking:"; echo "  - disable \"Limit IP address tracking\" on the active network interface"; echo "  - turn off \"Private Relay\" in iCloud"; echo "  - disable \"Use advanced tracking and fingerprinting protection\" in Safari.";'
 
 alias reload='source ~/.zshrc'
 
