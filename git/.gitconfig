@@ -1551,14 +1551,17 @@
     igh() { echo \"  \"; };\
     igl() { echo \"$(tput setaf 202)  $(tput -T ansi sgr0)\"; };\
     ibb() { echo \"$(tput setaf 27)  $(tput -T ansi sgr0)\"; };\
+    iol() { echo \"$(tput setaf 34)󰌪  $(tput -T ansi sgr0)\"; };\
     currentrepo() { [ \"$(pwd)\" = \"${1}\" ] && echo '*' || echo 'x' ; }; \
     prettifypwd() { \
       pwd | \
         sed -e \"s:${REPO_DIR_BASE}/::\" \
             -e \"s:^github/: $(igh)%C(dim)%<|(${1:-30})GitHub/:\" \
+            -e \"s:^github-gists/: $(igh)%C(dim)%<|(${1:-30})GitHub Gist/:\" \
             -e \"s:^gitlab/: $(igl)%C(dim)%<|(${1:-30})GitLab/:\" \
             -e \"s:^bitbucket/: $(ibb)%C(dim)%<|(${1:-30})Bitbucket/:\" \
-            -e \"s:^\\([[:alnum:]]*\\)/: x  %C(dim)%<|(${1:-30})\\1/:\" \
+            -e \"s:^overleaf/: $(iol)%C(dim)%<|(${1:-30})Overleaf/:\" \
+            -e \"s:^\\([[:alnum:]]*\\)/: ?  %C(dim)%<|(${1:-30})\\1/:\" \
             -e \"s:/: %C(no-dim):\"; \
     }; \
     f() { \
