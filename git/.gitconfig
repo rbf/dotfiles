@@ -279,25 +279,25 @@
   # SOURCE: http://blog.blindgaenger.net/advanced_git_aliases.html
   this = !git init && git add . && git commit -m \"initial commit\" && mkdir -p git-untracked && git todo init
 
-  rl = repo list
-  ro = repo open
-  rc = repo clone
+  rl = repos list
+  ro = repos open
+  rc = repos clone
 
-  repo = !"f() { \
+  repos = !"f() { \
     git imp-prevent-inception || exit $?; \
-    export CURRENT_ALIAS_NAME='repo'; \
+    export CURRENT_ALIAS_NAME='repos'; \
     export REPO_DIR_BASE=~/dev/repos; \
     COMMAND=\"${1}\"; \
     shift; \
     case ${COMMAND} in \
       clone) \
-        git imp-repo-clone \"${@}\"; \
+        git imp-repos-clone \"${@}\"; \
         ;; \
       list) \
-        git imp-repo-list \"${@}\"; \
+        git imp-repos-list \"${@}\"; \
         ;; \
       open) \
-        git imp-repo-open \"${@}\"; \
+        git imp-repos-open \"${@}\"; \
         ;; \
       help) \
         git imp-warn-alias \"[open] <repo name pattern>\"; \
@@ -1488,7 +1488,7 @@
 
   imp-is-current-branch-up-to-date-with-upstream-main = !"[ -n \"$(git branch --contains \"$(git imp-upstream-main-branch-name)\" --list \"$(git imp-current-branch-name)\")\" ]"
 
-  imp-repo-clone = !"f() { \
+  imp-repos-clone = !"f() { \
     export CURRENT_ALIAS_NAME='repo clone'; \
     REPO_URL=\"${1}\"; \
     shift; \
@@ -1544,10 +1544,10 @@
         return 1; \
       fi; \
     fi; \
-    git imp-repo-open \"${REPO_DIR}\"; \
+    git imp-repos-open \"${REPO_DIR}\"; \
   }; f"
 
-  imp-repo-list-print = !"\
+  imp-repos-list-print = !"\
     igh() { echo \"  \"; };\
     igl() { echo \"$(tput setaf 202)  $(tput -T ansi sgr0)\"; };\
     ibb() { echo \"$(tput setaf 27)  $(tput -T ansi sgr0)\"; };\
@@ -1571,7 +1571,7 @@
         --pretty=tformat:\"$(currentrepo \"${3}\")$(prettifypwd \"${2}\") %>|(${1:-30})%C(no-bold)%C(dim)* %C(yellow)%h%C(green) %>(16)%ad %C(default)| %<(70)%s %C(blue)[%an] %G?%C(normal)%C(red bold)%<|($(tput cols),trunc)%d%C(reset)\"; \
     }; f"
 
-  imp-repo-list = !"f() { \
+  imp-repos-list = !"f() { \
     export CURRENT_ALIAS_NAME='repo list'; \
     case \"${1}\" in \
       --porcelain|-p) \
@@ -1604,12 +1604,12 @@
                               -not -path '*/.git/*' \
                               -type d \
                               -name .git \
-                              -execdir git imp-repo-list-print ${MAX_REPO_LENGTH} ${MAX_DOMAIN_LENGTH} $(pwd) \\; \
+                              -execdir git imp-repos-list-print ${MAX_REPO_LENGTH} ${MAX_DOMAIN_LENGTH} $(pwd) \\; \
       | sort --key=4 --key=3 --ignore-leading-blanks \
       | sed 's/^x/ /'; \
   }; f"
 
-  imp-repo-open = !"f() { \
+  imp-repos-open = !"f() { \
     export CURRENT_ALIAS_NAME='repo open'; \
     IS_SUBLP_TO_BE_CALLED=false; \
     IS_TO_BE_OPENED_IN_TMUX=${IS_RUNNING_INSIDE_TMUX:-false}; \
@@ -1655,12 +1655,12 @@
       git imp-error-alias - missing pattern; \
       return 1; \
     fi; \
-    MATCHED_REPOS=($(git imp-repo-list --porcelain \"${REPO_PATTERN}\")); \
+    MATCHED_REPOS=($(git imp-repos-list --porcelain \"${REPO_PATTERN}\")); \
     case ${#MATCHED_REPOS[@]} in \
       0) \
         CURRENT_ALIAS_ARGUMENTS+=\" -- ${REPO_PATTERN}\"; \
         git imp-error-alias no repo found; \
-        git imp-repo-list; \
+        git imp-repos-list; \
         return 1; \
         ;; \
       1) \
@@ -1685,7 +1685,7 @@
       *) \
         CURRENT_ALIAS_ARGUMENTS+=\" -- ${REPO_PATTERN}\"; \
         git imp-error-alias \"ambiguous pattern: ${#MATCHED_REPOS[@]} repos found matching '${REPO_PATTERN}'\"; \
-        git imp-repo-list \"${REPO_PATTERN}\"; \
+        git imp-repos-list \"${REPO_PATTERN}\"; \
         return 1; \
         ;; \
     esac; \
