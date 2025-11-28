@@ -31,6 +31,10 @@
 
 # Inspired from: http://help.github.com/ignore-files/
 
+# Git files
+####################################
+.gitconfig.local
+
 # Compiled source
 ####################################
 *.com
