@@ -667,21 +667,10 @@ export GPG_TTY=$TTY
 # export BAT_THEME="base16"
 
 # These 2 bat themes do not dynamically adapt to the light/dark macOS interface
-# styles (i.e. .zshrc must be reloaded in order to change the theme for bat and
-# delta), but they look nicer.
-# export BAT_THEME="Solarized (dark)"
-# export BAT_THEME="Solarized (light)"
-
-function dynamic_bat_theme_name() {
-  if is_macos_in_dark_mode; then
-    echo "Solarized (dark)"
-  else
-    echo "Solarized (light)"
-  fi
-}
-
-alias git='BAT_THEME="$(dynamic_bat_theme_name)" git'
-alias bat='BAT_THEME="$(dynamic_bat_theme_name)" bat'
+# styles, but they look IMO nicer. Therefore we set them invidually for dark and
+# light modes:
+export BAT_THEME_DARK="Solarized (dark)"
+export BAT_THEME_LIGHT="Solarized (light)"
 
 # Put your personal modifications on ~/.zshrc.local, which won't be overwritten.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
