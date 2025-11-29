@@ -1,0 +1,40 @@
+{
+  "cmd": ["echo", "See build system variants"],
+  "selector": "text.tex.latex",
+  "working_dir": "${project_path}",
+
+  "variants": [
+    {
+      "name": "lualatex",
+      "shell_cmd": "ST_FILE='${file}' && ST_PROJECT_PATH='$project_path' && ST_FILE_RELATIVE=\"\\${ST_FILE##\\$ST_PROJECT_PATH/}\" && /opt/homebrew/bin/docker run --rm -v \"$project_path:/workdir\" --env HOME=/workdir -u `id -u`:`id -g` registry.gitlab.com/islandoftex/images/texlive:latest-full lualatex --interaction=nonstopmode --halt-on-error --shell-escape \"\\${ST_FILE_RELATIVE}\"",
+    },
+    {
+      // Run lualatex twice in order to get the table of contents right.
+      "name": "lualatex - Compile Twice",
+      "shell_cmd": "ST_FILE='${file}' && ST_PROJECT_PATH='$project_path' && ST_FILE_RELATIVE=\"\\${ST_FILE##\\$ST_PROJECT_PATH/}\" && /opt/homebrew/bin/docker run --rm -v \"$project_path:/workdir\" --env HOME=/workdir -u `id -u`:`id -g` registry.gitlab.com/islandoftex/images/texlive:latest-full sh -c \"lualatex --interaction=nonstopmode --halt-on-error --shell-escape \\\"\\${ST_FILE_RELATIVE}\\\" && lualatex --interaction=nonstopmode --halt-on-error --shell-escape \\\"\\${ST_FILE_RELATIVE}\\\"\"",
+    },
+    {
+      // Run lualatex, biber and then lualatex twice in order to get the table of contents right.
+      "name": "lualatex - Full Compile With Biber",
+      "shell_cmd": "ST_FILE='${file}' && ST_PROJECT_PATH='$project_path' && ST_FILE_RELATIVE=\"\\${ST_FILE##\\$ST_PROJECT_PATH/}\" && /opt/homebrew/bin/docker run --rm -v \"$project_path:/workdir\" --env HOME=/workdir -u `id -u`:`id -g` registry.gitlab.com/islandoftex/images/texlive:latest-full sh -c \"lualatex --interaction=nonstopmode --halt-on-error --shell-escape \\\"\\${ST_FILE_RELATIVE}\\\" && biber \\\"${file_base_name}\\\" && lualatex --interaction=nonstopmode --halt-on-error --shell-escape \\\"\\${ST_FILE_RELATIVE}\\\" && lualatex --interaction=nonstopmode --halt-on-error --shell-escape \\\"\\${ST_FILE_RELATIVE}\\\"\"",
+    },
+    {
+      "name": "Open PDF with TeXShop.app",
+        "cmd": ["open", "-a", "TeXShop.app", "${file_base_name}.pdf"],
+    },
+    {
+      "name": "Open PDF with Preview.app",
+        "cmd": ["open", "-a", "Preview.app", "${file_base_name}.pdf"],
+    },
+    {
+      "name": "Clean .aux, .out and .log files for current file",
+      "cmd": ["rm", "-v", "$file_base_name.aux", "$file_base_name.out", "$file_base_name.log"],
+    },
+    {
+      "name": "Clean ALL .aux, .out, .log and .minted in current project",
+      "shell_cmd": "rm -v *.aux *.out *.log *.minted",
+    },
+  ]
+}
+
+

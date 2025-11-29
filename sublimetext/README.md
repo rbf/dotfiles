@@ -5,6 +5,7 @@
     ln -swiv ~/dev/repos/github/rbf/dotfiles/sublimetext/Preferences.sublime-settings ~/Library/Application\ Support/Sublime\ Text/Packages/User
     ln -swiv ~/dev/repos/github/rbf/dotfiles/sublimetext/'Default (OSX).sublime-mousemap' ~/Library/Application\ Support/Sublime\ Text/Packages/User
     ln -swiv ~/dev/repos/github/rbf/dotfiles/sublimetext/'Default (OSX).sublime-keymap' ~/Library/Application\ Support/Sublime\ Text/Packages/User
+    ln -swiv ~/dev/repos/github/rbf/dotfiles/sublimetext/LaTeX.sublime-build ~/Library/Application\ Support/Sublime\ Text/Packages/User
     ```
 1. Install [PackageControl](https://packagecontrol.io/installation) as follows:
     1. Open the `Tools` menu with `cmd+shift+P`
