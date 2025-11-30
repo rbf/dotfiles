@@ -273,14 +273,18 @@ function sublp() {
 function ips() {
   local DIM=$'\e[2m'
   local RESET=$'\e[0m'
+  local CYAN=$'\e[36m'
+
+  # Cache networksetup output for performance
+  #   - 'networksetup -listallnetworkservices' gives only the (custom) interface names
+  #   - 'networksetup -listallhardwareports' gives MAC addresses and device names, but generic interface names
+  #   - 'networksetup -listnetworkserviceorder' gives the (custom) interface names, hardware port and device names
+  local NETWORK_ORDER=$(networksetup -listnetworkserviceorder)
 
   # Function to get first interface with an IP for a given type
   get_active_interface() {
     local port_pattern="$1"
-    # 'networksetup -listallnetworkservices' gives only the (custom) interface names
-    # 'networksetup -listallhardwareports' gives MAC addresses and device names, but generic interface names
-    # 'networksetup -listnetworkserviceorder' gives the (custom) interface names, hardware port and device names
-    networksetup -listnetworkserviceorder | \
+    echo "$NETWORK_ORDER" | \
       awk -v pattern="$port_pattern" '
         /^\([0-9]+\)/ {
           service_name = $0
@@ -297,52 +301,97 @@ function ips() {
       while read -r line; do
         local iface="${line%%:*}"
         local service_name="${line#*:}"
-        local ip=$(ipconfig getifaddr "$iface" 2>/dev/null)
-        if [[ -n "$ip" ]]; then
-          echo "$iface:$ip:$service_name"
+        local ipv4=$(ipconfig getifaddr "$iface" 2>/dev/null)
+        local ipv6=$(ipconfig getv6addr "$iface" 2>/dev/null)
+        if [[ -n "$ipv4" ]] || [[ -n "$ipv6" ]]; then
+          echo "$iface:${ipv4:-none}:${ipv6:-none}:$service_name"
           return 0
         fi
       done
   }
 
-  # Get active Wi-Fi interface
+  # Function to get active VPN info
+  get_active_vpn_info() {
+    # Get connected VPN name from scutil
+    local vpn_name=$(scutil --nc list | grep "(Connected)" | sed -E 's/.*"(.+)".*/\1/')
+
+    if [[ -n "$vpn_name" ]]; then
+      # Find active utun interface with an IP
+      local utun_info=$(ifconfig | grep -A 4 "^utun" | awk '
+        /^utun[0-9]+:/ {iface=$1; gsub(/:/, "", iface)}
+        /inet / {print iface ":" $2; exit}
+      ')
+
+      if [[ -n "$utun_info" ]]; then
+        echo "$utun_info:$vpn_name"
+      fi
+    fi
+  }
+
+  # Get active interfaces
   local WIFI_DATA=$(get_active_interface "Hardware Port: Wi-Fi")
-  local WIFI_INTERFACE="${WIFI_DATA%%:*}"
-  local WIFI_REST="${WIFI_DATA#*:}"
-  local WIFI_IP="${WIFI_REST%%:*}"
-  local WIFI_NAME="${WIFI_REST#*:}"
-
-  # Get active Ethernet interface (matches various Ethernet types)
   local ETH_DATA=$(get_active_interface "Hardware Port: (Ethernet|Thunderbolt|USB.*LAN)")
-  local ETH_INTERFACE="${ETH_DATA%%:*}"
-  local ETH_REST="${ETH_DATA#*:}"
-  local ETH_IP="${ETH_REST%%:*}"
-  local ETH_NAME="${ETH_REST#*:}"
+  local VPN_DATA=$(get_active_vpn_info)
 
-  # Display results
-  if [[ -n "${ETH_IP}" ]]; then
-    echo "Ethernet: ${ETH_IP} (${ETH_INTERFACE} - ${ETH_NAME})"
+  # Parse Wi-Fi
+  if [[ -n "$WIFI_DATA" ]]; then
+    local WIFI_INTERFACE="${WIFI_DATA%%:*}"
+    local WIFI_REST="${WIFI_DATA#*:}"
+    local WIFI_IPV4="${WIFI_REST%%:*}"
+    WIFI_REST="${WIFI_REST#*:}"
+    local WIFI_IPV6="${WIFI_REST%%:*}"
+    local WIFI_NAME="${WIFI_REST#*:}"
+
+    echo -n "Wi-Fi:    "
+    [[ "$WIFI_IPV4" != "none" ]] && echo -n "$WIFI_IPV4"
+    [[ "$WIFI_IPV6" != "none" ]] && echo -n " ${CYAN}[IPv6]${RESET}"
+    echo " ($WIFI_INTERFACE - $WIFI_NAME)"
+  else
+    echo "${DIM}Wi-Fi:    off${RESET}"
+  fi
+
+  # Parse Ethernet
+  if [[ -n "$ETH_DATA" ]]; then
+    local ETH_INTERFACE="${ETH_DATA%%:*}"
+    local ETH_REST="${ETH_DATA#*:}"
+    local ETH_IPV4="${ETH_REST%%:*}"
+    ETH_REST="${ETH_REST#*:}"
+    local ETH_IPV6="${ETH_REST%%:*}"
+    local ETH_NAME="${ETH_REST#*:}"
+
+    echo -n "Ethernet: "
+    [[ "$ETH_IPV4" != "none" ]] && echo -n "$ETH_IPV4"
+    [[ "$ETH_IPV6" != "none" ]] && echo -n " ${CYAN}[IPv6]${RESET}"
+    echo " ($ETH_INTERFACE - $ETH_NAME)"
   else
     echo "${DIM}Ethernet: off${RESET}"
   fi
 
-  if [[ -n "${WIFI_IP}" ]]; then
-    echo "Wi-Fi:    ${WIFI_IP} (${WIFI_INTERFACE} - ${WIFI_NAME})"
+  # Parse VPN
+  if [[ -n "$VPN_DATA" ]]; then
+    local VPN_INTERFACE="${VPN_DATA%%:*}"
+    local VPN_REST="${VPN_DATA#*:}"
+    local VPN_IP="${VPN_REST%%:*}"
+    local VPN_NAME="${VPN_REST#*:}"
+
+    echo "VPN:      $VPN_IP ($VPN_INTERFACE - $VPN_NAME)"
   else
-    echo "${DIM}Wi-Fi:    off${RESET}"
+    echo "${DIM}VPN:      N/A${RESET}"
   fi
 
   # Public IP
   local IPINFO="$(curl -sSL --connect-timeout 0.35 -H "User-Agent:" -H "Referer:" -H "Accept:" -H "Accept-Language:" -H "Accept-Encoding:" -H "Connection:" --cookie "" --http1.1 https://ipinfo.io/ 2>/dev/null)"
 
-  if [[ -n "${IPINFO}" ]]; then
-    echo "Public: $(echo ${IPINFO} | jq -r '.ip') ($(echo ${IPINFO} | jq -r '.city') $(echo ${IPINFO} | jq -r '.country') - $(echo ${IPINFO} | jq -r '.org'))"
+  if [[ -n "$IPINFO" ]]; then
+    local EXT_IP=$(echo "$IPINFO" | jq -r '.ip')
+    local EXT_CITY=$(echo "$IPINFO" | jq -r '.city')
+    local EXT_COUNTRY=$(echo "$IPINFO" | jq -r '.country')
+    local EXT_ORG=$(echo "$IPINFO" | jq -r '.org')
+    echo "Public:   $EXT_IP ($EXT_CITY $EXT_COUNTRY - $EXT_ORG)"
   else
-    echo "${DIM}Public: N/A (offline)${RESET}"
+    echo "${DIM}Public:   N/A (offline)${RESET}"
   fi
 }
-
-
 
 # SOURCE: 28jun2021 https://askubuntu.com/a/1309434
 # SOURCE: 28jun2021 https://github.com/romkatv/powerlevel10k/blob/4f3d2ff/config/p10k-classic.zsh#L6
