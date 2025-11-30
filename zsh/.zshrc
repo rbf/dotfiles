@@ -835,26 +835,33 @@ fi
 
 unset -f list_outdated_brew_packages
 
-$(pvm --setup-zsh-env)
+# This uses zsh's commands associative array to check if pvm exists in $PATH. It's
+# more efficient than 'which' or 'command -v' as it doesn't spawn an external
+# process. Note: The commands array includes all files in $PATH folders
+# regardless of executability. If you need to ensure the file is executable, use
+# command -v instead.
+if (( ${+commands[pvm]} )); then
+  $(pvm --setup-zsh-env)
 
-pvm-dev () {
-        if [ ${1} = "reset" ]
-        then
-                if [ -n "${__PVM_TARGET}" ]
-                then
-                        __pvm_reset_env
-                else
-                        echo "Nothing to reset"
-                fi
-                return
-        fi
-        ~/dev/repos/github/rbf/pvm/pvm "${@}"
-        if [ -f ".pvm/env" ]
-        then
-                source ".pvm/env"
-                rm ".pvm/env"
-        fi
-}
+  pvm-dev () {
+          if [ ${1} = "reset" ]
+          then
+                  if [ -n "${__PVM_TARGET}" ]
+                  then
+                          __pvm_reset_env
+                  else
+                          echo "Nothing to reset"
+                  fi
+                  return
+          fi
+          ~/dev/repos/github/rbf/pvm/pvm "${@}"
+          if [ -f ".pvm/env" ]
+          then
+                  source ".pvm/env"
+                  rm ".pvm/env"
+          fi
+  }
+fi
 
 # LS_COLORS controls how ls (and lsd) colorize filnames, although not sure what the codes really mean.
 # SOURCE: https://www.bigsoft.co.uk/blog/2008/04/11/configuring-ls_colors
