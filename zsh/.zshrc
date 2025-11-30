@@ -271,28 +271,78 @@ function sublp() {
 }
 
 function ips() {
-  DIM="\e[2m"
-  RESET="\e[0m"
+  local DIM=$'\e[2m'
+  local RESET=$'\e[0m'
 
-  ETHERNET_IP="$(ipconfig getifaddr en1)"
-  WIFI_IP="$(ipconfig getifaddr en0)"
-  IPINFO="$(curl -sSL --connect-timeout 0.35  -H "User-Agent:" -H "Referer:" -H "Accept:" -H "Accept-Language:" -H "Accept-Encoding:" -H "Connection:" --cookie "" --http1.1 https://ipinfo.io/ 2>/dev/null)"
-  if [ -n "${ETHERNET_IP}" ]; then
-    echo "Ethernet (en1): ${ETHERNET_IP}"
+  # Function to get first interface with an IP for a given type
+  get_active_interface() {
+    local port_pattern="$1"
+    # 'networksetup -listallnetworkservices' gives only the (custom) interface names
+    # 'networksetup -listallhardwareports' gives MAC addresses and device names, but generic interface names
+    # 'networksetup -listnetworkserviceorder' gives the (custom) interface names, hardware port and device names
+    networksetup -listnetworkserviceorder | \
+      awk -v pattern="$port_pattern" '
+        /^\([0-9]+\)/ {
+          service_name = $0
+          sub(/^\([0-9]+\) /, "", service_name)
+          getline
+          if ($0 ~ pattern) {
+            device = $0
+            sub(/.*Device: /, "", device)
+            sub(/\).*/, "", device)
+            print device ":" service_name
+          }
+        }
+      ' | \
+      while read -r line; do
+        local iface="${line%%:*}"
+        local service_name="${line#*:}"
+        local ip=$(ipconfig getifaddr "$iface" 2>/dev/null)
+        if [[ -n "$ip" ]]; then
+          echo "$iface:$ip:$service_name"
+          return 0
+        fi
+      done
+  }
+
+  # Get active Wi-Fi interface
+  local WIFI_DATA=$(get_active_interface "Hardware Port: Wi-Fi")
+  local WIFI_INTERFACE="${WIFI_DATA%%:*}"
+  local WIFI_REST="${WIFI_DATA#*:}"
+  local WIFI_IP="${WIFI_REST%%:*}"
+  local WIFI_NAME="${WIFI_REST#*:}"
+
+  # Get active Ethernet interface (matches various Ethernet types)
+  local ETH_DATA=$(get_active_interface "Hardware Port: (Ethernet|Thunderbolt|USB.*LAN)")
+  local ETH_INTERFACE="${ETH_DATA%%:*}"
+  local ETH_REST="${ETH_DATA#*:}"
+  local ETH_IP="${ETH_REST%%:*}"
+  local ETH_NAME="${ETH_REST#*:}"
+
+  # Display results
+  if [[ -n "${ETH_IP}" ]]; then
+    echo "Ethernet: ${ETH_IP} (${ETH_INTERFACE} - ${ETH_NAME})"
   else
-    echo "${DIM}Ethernet (en1): off${RESET}"
+    echo "${DIM}Ethernet: off${RESET}"
   fi
-  if [ -n "${WIFI_IP}" ]; then
-    echo "Wi-Fi    (en0): ${WIFI_IP}"
+
+  if [[ -n "${WIFI_IP}" ]]; then
+    echo "Wi-Fi:    ${WIFI_IP} (${WIFI_INTERFACE} - ${WIFI_NAME})"
   else
-    echo "${DIM}Wi-Fi    (en0): off${RESET}"
+    echo "${DIM}Wi-Fi:    off${RESET}"
   fi
-  if [ -n "${IPINFO}" ]; then
-    echo "External      : $(echo ${IPINFO} | jq -r '.ip') ($(echo ${IPINFO} | jq -r '.city') $(echo ${IPINFO} | jq -r '.country') - $(echo ${IPINFO} | jq -r '.org'))"
+
+  # Public IP
+  local IPINFO="$(curl -sSL --connect-timeout 0.35 -H "User-Agent:" -H "Referer:" -H "Accept:" -H "Accept-Language:" -H "Accept-Encoding:" -H "Connection:" --cookie "" --http1.1 https://ipinfo.io/ 2>/dev/null)"
+
+  if [[ -n "${IPINFO}" ]]; then
+    echo "Public: $(echo ${IPINFO} | jq -r '.ip') ($(echo ${IPINFO} | jq -r '.city') $(echo ${IPINFO} | jq -r '.country') - $(echo ${IPINFO} | jq -r '.org'))"
   else
-    echo "${DIM}External      : offline${RESET}"
+    echo "${DIM}Public: N/A (offline)${RESET}"
   fi
 }
+
+
 
 # SOURCE: 28jun2021 https://askubuntu.com/a/1309434
 # SOURCE: 28jun2021 https://github.com/romkatv/powerlevel10k/blob/4f3d2ff/config/p10k-classic.zsh#L6
